@@ -7,7 +7,7 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: "Geist", "Geist Fallback", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Arimo", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "Geist Mono", "Geist Mono Fallback", ui-monospace, monospace;
   --font-heading: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
@@ -126,5 +126,115 @@
   }
   html {
     @apply font-sans;
+  }
+}
+
+/* win-win back site tokens */
+.winwin-root {
+  --ww-navy: #082b4b;
+  --ww-cream: #fcfcf7;
+  --ww-mint: #e9f5ef;
+  --ww-ice: #edf6f7;
+  --ww-dark: #102e47;
+  --ww-lime: #b7e961;
+  --ww-lime-bright: #c5ed78;
+  --ww-gold: #eabf39;
+  font-family: "Arimo", ui-sans-serif, sans-serif;
+}
+
+.winwin-root * {
+  font-family: inherit;
+}
+
+.ww-lime-text-gradient {
+  background: linear-gradient(105deg, #b7e961, #cfe35a 48%, #eabf39);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.ww-hero-bg {
+  background-color: #082b4b;
+  background-image:
+    radial-gradient(circle at 76% 27%, rgba(163, 225, 78, 0.26), transparent 19%),
+    radial-gradient(circle at 68% 71%, rgba(234, 191, 57, 0.12), transparent 22%);
+}
+
+.ww-nav-gradient {
+  background: linear-gradient(rgba(5, 32, 57, 0.28), rgba(0, 0, 0, 0));
+}
+
+.ww-store-icon {
+  border-radius: 28%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ww-store-icon-tiktok { background: linear-gradient(145deg, #05111e, #1b3142); }
+.ww-store-icon-shopee { background: linear-gradient(145deg, #fc704b, #db3f26); }
+.ww-store-icon-lazada { background: linear-gradient(145deg, #7a5af8, #5b21b6); }
+
+.ww-arrow-icon { background: linear-gradient(145deg, #082b4b, #0d3d63); }
+
+/* ── Hero entrance (above-the-fold, plays on load) ── */
+@keyframes ww-fade-up {
+  from { opacity: 0; transform: translateY(28px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes ww-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes ww-fade-right {
+  from { opacity: 0; transform: translateX(32px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.ww-hero-enter {
+  animation: ww-fade-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: var(--delay, 0ms);
+}
+.ww-hero-enter-img {
+  animation: ww-fade-right 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: var(--delay, 200ms);
+}
+
+/* ── Scroll-reveal (below-the-fold, triggered by IntersectionObserver) ── */
+[data-animate] {
+  opacity: 0;
+  transform: translateY(28px);
+  transition:
+    opacity 0.65s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.65s cubic-bezier(0.22, 1, 0.36, 1);
+  transition-delay: var(--animate-delay, 0ms);
+}
+
+[data-animate="fade-left"] {
+  transform: translateX(-28px);
+}
+
+[data-animate="fade-right"] {
+  transform: translateX(28px);
+}
+
+[data-animate="scale"] {
+  transform: scale(0.93);
+}
+
+[data-animate][data-visible="true"] {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-animate],
+  .ww-hero-enter,
+  .ww-hero-enter-img {
+    animation: none !important;
+    transition: none !important;
+    opacity: 1 !important;
+    transform: none !important;
   }
 }
