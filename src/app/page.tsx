@@ -5,6 +5,7 @@ import { PartnersSection } from '@/components/sites/hoantienms-manus-722fa8de/ro
 import { HowItWorksSection } from '@/components/sites/hoantienms-manus-722fa8de/root-8a5edab2/HowItWorksSection';
 import { BenefitsSection } from '@/components/sites/hoantienms-manus-722fa8de/root-8a5edab2/BenefitsSection';
 import { FAQSection } from '@/components/sites/hoantienms-manus-722fa8de/root-8a5edab2/FAQSection';
+import { CommunitySection } from '@/components/sites/hoantienms-manus-722fa8de/root-8a5edab2/CommunitySection';
 import { FinalCTASection } from '@/components/sites/hoantienms-manus-722fa8de/root-8a5edab2/FinalCTASection';
 import { Footer } from '@/components/sites/hoantienms-manus-722fa8de/root-8a5edab2/Footer';
 
@@ -19,6 +20,7 @@ export default function Home() {
         <HowItWorksSection />
         <BenefitsSection />
         <FAQSection />
+        <CommunitySection />
         <FinalCTASection />
       </main>
       <Footer />
