@@ -16,7 +16,7 @@ export function HeroSection() {
             style={{ '--delay': '0ms' } as React.CSSProperties}
           >
             <span className="text-[9.28px] font-extrabold tracking-[1.392px] text-[#c5ed78]">
-              TIKTOK SHOP · SHOPEE · LAZADA
+              TIKTOK SHOP · SHOPEE
             </span>
           </div>
 
@@ -32,7 +32,7 @@ export function HeroSection() {
             className="ww-hero-enter mt-5 text-base text-white/70 max-w-[490px] leading-6"
             style={{ '--delay': '180ms' } as React.CSSProperties}
           >
-            Dán link sản phẩm vào Win-Win Back trước khi mua trên TikTok Shop, Shopee hoặc Lazada. Tiền hoàn về ví khi đơn hoàn tất.
+            Dán link sản phẩm vào Win-Win Back trước khi mua trên TikTok Shop hoặc Shopee. Tiền hoàn về ví khi đơn hoàn tất.
           </p>
 
           <div
@@ -52,14 +52,14 @@ export function HeroSection() {
 
         {/* Right: Hero image */}
         <div
-          className="ww-hero-enter-img relative hidden lg:block flex-shrink-0 w-[400px] xl:w-[500px] mt-0"
+          className="ww-hero-enter-img relative block flex-shrink-0 w-full max-w-[420px] mx-auto lg:w-[480px] xl:w-[600px] lg:max-w-none lg:mx-0 lg:ml-auto mt-4 lg:mt-0 self-center"
           style={{ '--delay': '200ms' } as React.CSSProperties}
         >
           <Image
-            src="/sites/hoantienms-manus-722fa8de/root-8a5edab2/images/winwin-wallet-hero.png"
+            src="/sites/hoantienms-manus-722fa8de/root-8a5edab2/images/hero-mascot-v3.png"
             width={1000}
             height={1000}
-            alt="Ví hoàn tiền 3D với TikTok, Shopee, Lazada"
+            alt="Linh vật Win-Win Back cầm điện thoại với TikTok, Shopee"
             className="w-full h-auto drop-shadow-2xl"
             priority
           />

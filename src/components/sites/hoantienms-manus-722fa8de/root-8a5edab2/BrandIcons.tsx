@@ -29,31 +29,3 @@ export function ShopeeIcon({ className, white, style }: IconProps) {
   );
 }
 
-export function LazadaIcon({ className, white, style }: IconProps) {
-  if (white) {
-    return (
-      <svg viewBox="0 0 67.4 54.7" xmlns="http://www.w3.org/2000/svg" className={className} style={style}>
-        <polygon points="0,10 14.8,0 52.6,0 67.4,10 67.4,33.3 33.7,54.7 0,33.3" fill="white"/>
-      </svg>
-    );
-  }
-  return (
-    <svg viewBox="0 0 67.4 54.7" xmlns="http://www.w3.org/2000/svg" className={className} style={style}>
-      <defs>
-        <linearGradient id="laz-mark-main" x1="0" y1="0.5" x2="1" y2="0.5">
-          <stop offset="0" stopColor="#ffb900"/>
-          <stop offset="0.33" stopColor="#f38000"/>
-          <stop offset="0.57" stopColor="#f83c72"/>
-          <stop offset="0.78" stopColor="#fc1cbe"/>
-          <stop offset="1" stopColor="#ff00ff"/>
-        </linearGradient>
-        <linearGradient id="laz-mark-shadow" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0" stopColor="#ed6600" stopOpacity="0.65"/>
-          <stop offset="1" stopColor="#f98200" stopOpacity="0.4"/>
-        </linearGradient>
-      </defs>
-      <polygon points="0,10 14.8,0 52.6,0 67.4,10 67.4,33.3 33.7,54.7 0,33.3" fill="url(#laz-mark-main)"/>
-      <polygon points="33.7,54.7 67.4,33.3 67.4,10 52.6,0" fill="url(#laz-mark-shadow)"/>
-    </svg>
-  );
-}

@@ -3,9 +3,9 @@
 import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { Link2, ArrowRight } from 'lucide-react';
-import { TikTokIcon, ShopeeIcon, LazadaIcon } from './BrandIcons';
+import { TikTokIcon, ShopeeIcon } from './BrandIcons';
 
-type Platform = 'tiktok' | 'shopee' | 'lazada';
+type Platform = 'tiktok' | 'shopee';
 
 interface PlatformConfig {
   key: Platform;
@@ -26,12 +26,6 @@ const platforms: PlatformConfig[] = [
     label: 'Shopee',
     icon: (active) => <ShopeeIcon className="w-5 h-5 flex-shrink-0" white={active} />,
     activeBg: '#ee4d2d',
-  },
-  {
-    key: 'lazada',
-    label: 'Lazada',
-    icon: () => <LazadaIcon className="w-5 h-5 flex-shrink-0" />,
-    activeBg: '#7a5af8',
   },
 ];
 
@@ -77,7 +71,7 @@ export function ConsoleSection() {
                 type="text"
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
-                placeholder="Dán link sản phẩm vào đây (TikTok, Shopee hoặc Lazada)"
+                placeholder="Dán link sản phẩm vào đây (TikTok Shop hoặc Shopee)"
                 className="flex-1 hidden sm:block text-sm text-gray-700 outline-none bg-transparent placeholder:text-gray-400 min-w-0 py-1.5"
               />
               <button

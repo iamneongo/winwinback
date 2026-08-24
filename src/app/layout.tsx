@@ -5,10 +5,10 @@ import { ScrollReveal } from "@/components/ScrollReveal";
 
 export const metadata: Metadata = {
   title: "Win-Win Back — Mua sắm có hoàn tiền",
-  description: "Dán link sản phẩm từ TikTok Shop, Shopee hoặc Lazada. Tiền hoàn về ví khi đơn hoàn tất. Không mất phí.",
+  description: "Dán link sản phẩm từ TikTok Shop hoặc Shopee. Tiền hoàn về ví khi đơn hoàn tất. Không mất phí.",
   openGraph: {
     title: "Win-Win Back — Dán link sản phẩm, nhận tiền hoàn về ví",
-    description: "Dán link sản phẩm từ TikTok Shop, Shopee hoặc Lazada. Tiền hoàn về ví khi đơn hoàn tất. Không mất phí.",
+    description: "Dán link sản phẩm từ TikTok Shop hoặc Shopee. Tiền hoàn về ví khi đơn hoàn tất. Không mất phí.",
     images: [
       {
         url: "/sites/hoantienms-manus-722fa8de/root-8a5edab2/images/og-image.png",
@@ -23,7 +23,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Win-Win Back — Dán link sản phẩm, nhận tiền hoàn về ví",
-    description: "Dán link sản phẩm từ TikTok Shop, Shopee hoặc Lazada. Tiền hoàn về ví khi đơn hoàn tất.",
+    description: "Dán link sản phẩm từ TikTok Shop hoặc Shopee. Tiền hoàn về ví khi đơn hoàn tất.",
     images: ["/sites/hoantienms-manus-722fa8de/root-8a5edab2/images/og-image.png"],
   },
 };

@@ -5,7 +5,7 @@ const steps = [
   {
     num: '01',
     title: 'Dán link sản phẩm',
-    desc: 'Sao chép link bất kỳ sản phẩm nào trên TikTok Shop, Shopee hoặc Lazada, rồi dán vào ô kiểm tra.',
+    desc: 'Sao chép link bất kỳ sản phẩm nào trên TikTok Shop hoặc Shopee, rồi dán vào ô kiểm tra.',
   },
   {
     num: '02',

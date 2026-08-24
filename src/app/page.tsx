@@ -16,11 +16,11 @@ export default function Home() {
       <main>
         <HeroSection />
         <ConsoleSection />
+        <CommunitySection />
         <PartnersSection />
         <HowItWorksSection />
         <BenefitsSection />
         <FAQSection />
-        <CommunitySection />
         <FinalCTASection />
       </main>
       <Footer />

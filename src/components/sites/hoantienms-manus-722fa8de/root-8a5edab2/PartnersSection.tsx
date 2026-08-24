@@ -19,15 +19,6 @@ const cards = [
     logoH: 48,
     bg: '#fff3f0',
   },
-  {
-    key: 'lazada',
-    name: 'Lazada',
-    tagline: 'Ưu đãi mỗi ngày, thêm tiền hoàn về ví',
-    logo: '/sites/hoantienms-manus-722fa8de/root-8a5edab2/images/logo-lazada.png',
-    logoW: 120,
-    logoH: 38,
-    bg: '#f3f2ff',
-  },
 ];
 
 export function PartnersSection() {
@@ -41,14 +32,14 @@ export function PartnersSection() {
               data-animate
               className="text-[10px] font-bold tracking-[0.15em] text-[#102e47]/50 uppercase mb-3"
             >
-              3 SÀN ĐƯỢC HỖ TRỢ
+              2 SÀN ĐƯỢC HỖ TRỢ
             </p>
             <h2
               data-animate
               className="text-3xl sm:text-4xl lg:text-5xl font-bold text-[#102e47] leading-tight tracking-tight"
               style={{ '--animate-delay': '80ms' } as React.CSSProperties}
             >
-              Mua sắm trên 3 sàn,<br />
+              Mua sắm trên 2 sàn,<br />
               hoàn tiền theo cùng một cách.
             </h2>
           </div>
@@ -58,13 +49,13 @@ export function PartnersSection() {
             style={{ '--animate-delay': '160ms' } as React.CSSProperties}
           >
             <p className="text-base text-[#102e47]/70 leading-relaxed">
-              Mua trên TikTok Shop, Shopee hoặc Lazada như bình thường. Đi qua Win-Win Back trước khi thanh toán, tiền hoàn về ví sau khi đơn xong.
+              Mua trên TikTok Shop hoặc Shopee như bình thường. Đi qua Win-Win Back trước khi thanh toán, tiền hoàn về ví sau khi đơn xong.
             </p>
           </div>
         </div>
 
         {/* Platform cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {cards.map((card, i) => (
             <div
               key={card.key}
