@@ -70,39 +70,22 @@ RUN if [ -f package-lock.json ]; then \
   fi
 
 # ============================================
-# Stage 3: Run Next.js application
+# Stage 3: Serve static export (out/)
 # ============================================
+# next.config.ts uses `output: "export"`, which emits a fully static site to
+# /app/out. We serve it with a lightweight static server on port 3000.
 
 FROM node:${NODE_VERSION} AS runner
 
-# Set working directory
 WORKDIR /app
 
-# Set production environment variables
 ENV NODE_ENV=production
-ENV PORT=3000
-ENV HOSTNAME="0.0.0.0"
 
-# Next.js collects completely anonymous telemetry data about general usage.
-# Learn more here: https://nextjs.org/telemetry
-# Uncomment the following line in case you want to disable telemetry during the run time.
-# ENV NEXT_TELEMETRY_DISABLED=1
+# Lightweight static file server
+RUN npm install -g serve@14
 
-# Copy production assets
-COPY --from=builder --chown=node:node /app/public ./public
-
-# Set the correct permission for prerender cache
-RUN mkdir .next
-RUN chown node:node .next
-
-# Automatically leverage output traces to reduce image size
-# https://nextjs.org/docs/advanced-features/output-file-tracing
-COPY --from=builder --chown=node:node /app/.next/standalone ./
-COPY --from=builder --chown=node:node /app/.next/static ./.next/static
-
-# If you want to persist the fetch cache generated during the build so that
-# cached responses are available immediately on startup, uncomment this line:
-# COPY --from=builder --chown=node:node /app/.next/cache ./.next/cache
+# Copy the static export produced by the build stage
+COPY --from=builder --chown=node:node /app/out ./out
 
 # Switch to non-root user for security best practices
 USER node
@@ -110,5 +93,5 @@ USER node
 # Expose port 3000 to allow HTTP traffic
 EXPOSE 3000
 
-# Start Next.js standalone server
-CMD ["node", "server.js"]
+# No SPA rewrite: the export ships real per-route pages and a 404.html.
+CMD ["serve", "out", "-l", "3000"]
