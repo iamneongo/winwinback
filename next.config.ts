@@ -1,7 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  output: "export",
+  // Server runtime (not static export) — required for the database-backed
+  // dashboard, auth, affiliate redirects and webhooks.
+  output: "standalone",
   images: {
     unoptimized: true,
   },

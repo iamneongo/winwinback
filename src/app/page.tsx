@@ -1,13 +1,13 @@
-import { NavBar } from '@/components/sites/hoantienms-manus-722fa8de/root-8a5edab2/NavBar';
-import { HeroSection } from '@/components/sites/hoantienms-manus-722fa8de/root-8a5edab2/HeroSection';
-import { ConsoleSection } from '@/components/sites/hoantienms-manus-722fa8de/root-8a5edab2/ConsoleSection';
-import { PartnersSection } from '@/components/sites/hoantienms-manus-722fa8de/root-8a5edab2/PartnersSection';
-import { HowItWorksSection } from '@/components/sites/hoantienms-manus-722fa8de/root-8a5edab2/HowItWorksSection';
-import { BenefitsSection } from '@/components/sites/hoantienms-manus-722fa8de/root-8a5edab2/BenefitsSection';
-import { FAQSection } from '@/components/sites/hoantienms-manus-722fa8de/root-8a5edab2/FAQSection';
-import { CommunitySection } from '@/components/sites/hoantienms-manus-722fa8de/root-8a5edab2/CommunitySection';
-import { FinalCTASection } from '@/components/sites/hoantienms-manus-722fa8de/root-8a5edab2/FinalCTASection';
-import { Footer } from '@/components/sites/hoantienms-manus-722fa8de/root-8a5edab2/Footer';
+import { NavBar } from '@/components/sections/NavBar';
+import { HeroSection } from '@/components/sections/HeroSection';
+import { ConsoleSection } from '@/components/sections/ConsoleSection';
+import { PartnersSection } from '@/components/sections/PartnersSection';
+import { HowItWorksSection } from '@/components/sections/HowItWorksSection';
+import { BenefitsSection } from '@/components/sections/BenefitsSection';
+import { FAQSection } from '@/components/sections/FAQSection';
+import { CommunitySection } from '@/components/sections/CommunitySection';
+import { FinalCTASection } from '@/components/sections/FinalCTASection';
+import { Footer } from '@/components/sections/Footer';
 
 export default function Home() {
   return (

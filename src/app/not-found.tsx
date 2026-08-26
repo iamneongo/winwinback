@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
-import { NavBar } from '@/components/sites/hoantienms-manus-722fa8de/root-8a5edab2/NavBar';
-import { Footer } from '@/components/sites/hoantienms-manus-722fa8de/root-8a5edab2/Footer';
+import { NavBar } from '@/components/sections/NavBar';
+import { Footer } from '@/components/sections/Footer';
 
 export default function NotFound() {
   return (

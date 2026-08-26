@@ -11,7 +11,7 @@ export const metadata: Metadata = {
     description: "Dán link sản phẩm từ TikTok Shop hoặc Shopee. Tiền hoàn về ví khi đơn hoàn tất. Không mất phí.",
     images: [
       {
-        url: "/sites/hoantienms-manus-722fa8de/root-8a5edab2/images/og-image.png",
+        url: "/images/og-image.png",
         width: 1512,
         height: 756,
         alt: "Win-Win Back — Dán link sản phẩm, nhận tiền hoàn về ví",
@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Win-Win Back — Dán link sản phẩm, nhận tiền hoàn về ví",
     description: "Dán link sản phẩm từ TikTok Shop hoặc Shopee. Tiền hoàn về ví khi đơn hoàn tất.",
-    images: ["/sites/hoantienms-manus-722fa8de/root-8a5edab2/images/og-image.png"],
+    images: ["/images/og-image.png"],
   },
 };
 
@@ -42,8 +42,8 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Arimo:ital,wght@0,400..700;1,400..700&display=swap"
           rel="stylesheet"
         />
-        <link rel="icon" href="/sites/hoantienms-manus-722fa8de/root-8a5edab2/favicon.svg" type="image/svg+xml" />
-        <link rel="icon" href="/sites/hoantienms-manus-722fa8de/root-8a5edab2/favicon.png" type="image/png" />
+        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+        <link rel="icon" href="/favicon.png" type="image/png" />
       </head>
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
         <SmoothScroll>

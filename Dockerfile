@@ -70,22 +70,23 @@ RUN if [ -f package-lock.json ]; then \
   fi
 
 # ============================================
-# Stage 3: Serve static export (out/)
+# Stage 3: Run the standalone Next.js server
 # ============================================
-# next.config.ts uses `output: "export"`, which emits a fully static site to
-# /app/out. We serve it with a lightweight static server on port 3000.
+# next.config.ts uses `output: "standalone"`, which emits a self-contained
+# server bundle. We run it directly with Node on port 3000.
 
 FROM node:${NODE_VERSION} AS runner
 
 WORKDIR /app
 
 ENV NODE_ENV=production
+ENV PORT=3000
+ENV HOSTNAME=0.0.0.0
 
-# Lightweight static file server
-RUN npm install -g serve@14
-
-# Copy the static export produced by the build stage
-COPY --from=builder --chown=node:node /app/out ./out
+# Copy the standalone server, static assets and public files.
+COPY --from=builder --chown=node:node /app/.next/standalone ./
+COPY --from=builder --chown=node:node /app/.next/static ./.next/static
+COPY --from=builder --chown=node:node /app/public ./public
 
 # Switch to non-root user for security best practices
 USER node
@@ -93,5 +94,6 @@ USER node
 # Expose port 3000 to allow HTTP traffic
 EXPOSE 3000
 
-# No SPA rewrite: the export ships real per-route pages and a 404.html.
-CMD ["serve", "out", "-l", "3000"]
+# Runtime env (DATABASE_URL, SESSION_SECRET, WEBHOOK_SECRET, …) must be provided
+# by the container platform. server.js is emitted by the standalone build.
+CMD ["node", "server.js"]
