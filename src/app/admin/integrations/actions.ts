@@ -9,8 +9,16 @@ import {
   disconnectTikTok,
 } from "@/lib/affiliate/tiktok/tokens";
 import { TikTokApiError } from "@/lib/affiliate/tiktok/client";
+import {
+  fetchConnectedCreatorOrders,
+  type TikTokOrderRow,
+} from "@/lib/affiliate/tiktok/orders";
 
 export type ActionState = { error?: string; success?: string } | undefined;
+
+export type OrdersState =
+  | { error?: string; rows?: TikTokOrderRow[]; fetchedAt?: string }
+  | undefined;
 
 const codeSchema = z.object({
   authCode: z.string().trim().min(4, "Nhập auth code từ TikTok"),
@@ -64,4 +72,20 @@ export async function disconnectTikTokAction(): Promise<ActionState> {
   await disconnectTikTok();
   revalidatePath("/admin/integrations");
   return { success: "Đã ngắt kết nối TikTok Shop" };
+}
+
+/** Fetch the connected creator's live affiliate orders from TikTok Shop. */
+export async function fetchTikTokOrdersAction(): Promise<OrdersState> {
+  await requireAdmin();
+  try {
+    const rows = await fetchConnectedCreatorOrders();
+    return { rows, fetchedAt: new Date().toLocaleString("vi-VN") };
+  } catch (e) {
+    if (e instanceof TikTokApiError) {
+      return { error: `TikTok trả về lỗi (mã ${e.code}): ${e.message}` };
+    }
+    return {
+      error: e instanceof Error ? e.message : "Không tải được đơn hàng TikTok",
+    };
+  }
 }

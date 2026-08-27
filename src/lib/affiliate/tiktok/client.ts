@@ -3,6 +3,7 @@ import {
   TIKTOK_API_BASE,
   TIKTOK_AUTH_BASE,
   TIKTOK_GENERATE_LINK_PATH,
+  TIKTOK_ORDERS_SEARCH_PATH,
   getTikTokAppKey,
   getTikTokAppSecret,
 } from "./config";
@@ -90,11 +91,15 @@ async function signedPost<T>(
   path: string,
   accessToken: string,
   bodyObj: unknown,
+  extraQuery: Record<string, string> = {},
 ): Promise<T> {
   const timestamp = Math.floor(Date.now() / 1000).toString();
+  // Extra query params (e.g. page_size, page_token) participate in the signature
+  // exactly like app_key/timestamp — signRequest sorts and includes them all.
   const query: Record<string, string> = {
     app_key: getTikTokAppKey(),
     timestamp,
+    ...extraQuery,
   };
   const body = JSON.stringify(bodyObj);
   const sign = signRequest({
@@ -166,5 +171,73 @@ export async function generateSharingLinks(
   return {
     links: data.sharing_links ?? [],
     failed: data.failed_materials ?? [],
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Affiliate orders (creator.affiliate_collaboration.read)
+// ---------------------------------------------------------------------------
+
+/** A single product line inside an affiliate order. */
+export interface AffiliateOrderSku {
+  id?: string;
+  product_id?: string;
+  product_name?: string;
+  price?: { amount?: string; currency?: string };
+  campaign_id?: string;
+  open_collaboration_id?: string;
+  target_collaboration_id?: string;
+}
+
+/** An affiliate order driven by the connected creator. */
+export interface AffiliateOrder {
+  /** TikTok Shop order id (18-digit, starts with 57/58). */
+  id: string;
+  create_time?: number;
+  delivery_time?: number;
+  status?: string;
+  skus?: AffiliateOrderSku[];
+}
+
+interface SearchOrdersData {
+  orders?: AffiliateOrder[];
+  next_page_token?: string;
+  total_count?: number;
+}
+
+/**
+ * Search the connected creator's affiliate orders. Returns real TikTok Shop
+ * order + product data (order id, product id/name, price, status).
+ *
+ * `createTimeGe` / `createTimeLt` are unix seconds; when both are omitted TikTok
+ * defaults to [earliest shop time, now].
+ */
+export async function searchAffiliateOrders(
+  accessToken: string,
+  params: {
+    createTimeGe?: number;
+    createTimeLt?: number;
+    pageSize?: number;
+    pageToken?: string;
+  } = {},
+): Promise<{ orders: AffiliateOrder[]; nextPageToken?: string }> {
+  const extraQuery: Record<string, string> = {
+    page_size: String(params.pageSize ?? 50),
+  };
+  if (params.pageToken) extraQuery.page_token = params.pageToken;
+
+  const body: Record<string, number> = {};
+  if (params.createTimeGe) body.create_time_ge = params.createTimeGe;
+  if (params.createTimeLt) body.create_time_lt = params.createTimeLt;
+
+  const data = await signedPost<SearchOrdersData>(
+    TIKTOK_ORDERS_SEARCH_PATH,
+    accessToken,
+    body,
+    extraQuery,
+  );
+  return {
+    orders: data.orders ?? [],
+    nextPageToken: data.next_page_token,
   };
 }

@@ -5,7 +5,9 @@ import {
   connectTikTokAction,
   refreshTikTokAction,
   disconnectTikTokAction,
+  fetchTikTokOrdersAction,
   type ActionState,
+  type OrdersState,
 } from "@/app/admin/integrations/actions";
 import { SubmitButton } from "@/components/forms/SubmitButton";
 
@@ -76,6 +78,73 @@ function DisconnectButton() {
   );
 }
 
+function OrdersPanel() {
+  const [state, action] = useActionState<OrdersState, FormData>(
+    () => fetchTikTokOrdersAction(),
+    undefined,
+  );
+  return (
+    <div className="space-y-3 rounded-2xl border border-white/10 bg-white/5 p-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p className="text-sm font-semibold text-white">
+            Dữ liệu đơn hàng từ TikTok Shop
+          </p>
+          <p className="text-xs text-white/50">
+            Đồng bộ trực tiếp qua Affiliate Creator API (order id + product id
+            thật).
+          </p>
+        </div>
+        <form action={action}>
+          <SubmitButton variant="ghost">Đồng bộ đơn hàng</SubmitButton>
+        </form>
+      </div>
+
+      {state?.error && <p className="text-sm text-red-300">{state.error}</p>}
+
+      {state?.rows && (
+        <>
+          <p className="text-xs text-white/50">
+            Đã đồng bộ {state.rows.length} dòng lúc {state.fetchedAt}.
+          </p>
+          {state.rows.length === 0 ? (
+            <p className="text-sm text-white/60">
+              Chưa có đơn hàng affiliate nào cho creator này.
+            </p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs text-white/80">
+                <thead className="text-white/40">
+                  <tr>
+                    <th className="py-2 pr-3">Order ID</th>
+                    <th className="py-2 pr-3">Product ID</th>
+                    <th className="py-2 pr-3">Sản phẩm</th>
+                    <th className="py-2 pr-3">Giá</th>
+                    <th className="py-2 pr-3">Trạng thái</th>
+                    <th className="py-2">Thời gian</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {state.rows.map((row, i) => (
+                    <tr key={`${row.orderId}-${i}`} className="border-t border-white/10">
+                      <td className="py-2 pr-3 font-mono">{row.orderId}</td>
+                      <td className="py-2 pr-3 font-mono">{row.productId}</td>
+                      <td className="py-2 pr-3">{row.productName}</td>
+                      <td className="py-2 pr-3">{row.price}</td>
+                      <td className="py-2 pr-3">{row.status}</td>
+                      <td className="py-2">{row.createdAt ?? "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
 export function TikTokIntegration({ status }: { status: TikTokStatus }) {
   if (!status.configured) {
     return (
@@ -130,7 +199,11 @@ export function TikTokIntegration({ status }: { status: TikTokStatus }) {
             <DisconnectButton />
           </div>
         </div>
-      ) : (
+      ) : null}
+
+      {status.connected && <OrdersPanel />}
+
+      {!status.connected && (
         <p className="text-sm text-white/60">
           Chưa kết nối tài khoản Affiliate Creator.
         </p>
