@@ -11,6 +11,7 @@ import { AppHeader } from "@/components/dashboard/AppHeader";
 import { CreateLinkForm } from "@/components/dashboard/CreateLinkForm";
 import { WithdrawalForm } from "@/components/dashboard/WithdrawalForm";
 import { CopyLink } from "@/components/dashboard/CopyLink";
+import { BuyButton } from "@/components/dashboard/BuyButton";
 import { baseUrl, formatVnd, minWithdrawal } from "@/lib/config";
 import {
   orderStatusClass,
@@ -109,6 +110,12 @@ export default async function DashboardPage() {
         {/* Create link */}
         <Card title="Dán link sản phẩm → nhận link hoàn tiền">
           <CreateLinkForm />
+          <p className="mt-3 text-xs text-white/50">
+            Dán link sản phẩm TikTok Shop → bấm{" "}
+            <span className="font-semibold text-[#b7e961]">Mua trên TikTok</span>{" "}
+            để mở app TikTok và đặt hàng. Khi đơn hoàn tất, tiền hoàn tự động về
+            ví của bạn.
+          </p>
         </Card>
 
         {/* Links */}
@@ -142,6 +149,10 @@ export default async function DashboardPage() {
                         {l.clicks} lượt click
                       </span>
                       <CopyLink value={shortUrl} />
+                      <BuyButton
+                        href={shortUrl}
+                        platformName={platformLabel[l.platform]}
+                      />
                     </div>
                   </div>
                 );

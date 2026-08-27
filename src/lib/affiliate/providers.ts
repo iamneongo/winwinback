@@ -96,7 +96,12 @@ class TikTokProvider implements AffiliateProvider {
     }
 
     const link = result.links[0];
-    if (!link?.sharing_link) {
+    // Prefer the OneLink smart deeplink (opens the TikTok app when installed,
+    // falls back to web/store otherwise). Fall back to the raw scheme deep_link,
+    // then the plain web sharing_link.
+    const affiliateUrl =
+      link?.one_link || link?.deep_link || link?.sharing_link;
+    if (!affiliateUrl) {
       const failed = result.failed[0];
       throw new Error(
         failed?.reason || failed?.message
@@ -105,7 +110,7 @@ class TikTokProvider implements AffiliateProvider {
       );
     }
 
-    return { affiliateUrl: link.sharing_link };
+    return { affiliateUrl };
   }
 }
 
