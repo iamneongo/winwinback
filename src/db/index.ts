@@ -1,27 +1,49 @@
 import "server-only";
 import { Pool } from "pg";
-import { drizzle } from "drizzle-orm/node-postgres";
+import { drizzle, type NodePgDatabase } from "drizzle-orm/node-postgres";
 import * as schema from "./schema";
 
-const connectionString = process.env.DATABASE_URL;
-if (!connectionString) {
-  throw new Error("DATABASE_URL is not set");
-}
+type Database = NodePgDatabase<typeof schema>;
 
-// Reuse the pool across hot reloads / serverless invocations.
-const globalForDb = globalThis as unknown as { pool?: Pool };
+// Lazily create the pool + drizzle instance on first use. Importing this module
+// must NOT throw or open a connection: `next build` imports route modules to
+// collect page data, but DATABASE_URL only exists at runtime (it is not present
+// in the Docker build stage). A lazy proxy keeps import side-effect free.
+const globalForDb = globalThis as unknown as {
+  pool?: Pool;
+  db?: Database;
+};
 
-const pool =
-  globalForDb.pool ??
-  new Pool({
-    connectionString,
-    ssl: { rejectUnauthorized: false },
-    max: 5,
-  });
+function getDb(): Database {
+  if (globalForDb.db) return globalForDb.db;
 
-if (process.env.NODE_ENV !== "production") {
+  const connectionString = process.env.DATABASE_URL;
+  if (!connectionString) {
+    throw new Error("DATABASE_URL is not set");
+  }
+
+  const pool =
+    globalForDb.pool ??
+    new Pool({
+      connectionString,
+      ssl: { rejectUnauthorized: false },
+      max: 5,
+    });
   globalForDb.pool = pool;
+
+  const instance = drizzle(pool, { schema });
+  globalForDb.db = instance;
+  return instance;
 }
 
-export const db = drizzle(pool, { schema });
+export const db = new Proxy({} as Database, {
+  get(_target, prop) {
+    const instance = getDb();
+    const value = Reflect.get(instance as object, prop);
+    return typeof value === "function"
+      ? (value as (...args: unknown[]) => unknown).bind(instance)
+      : value;
+  },
+});
+
 export { schema };
