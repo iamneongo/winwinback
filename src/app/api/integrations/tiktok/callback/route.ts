@@ -2,15 +2,10 @@ import "server-only";
 import { NextResponse, type NextRequest } from "next/server";
 import { getCurrentUser } from "@/lib/auth/session";
 import { connectTikTokWithAuthCode } from "@/lib/affiliate/tiktok/tokens";
+import { TikTokApiError } from "@/lib/affiliate/tiktok/client";
+import { getBaseUrl } from "@/lib/baseUrl";
 
 export const dynamic = "force-dynamic";
-
-function baseUrl(): string {
-  return (
-    process.env.NEXT_PUBLIC_BASE_URL?.replace(/\/$/, "") ||
-    "http://localhost:3000"
-  );
-}
 
 /**
  * OAuth callback for TikTok creator authorization.
@@ -20,9 +15,11 @@ function baseUrl(): string {
  * site root, use the manual auth-code form on /admin/integrations instead.
  */
 export async function GET(req: NextRequest): Promise<NextResponse> {
+  const base = getBaseUrl(req);
+
   const user = await getCurrentUser();
   if (!user || user.role !== "admin") {
-    return NextResponse.redirect(new URL("/login", baseUrl()));
+    return NextResponse.redirect(new URL("/login", base));
   }
 
   const url = new URL(req.url);
@@ -30,10 +27,11 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   const state = url.searchParams.get("state");
   const cookieState = req.cookies.get("tiktok_oauth_state")?.value;
 
-  const redirectTo = (status: string) =>
-    NextResponse.redirect(
-      new URL(`/admin/integrations?tiktok=${status}`, baseUrl()),
-    );
+  const redirectTo = (status: string, reason?: string) => {
+    const target = new URL(`/admin/integrations?tiktok=${status}`, base);
+    if (reason) target.searchParams.set("reason", reason);
+    return NextResponse.redirect(target);
+  };
 
   if (!code) return redirectTo("denied");
   if (!state || !cookieState || state !== cookieState) {
@@ -46,7 +44,13 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       data.user_type === 1 ? redirectTo("connected") : redirectTo("not_creator");
     res.cookies.delete("tiktok_oauth_state");
     return res;
-  } catch {
-    return redirectTo("error");
+  } catch (e) {
+    const reason =
+      e instanceof TikTokApiError
+        ? `mã ${e.code}: ${e.message}`
+        : e instanceof Error
+          ? e.message
+          : "unknown";
+    return redirectTo("error", reason);
   }
 }

@@ -29,10 +29,10 @@ const CALLBACK_MESSAGES: Record<string, { text: string; ok: boolean }> = {
 export default async function IntegrationsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tiktok?: string }>;
+  searchParams: Promise<{ tiktok?: string; reason?: string }>;
 }) {
   const admin = await requireAdmin();
-  const { tiktok } = await searchParams;
+  const { tiktok, reason } = await searchParams;
 
   const stored = await getStoredTikTokToken();
   const status: TikTokStatus = {
@@ -75,6 +75,11 @@ export default async function IntegrationsPage({
             }`}
           >
             {banner.text}
+            {!banner.ok && reason && (
+              <span className="mt-1 block font-mono text-xs text-red-300/90">
+                Chi tiết: {reason}
+              </span>
+            )}
           </div>
         )}
 

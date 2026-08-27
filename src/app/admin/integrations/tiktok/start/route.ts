@@ -1,11 +1,12 @@
 import "server-only";
 import crypto from "node:crypto";
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { getCurrentUser } from "@/lib/auth/session";
 import {
   TIKTOK_CREATOR_AUTH_URL,
   getTikTokAppKey,
 } from "@/lib/affiliate/tiktok/config";
+import { getBaseUrl } from "@/lib/baseUrl";
 
 export const dynamic = "force-dynamic";
 
@@ -14,16 +15,18 @@ export const dynamic = "force-dynamic";
  * redirect the admin to the TikTok creator auth page. On approval TikTok
  * redirects back to the configured Redirect URL with `?code=...&state=...`.
  */
-export async function GET(): Promise<NextResponse> {
+export async function GET(req: NextRequest): Promise<NextResponse> {
+  const base = getBaseUrl(req);
+
   const user = await getCurrentUser();
   if (!user || user.role !== "admin") {
-    return NextResponse.redirect(new URL("/login", getBaseUrl()));
+    return NextResponse.redirect(new URL("/login", base));
   }
 
   const appKey = getTikTokAppKey();
   if (!appKey) {
     return NextResponse.redirect(
-      new URL("/admin/integrations?tiktok=misconfigured", getBaseUrl()),
+      new URL("/admin/integrations?tiktok=misconfigured", base),
     );
   }
 
@@ -41,11 +44,4 @@ export async function GET(): Promise<NextResponse> {
     maxAge: 600,
   });
   return res;
-}
-
-function getBaseUrl(): string {
-  return (
-    process.env.NEXT_PUBLIC_BASE_URL?.replace(/\/$/, "") ||
-    "http://localhost:3000"
-  );
 }
