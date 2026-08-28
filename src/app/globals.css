@@ -178,6 +178,68 @@
 
 .ww-arrow-icon { background: linear-gradient(145deg, #082b4b, #0d3d63); }
 
+/* ── Floating dock navigation (authenticated app) ── */
+.ww-dock {
+  background: linear-gradient(180deg, rgba(16, 52, 82, 0.82), rgba(8, 34, 56, 0.9));
+  backdrop-filter: blur(18px) saturate(1.4);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4);
+  box-shadow:
+    0 1px 0 0 rgba(255, 255, 255, 0.08) inset,
+    0 18px 40px -12px rgba(0, 0, 0, 0.55),
+    0 8px 20px -8px rgba(0, 0, 0, 0.4);
+}
+
+.ww-dock-icon {
+  transform-origin: bottom center;
+  transition:
+    transform 130ms cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease;
+  will-change: transform;
+}
+
+.ww-dock-tip {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  padding: 0.25rem 0.6rem;
+  border-radius: 9999px;
+  background: rgba(6, 24, 40, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #eaf5df;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 140ms ease,
+    transform 140ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.ww-dock-item:hover .ww-dock-tip,
+.ww-dock-item:focus-visible .ww-dock-tip {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.ww-dock-item:focus-visible {
+  outline: none;
+}
+.ww-dock-item:focus-visible .ww-dock-icon {
+  box-shadow: 0 0 0 2px rgba(183, 233, 97, 0.7);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ww-dock-icon {
+    transition: background-color 160ms ease, border-color 160ms ease,
+      color 160ms ease;
+    transform: none !important;
+  }
+}
+
 /* ── Hero entrance (above-the-fold, plays on load) ── */
 @keyframes ww-fade-up {
   from { opacity: 0; transform: translateY(28px); }
