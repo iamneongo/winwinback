@@ -1,13 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   Home,
-  Link2,
-  List,
   ShoppingBag,
   Wallet,
-  ArrowDownToLine,
+  User,
   ShieldCheck,
   LogOut,
   type LucideIcon,
@@ -15,29 +15,31 @@ import {
 import { logoutAction } from "@/app/(auth)/actions";
 
 interface DockItem {
-  id: string;
+  href: string;
   label: string;
   icon: LucideIcon;
+  exact?: boolean;
 }
 
 const ITEMS: DockItem[] = [
-  { id: "tong-quan", label: "Tổng quan", icon: Home },
-  { id: "tao-link", label: "Tạo link", icon: Link2 },
-  { id: "link-cua-ban", label: "Link của bạn", icon: List },
-  { id: "don-hang", label: "Đơn hàng", icon: ShoppingBag },
-  { id: "vi", label: "Ví của bạn", icon: Wallet },
-  { id: "rut-tien", label: "Rút tiền", icon: ArrowDownToLine },
+  { href: "/dashboard", label: "Tổng quan", icon: Home, exact: true },
+  { href: "/dashboard/don-hang", label: "Đơn hàng", icon: ShoppingBag },
+  { href: "/dashboard/vi", label: "Ví của bạn", icon: Wallet },
+  { href: "/dashboard/tai-khoan", label: "Tài khoản", icon: User },
 ];
 
 // Proximity magnification tuning (macOS-dock feel).
-const MAX_SCALE = 0.9; // extra scale at the cursor's focus
-const LIFT = 12; // px the focused icon rises
-const SIGMA = 58; // px falloff radius of the magnification
+const MAX_SCALE = 0.9;
+const LIFT = 12;
+const SIGMA = 58;
+
+function isActive(pathname: string, item: DockItem): boolean {
+  return item.exact ? pathname === item.href : pathname.startsWith(item.href);
+}
 
 export function Dock({ role }: { role: "user" | "admin" }) {
-  const items = ITEMS;
+  const pathname = usePathname();
   const iconRefs = useRef<(HTMLSpanElement | null)[]>([]);
-  const [active, setActive] = useState<string>(items[0]!.id);
   const reduced = useRef(false);
 
   useEffect(() => {
@@ -45,26 +47,6 @@ export function Dock({ role }: { role: "user" | "admin" }) {
       "(prefers-reduced-motion: reduce)",
     ).matches;
   }, []);
-
-  // Highlight the dock item whose section is centred in the viewport.
-  useEffect(() => {
-    const sections = items
-      .map((i) => document.getElementById(i.id))
-      .filter((el): el is HTMLElement => Boolean(el));
-    if (sections.length === 0) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries
-          .filter((e) => e.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
-        if (visible?.target.id) setActive(visible.target.id);
-      },
-      { rootMargin: "-45% 0px -45% 0px", threshold: [0, 0.25, 0.5, 1] },
-    );
-    sections.forEach((s) => observer.observe(s));
-    return () => observer.disconnect();
-  }, [items]);
 
   const magnify = useCallback((cursorX: number | null) => {
     iconRefs.current.forEach((el) => {
@@ -77,40 +59,36 @@ export function Dock({ role }: { role: "user" | "admin" }) {
       const center = rect.left + rect.width / 2;
       const dist = cursorX - center;
       const influence = Math.exp(-(dist * dist) / (2 * SIGMA * SIGMA));
-      const scale = 1 + MAX_SCALE * influence;
-      const lift = LIFT * influence;
-      el.style.transform = `translateY(${-lift}px) scale(${scale})`;
+      el.style.transform = `translateY(${-LIFT * influence}px) scale(${
+        1 + MAX_SCALE * influence
+      })`;
     });
   }, []);
 
-  const go = useCallback((id: string) => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    setActive(id);
-    el.scrollIntoView({
-      behavior: reduced.current ? "auto" : "smooth",
-      block: "start",
-    });
-  }, []);
+  const iconClass = (active: boolean) =>
+    `ww-dock-icon flex h-11 w-11 items-center justify-center rounded-2xl border ${
+      active
+        ? "border-[#b7e961]/60 bg-[#b7e961] text-[#0a2438]"
+        : "border-white/10 bg-white/5 text-white/70 group-hover:text-white"
+    }`;
 
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-4 z-40 flex justify-center px-4">
       <nav
-        aria-label="Điều hướng nhanh"
+        aria-label="Điều hướng"
         onPointerMove={(e) => magnify(e.clientX)}
         onPointerLeave={() => magnify(null)}
         className="ww-dock pointer-events-auto flex items-end gap-1 rounded-[26px] border border-white/12 px-3 py-2.5 sm:gap-1.5 sm:px-4"
       >
-        {items.map((item, i) => {
+        {ITEMS.map((item, i) => {
           const Icon = item.icon;
-          const isActive = active === item.id;
+          const active = isActive(pathname, item);
           return (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => go(item.id)}
+            <Link
+              key={item.href}
+              href={item.href}
               aria-label={item.label}
-              aria-current={isActive ? "true" : undefined}
+              aria-current={active ? "page" : undefined}
               className="ww-dock-item group relative flex flex-col items-center"
             >
               <span className="ww-dock-tip">{item.label}</span>
@@ -118,25 +96,24 @@ export function Dock({ role }: { role: "user" | "admin" }) {
                 ref={(el) => {
                   iconRefs.current[i] = el;
                 }}
-                className={`ww-dock-icon flex h-11 w-11 items-center justify-center rounded-2xl border ${
-                  isActive
-                    ? "border-[#b7e961]/60 bg-[#b7e961] text-[#0a2438]"
-                    : "border-white/10 bg-white/5 text-white/70 group-hover:text-white"
-                }`}
+                className={iconClass(active)}
               >
                 <Icon className="h-[19px] w-[19px]" strokeWidth={2.1} />
               </span>
               <span
                 className={`mt-1.5 h-1 w-1 rounded-full transition-all duration-300 ${
-                  isActive ? "bg-[#b7e961] opacity-100" : "opacity-0"
+                  active ? "bg-[#b7e961] opacity-100" : "opacity-0"
                 }`}
                 aria-hidden="true"
               />
-            </button>
+            </Link>
           );
         })}
 
-        <span className="mx-1 h-8 w-px self-center bg-white/10" aria-hidden="true" />
+        <span
+          className="mx-1 h-8 w-px self-center bg-white/10"
+          aria-hidden="true"
+        />
 
         {role === "admin" && (
           <a
@@ -147,7 +124,7 @@ export function Dock({ role }: { role: "user" | "admin" }) {
             <span className="ww-dock-tip">Quản trị</span>
             <span
               ref={(el) => {
-                iconRefs.current[items.length] = el;
+                iconRefs.current[ITEMS.length] = el;
               }}
               className="ww-dock-icon flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-white/70 group-hover:text-white"
             >
@@ -166,7 +143,7 @@ export function Dock({ role }: { role: "user" | "admin" }) {
             <span className="ww-dock-tip">Đăng xuất</span>
             <span
               ref={(el) => {
-                iconRefs.current[items.length + 1] = el;
+                iconRefs.current[ITEMS.length + 1] = el;
               }}
               className="ww-dock-icon flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-white/60 group-hover:border-red-300/40 group-hover:text-red-200"
             >

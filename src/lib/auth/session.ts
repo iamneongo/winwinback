@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { cookies } from "next/headers";
 import { randomBytes } from "crypto";
 import { eq } from "drizzle-orm";
@@ -33,7 +34,7 @@ export async function destroySession(): Promise<void> {
   }
 }
 
-export async function getCurrentUser(): Promise<User | null> {
+export const getCurrentUser = cache(async (): Promise<User | null> => {
   const cookieStore = await cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   if (!token) return null;
@@ -52,4 +53,4 @@ export async function getCurrentUser(): Promise<User | null> {
     return null;
   }
   return record.user;
-}
+});
