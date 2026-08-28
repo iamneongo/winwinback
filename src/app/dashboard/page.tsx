@@ -12,7 +12,8 @@ import { CreateLinkForm } from "@/components/dashboard/CreateLinkForm";
 import { WithdrawalForm } from "@/components/dashboard/WithdrawalForm";
 import { CopyLink } from "@/components/dashboard/CopyLink";
 import { BuyButton } from "@/components/dashboard/BuyButton";
-import { baseUrl, formatVnd, minWithdrawal } from "@/lib/config";
+import { formatVnd, minWithdrawal } from "@/lib/config";
+import { getRequestBaseUrl } from "@/lib/baseUrl";
 import {
   orderStatusClass,
   orderStatusLabel,
@@ -46,6 +47,7 @@ function Empty({ text }: { text: string }) {
 
 export default async function DashboardPage() {
   const user = await requireUser();
+  const baseUrl = await getRequestBaseUrl();
 
   const [links, orderRows, txRows, wdRows] = await Promise.all([
     db

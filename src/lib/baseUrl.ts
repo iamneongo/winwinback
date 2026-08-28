@@ -1,4 +1,5 @@
 import "server-only";
+import { headers } from "next/headers";
 import type { NextRequest } from "next/server";
 
 /**
@@ -18,6 +19,22 @@ export function getBaseUrl(req?: NextRequest): string {
       req.headers.get("x-forwarded-host") ?? req.headers.get("host");
     if (host) return `${proto}://${host}`;
   }
+  const env = process.env.NEXT_PUBLIC_BASE_URL?.replace(/\/$/, "");
+  if (env) return env;
+  return "http://localhost:3000";
+}
+
+/**
+ * Same as {@link getBaseUrl} but for server components / server actions that
+ * have no `NextRequest` in scope — reads the incoming request's forwarded
+ * host/proto via `next/headers`. Use this when building absolute URLs (e.g.
+ * the `/go/<code>` short link) so they never fall back to localhost in prod.
+ */
+export async function getRequestBaseUrl(): Promise<string> {
+  const h = await headers();
+  const proto = h.get("x-forwarded-proto")?.split(",")[0]?.trim() || "https";
+  const host = h.get("x-forwarded-host") ?? h.get("host");
+  if (host) return `${proto}://${host}`;
   const env = process.env.NEXT_PUBLIC_BASE_URL?.replace(/\/$/, "");
   if (env) return env;
   return "http://localhost:3000";
