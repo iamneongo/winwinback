@@ -1,161 +1,26 @@
 import { desc, eq } from "drizzle-orm";
-import { Wallet, ArrowDownToLine, History } from "lucide-react";
+import { ArrowDownToLine, Clock3, History, Landmark, Wallet } from "lucide-react";
+import Image from "next/image";
 import { db } from "@/db";
 import { walletTransactions, withdrawals } from "@/db/schema";
 import { requireUser } from "@/lib/auth/guards";
 import { WithdrawalForm } from "@/components/dashboard/WithdrawalForm";
-import { PageHeader, Empty, cardClass } from "@/components/dashboard/ui";
+import { Empty, PageHeader, cardClass, sectionTitleClass } from "@/components/dashboard/ui";
 import { formatVnd, minWithdrawal } from "@/lib/config";
-import {
-  txTypeLabel,
-  withdrawalStatusClass,
-  withdrawalStatusLabel,
-} from "@/lib/labels";
+import { txTypeLabel, withdrawalStatusClass, withdrawalStatusLabel } from "@/lib/labels";
 
 export const metadata = { title: "Ví của bạn — Win-Win Back" };
 export const dynamic = "force-dynamic";
+function Stat({ icon: Icon, label, value, tone }: { icon: typeof Wallet; label: string; value: string; tone: string }) { return <div className={cardClass}><div className="flex items-center gap-3"><span className={`flex h-11 w-11 items-center justify-center rounded-full ${tone}`}><Icon className="h-5 w-5" /></span><div><p className="text-xs text-[#6681a7]">{label}</p><p className="mt-1 text-xl font-black tracking-tight text-[#0d315d]">{value}</p></div></div></div>; }
 
 export default async function WalletPage() {
   const user = await requireUser();
-
-  const [txRows, wdRows] = await Promise.all([
-    db
-      .select()
-      .from(walletTransactions)
-      .where(eq(walletTransactions.userId, user.id))
-      .orderBy(desc(walletTransactions.createdAt))
-      .limit(100),
-    db
-      .select()
-      .from(withdrawals)
-      .where(eq(withdrawals.userId, user.id))
-      .orderBy(desc(withdrawals.requestedAt))
-      .limit(50),
-  ]);
-
-  return (
-    <main className="mx-auto max-w-5xl space-y-10 px-6 py-10">
-      <PageHeader
-        icon={Wallet}
-        title="Ví của bạn"
-        hint="Số dư, rút tiền và lịch sử giao dịch."
-      />
-
-      {/* Balance + withdraw */}
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,20rem)_1fr]">
-        <div className="rounded-3xl border border-[#b7e961]/25 bg-[#b7e961]/[0.08] p-6">
-          <p className="text-sm text-white/60">Số dư khả dụng</p>
-          <p className="mt-1 text-4xl font-black tracking-tight text-[#b7e961]">
-            {formatVnd(user.balance)}
-          </p>
-          <p className="mt-3 text-xs text-white/45">
-            Rút tối thiểu {formatVnd(minWithdrawal)} mỗi lần.
-          </p>
-        </div>
-
-        <div className={cardClass}>
-          <div className="mb-4 flex items-center gap-2 text-white/80">
-            <ArrowDownToLine className="h-4 w-4 text-[#b7e961]" />
-            <h2 className="text-sm font-bold">Rút tiền về ngân hàng</h2>
-          </div>
-          <WithdrawalForm balance={user.balance} minWithdrawal={minWithdrawal} />
-        </div>
-      </div>
-
-      {/* Wallet history */}
-      <section>
-        <div className="mb-4 flex items-center gap-2 text-white/80">
-          <History className="h-4 w-4 text-[#b7e961]" />
-          <h2 className="text-sm font-bold">Lịch sử ví</h2>
-        </div>
-        <div className={cardClass}>
-          {txRows.length === 0 ? (
-            <Empty text="Chưa có giao dịch ví nào." />
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead className="text-white/45">
-                  <tr className="border-b border-white/10">
-                    <th className="py-2 pr-4 font-medium">Thời gian</th>
-                    <th className="py-2 pr-4 font-medium">Loại</th>
-                    <th className="py-2 pr-4 font-medium">Số tiền</th>
-                    <th className="py-2 pr-4 font-medium">Số dư sau</th>
-                    <th className="py-2 pr-4 font-medium">Ghi chú</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {txRows.map((t) => (
-                    <tr key={t.id} className="border-b border-white/5">
-                      <td className="py-2.5 pr-4 text-white/55">
-                        {t.createdAt.toLocaleString("vi-VN")}
-                      </td>
-                      <td className="py-2.5 pr-4 text-white/70">
-                        {txTypeLabel[t.type]}
-                      </td>
-                      <td
-                        className={`py-2.5 pr-4 font-semibold ${t.amount >= 0 ? "text-[#b7e961]" : "text-red-300"}`}
-                      >
-                        {t.amount >= 0 ? "+" : ""}
-                        {formatVnd(t.amount)}
-                      </td>
-                      <td className="py-2.5 pr-4 text-white/70">
-                        {formatVnd(t.balanceAfter)}
-                      </td>
-                      <td className="py-2.5 pr-4 text-white/55">{t.note}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* Withdrawal history */}
-      {wdRows.length > 0 && (
-        <section>
-          <div className="mb-4 flex items-center gap-2 text-white/80">
-            <ArrowDownToLine className="h-4 w-4 text-[#b7e961]" />
-            <h2 className="text-sm font-bold">Lịch sử rút tiền</h2>
-          </div>
-          <div className={cardClass}>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead className="text-white/45">
-                  <tr className="border-b border-white/10">
-                    <th className="py-2 pr-4 font-medium">Thời gian</th>
-                    <th className="py-2 pr-4 font-medium">Số tiền</th>
-                    <th className="py-2 pr-4 font-medium">Ngân hàng</th>
-                    <th className="py-2 pr-4 font-medium">Trạng thái</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {wdRows.map((w) => (
-                    <tr key={w.id} className="border-b border-white/5">
-                      <td className="py-2.5 pr-4 text-white/55">
-                        {w.requestedAt.toLocaleString("vi-VN")}
-                      </td>
-                      <td className="py-2.5 pr-4 font-semibold">
-                        {formatVnd(w.amount)}
-                      </td>
-                      <td className="py-2.5 pr-4 text-white/55">
-                        {w.bankName} · {w.bankAccount}
-                      </td>
-                      <td className="py-2.5 pr-4">
-                        <span
-                          className={`rounded-full px-2.5 py-0.5 text-xs ${withdrawalStatusClass[w.status]}`}
-                        >
-                          {withdrawalStatusLabel[w.status]}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </section>
-      )}
-    </main>
-  );
+  const [transactions, withdrawalsRows] = await Promise.all([db.select().from(walletTransactions).where(eq(walletTransactions.userId, user.id)).orderBy(desc(walletTransactions.createdAt)).limit(100), db.select().from(withdrawals).where(eq(withdrawals.userId, user.id)).orderBy(desc(withdrawals.requestedAt)).limit(50)]);
+  const waitingAmount = withdrawalsRows.filter((item) => item.status === "pending").reduce((sum, item) => sum + item.amount, 0);
+  const withdrawnAmount = withdrawalsRows.filter((item) => item.status === "paid").reduce((sum, item) => sum + item.amount, 0);
+  return <main className="mx-auto max-w-[1440px] px-4 py-7 sm:px-7 lg:px-6 lg:py-8"><PageHeader icon={Wallet} title="Ví hoàn tiền" hint="Theo dõi số dư, lịch sử giao dịch và rút tiền về tài khoản của bạn." />
+    <section className="relative mb-5 min-h-52 overflow-hidden rounded-xl bg-[#ecfae4] p-5 sm:min-h-48 sm:p-6"><Image src="/images/dashboard-wallet-promo-v2.png" alt="" fill sizes="(max-width: 640px) 100vw, 80rem" className="object-contain object-right sm:object-cover sm:object-center" /><div className="relative z-10 max-w-[10rem] sm:max-w-[22rem]"><p className="text-lg font-black text-[#164b37] sm:hidden">Ví hoàn tiền an toàn</p><p className="hidden text-lg font-black text-[#164b37] sm:block">Tiền hoàn được giữ an toàn trong ví</p><p className="mt-2 text-sm leading-6 text-[#356b54] sm:hidden">Tiền về ví sau khi đơn hoàn tất.</p><p className="mt-2 hidden text-sm leading-6 text-[#356b54] sm:block">Khi đơn hàng hoàn tất, số dư sẽ được cập nhật để bạn rút về tài khoản ngân hàng.</p></div></section>
+    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4"><Stat icon={Wallet} label="Số dư khả dụng" value={formatVnd(user.balance)} tone="bg-[#ecfae4] text-[#4aab1b]" /><Stat icon={Clock3} label="Tiền chờ duyệt" value={formatVnd(waitingAmount)} tone="bg-[#fff5dc] text-[#ed9b07]" /><Stat icon={ArrowDownToLine} label="Tổng đã rút" value={formatVnd(withdrawnAmount)} tone="bg-[#eaf2ff] text-[#287be5]" /><Stat icon={Landmark} label="Rút tối thiểu" value={formatVnd(minWithdrawal)} tone="bg-[#f7e9ff] text-[#aa34de]" /></div>
+    <section className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1fr)_23rem]"><div className={`${cardClass} overflow-hidden p-0`}><div className="flex items-center gap-2 border-b border-[#e6edf6] px-4 py-4 sm:px-5"><History className="h-4 w-4 text-[#287be5]" /><h2 className={sectionTitleClass}>Lịch sử giao dịch ví</h2></div>{transactions.length === 0 ? <div className="p-5"><Empty text="Chưa có giao dịch ví nào." /></div> : <div className="overflow-x-auto"><table className="min-w-[720px] w-full text-left text-sm"><thead className="bg-[#f8fbff] text-xs text-[#6681a7]"><tr><th className="px-5 py-3 font-semibold">Thời gian</th><th className="px-4 py-3 font-semibold">Nội dung</th><th className="px-4 py-3 font-semibold">Số tiền</th><th className="px-4 py-3 font-semibold">Số dư sau</th></tr></thead><tbody className="divide-y divide-[#e8eef6]">{transactions.map((item) => <tr key={item.id}><td className="px-5 py-4 text-[#6681a7]">{item.createdAt.toLocaleString("vi-VN")}</td><td className="px-4 py-4"><b className="block text-[#244a7c]">{txTypeLabel[item.type]}</b><span className="text-xs text-[#6681a7]">{item.note}</span></td><td className={`px-4 py-4 font-bold ${item.amount >= 0 ? "text-[#19813e]" : "text-red-500"}`}>{item.amount >= 0 ? "+" : ""}{formatVnd(item.amount)}</td><td className="px-4 py-4 text-[#315a90]">{formatVnd(item.balanceAfter)}</td></tr>)}</tbody></table></div>}</div><aside className="space-y-4"><div className={cardClass}><div className="mb-4 flex items-center gap-2"><span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#ecfae4] text-[#4aab1b]"><ArrowDownToLine className="h-4 w-4" /></span><h2 className={sectionTitleClass}>Rút tiền</h2></div><WithdrawalForm balance={user.balance} minWithdrawal={minWithdrawal} /></div>{withdrawalsRows.length > 0 && <div className={cardClass}><h2 className={sectionTitleClass}>Lịch sử rút tiền</h2><div className="mt-3 divide-y divide-[#e8eef6]">{withdrawalsRows.slice(0, 5).map((item) => <div key={item.id} className="py-3 text-sm"><div className="flex items-center justify-between gap-2"><b className="text-[#244a7c]">{formatVnd(item.amount)}</b><span className={`rounded-full px-2 py-0.5 text-xs ${withdrawalStatusClass[item.status]}`}>{withdrawalStatusLabel[item.status]}</span></div><p className="mt-1 text-xs text-[#6681a7]">{item.bankName} · {item.bankAccount}</p></div>)}</div></div>}</aside></section>
+  </main>;
 }

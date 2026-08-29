@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db } from "@/db";
-import { affiliateLinks, withdrawals } from "@/db/schema";
+import { affiliateLinks, users, withdrawals } from "@/db/schema";
+import { eq } from "drizzle-orm";
 import { requireUser } from "@/lib/auth/guards";
 import { detectPlatform } from "@/lib/affiliate/platform";
 import { getAffiliateProvider } from "@/lib/affiliate/providers";
@@ -12,6 +13,29 @@ import { recordWalletTx } from "@/lib/wallet";
 import { minWithdrawal } from "@/lib/config";
 
 export type ActionState = { error?: string; success?: string } | undefined;
+
+const profileSchema = z.object({
+  name: z.string().trim().min(1, "Vui lòng nhập tên hiển thị").max(80),
+});
+
+export async function updateProfileAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const user = await requireUser();
+  const parsed = profileSchema.safeParse({ name: formData.get("name") });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Dữ liệu không hợp lệ" };
+  }
+
+  await db
+    .update(users)
+    .set({ name: parsed.data.name })
+    .where(eq(users.id, user.id));
+  revalidatePath("/dashboard/tai-khoan");
+  revalidatePath("/dashboard", "layout");
+  return { success: "Đã cập nhật tên hiển thị" };
+}
 
 const linkSchema = z.object({
   url: z.string().trim().url("Link sản phẩm không hợp lệ"),

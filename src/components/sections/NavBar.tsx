@@ -1,6 +1,7 @@
 'use client';
 
 import { ArrowRight } from 'lucide-react';
+import { BrandLogo } from '@/components/BrandLogo';
 
 export function NavBar() {
   const scrollTo = (id: string) => {
@@ -14,17 +15,7 @@ export function NavBar() {
       <div className="relative mx-auto max-w-screen-xl px-6 flex items-center justify-between h-[73px]">
         {/* Logo */}
         <a href="#top" className="flex items-center gap-2">
-          <svg viewBox="0 0 48 48" className="h-8 w-8" aria-hidden="true">
-            <defs>
-              <linearGradient id="winwin-arrow" x1="4" y1="42" x2="43" y2="5" gradientUnits="userSpaceOnUse">
-                <stop stopColor="#9AD336"/>
-                <stop offset="1" stopColor="#EABF39"/>
-              </linearGradient>
-            </defs>
-            <path d="M6 36.5 17.5 23l7.4 6.7L37.8 11" fill="none" stroke="url(#winwin-arrow)" strokeLinecap="round" strokeLinejoin="round" strokeWidth="7.5"/>
-            <path d="M29.2 11h8.6v8.6" fill="none" stroke="#EABF39" strokeLinecap="round" strokeLinejoin="round" strokeWidth="7.5"/>
-          </svg>
-          <span className="font-bold text-white text-lg">Win-Win Back</span>
+          <BrandLogo light />
         </a>
         {/* Nav links */}
         <nav className="hidden md:flex items-center gap-6">

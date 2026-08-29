@@ -17,7 +17,7 @@ export function CopyLink({ value }: { value: string }) {
           /* ignore */
         }
       }}
-      className="inline-flex items-center gap-1 rounded-lg border border-white/15 px-2.5 py-1 text-xs text-white/80 hover:bg-white/10"
+      className="inline-flex min-h-8 items-center gap-1 rounded-lg border border-[#cbd9ec] px-2.5 py-1 text-xs font-medium text-[#315a90] hover:bg-[#f1f6fc]"
       title="Sao chép link"
     >
       {copied ? (

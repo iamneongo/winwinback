@@ -1,102 +1,19 @@
 import Link from "next/link";
-import { User, Mail, CalendarDays, ShieldCheck, LogOut } from "lucide-react";
+import { CalendarDays, ChevronRight, Mail, ShieldCheck, User } from "lucide-react";
+import Image from "next/image";
 import { requireUser } from "@/lib/auth/guards";
-import { logoutAction } from "@/app/(auth)/actions";
-import { PageHeader, cardClass } from "@/components/dashboard/ui";
+import { PageHeader, cardClass, sectionTitleClass } from "@/components/dashboard/ui";
+import { ProfileForm } from "@/components/dashboard/ProfileForm";
 
 export const metadata = { title: "Tài khoản — Win-Win Back" };
 export const dynamic = "force-dynamic";
 
-function Row({
-  icon: Icon,
-  label,
-  value,
-}: {
-  icon: typeof User;
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="flex items-center gap-4 py-4">
-      <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/5 text-white/60">
-        <Icon className="h-[18px] w-[18px]" strokeWidth={2} />
-      </span>
-      <div className="min-w-0">
-        <p className="text-xs text-white/45">{label}</p>
-        <p className="truncate text-sm font-medium text-white/90">{value}</p>
-      </div>
-    </div>
-  );
-}
+function Setting({ icon: Icon, title, description }: { icon: typeof User; title: string; description: string }) { return <div className="flex items-center gap-3 border-b border-[#e8eef6] py-4 last:border-0"><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#eef4fc] text-[#3172c8]"><Icon className="h-[18px] w-[18px]" /></span><div className="min-w-0 flex-1"><p className="font-semibold text-[#244a7c]">{title}</p><p className="mt-0.5 text-xs text-[#6681a7]">{description}</p></div></div>; }
 
 export default async function AccountPage() {
   const user = await requireUser();
-
-  return (
-    <main className="mx-auto max-w-3xl px-6 py-10">
-      <PageHeader
-        icon={User}
-        title="Quản lý tài khoản"
-        hint="Thông tin tài khoản Win-Win Back của bạn."
-      />
-
-      <div className={cardClass}>
-        <div className="flex items-center gap-4 border-b border-white/10 pb-5">
-          <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#b7e961] text-xl font-black text-[#0a2438]">
-            {user.name.trim().charAt(0).toUpperCase()}
-          </span>
-          <div>
-            <p className="text-lg font-bold text-white">{user.name}</p>
-            <span
-              className={`mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold ${
-                user.role === "admin"
-                  ? "bg-[#eabf39]/15 text-[#eabf39]"
-                  : "bg-white/10 text-white/70"
-              }`}
-            >
-              {user.role === "admin" ? (
-                <>
-                  <ShieldCheck className="h-3 w-3" /> Quản trị viên
-                </>
-              ) : (
-                "Người dùng"
-              )}
-            </span>
-          </div>
-        </div>
-
-        <div className="divide-y divide-white/5">
-          <Row icon={Mail} label="Email" value={user.email} />
-          <Row
-            icon={CalendarDays}
-            label="Tham gia từ"
-            value={user.createdAt.toLocaleDateString("vi-VN", {
-              day: "2-digit",
-              month: "2-digit",
-              year: "numeric",
-            })}
-          />
-        </div>
-
-        <div className="mt-5 flex flex-wrap gap-3 border-t border-white/10 pt-5">
-          {user.role === "admin" && (
-            <Link
-              href="/admin"
-              className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-white/85 transition-colors hover:bg-white/10"
-            >
-              <ShieldCheck className="h-4 w-4" /> Trang quản trị
-            </Link>
-          )}
-          <form action={logoutAction}>
-            <button
-              type="submit"
-              className="inline-flex items-center gap-2 rounded-full border border-red-400/30 px-4 py-2 text-sm font-semibold text-red-200 transition-colors hover:bg-red-500/10"
-            >
-              <LogOut className="h-4 w-4" /> Đăng xuất
-            </button>
-          </form>
-        </div>
-      </div>
-    </main>
-  );
+  return <main className="mx-auto max-w-[1440px] px-4 py-7 sm:px-7 lg:px-6 lg:py-8"><PageHeader icon={User} title="Cài đặt" hint="Quản lý thông tin tài khoản và tùy chọn sử dụng của bạn." />
+    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4"><div className={cardClass}><p className="text-xs text-[#6681a7]">Hồ sơ tài khoản</p><p className="mt-2 font-bold text-[#238a24]">Đã xác minh</p></div><div className={cardClass}><p className="text-xs text-[#6681a7]">Bảo mật</p><p className="mt-2 font-bold text-[#238a24]">An toàn</p></div><div className={cardClass}><p className="text-xs text-[#6681a7]">Thông báo</p><p className="mt-2 font-bold text-[#238a24]">Đang bật</p></div><div className={cardClass}><p className="text-xs text-[#6681a7]">Vai trò</p><p className="mt-2 font-bold text-[#244a7c]">{user.role === "admin" ? "Quản trị viên" : "Người dùng"}</p></div></div>
+    <section className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1fr)_20rem]"><div className="space-y-5"><div className={cardClass}><h2 className={sectionTitleClass}>Thông tin cá nhân</h2><div className="mt-5 flex items-center gap-4"><span className="flex h-16 w-16 items-center justify-center rounded-full bg-[#b7e961] text-2xl font-black text-[#0a3b60]">{user.name.trim().charAt(0).toUpperCase()}</span><div><p className="text-lg font-bold text-[#0d315d]">{user.name}</p><p className="mt-1 text-sm text-[#6681a7]">{user.email}</p></div></div><ProfileForm name={user.name} email={user.email} /><div className="mt-5 divide-y divide-[#e8eef6]"><Setting icon={Mail} title="Email" description={user.email} /><Setting icon={CalendarDays} title="Tham gia từ" description={user.createdAt.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" })} /></div></div><div className={cardClass}><h2 className={sectionTitleClass}>Bảo mật tài khoản</h2><div className="mt-2"><Setting icon={ShieldCheck} title="Thông tin đăng nhập" description="Chức năng đổi mật khẩu sẽ được bổ sung trong bản cập nhật sau." /></div></div></div><aside className="space-y-4"><div className="relative min-h-56 overflow-hidden rounded-xl bg-[#effbdd] p-5"><Image src="/images/dashboard-security-promo-v2.png" alt="" fill sizes="20rem" className="object-contain object-right sm:object-cover sm:object-center" /><div className="relative z-10 max-w-[10rem] sm:max-w-[11rem]"><h2 className="text-lg font-black text-[#164b37]">Tài khoản luôn được bảo vệ</h2><p className="mt-3 text-sm leading-5 text-[#356b54]">Không chia sẻ thông tin đăng nhập với người khác.</p></div></div><div className={cardClass}><h2 className={sectionTitleClass}>Thông tin hữu ích</h2><ul className="mt-4 space-y-3 text-sm leading-5 text-[#6681a7]"><li>✓ Theo dõi đơn hàng để nhận tiền hoàn đúng hạn.</li><li>✓ Liên hệ hỗ trợ khi cần trợ giúp.</li></ul></div>{user.role === "admin" && <Link href="/admin" className="flex items-center justify-between rounded-xl bg-[#effbdd] p-5 font-bold text-[#315c24]">Trang quản trị <ChevronRight className="h-5 w-5" /></Link>}</aside></section>
+  </main>;
 }

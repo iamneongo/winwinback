@@ -146,6 +146,30 @@
   font-family: inherit;
 }
 
+.ww-sidebar {
+  background:
+    radial-gradient(circle at 15% 100%, rgba(26, 102, 151, 0.42), transparent 26%),
+    linear-gradient(165deg, #062f54 0%, #042545 100%);
+}
+
+.ww-dashboard-link-banner {
+  background-color: #062b50;
+  background-image:
+    radial-gradient(circle at 79% 36%, rgba(183, 233, 97, 0.22), transparent 14rem),
+    radial-gradient(circle at 62% 116%, rgba(22, 111, 152, 0.32), transparent 19rem),
+    linear-gradient(105deg, #062b50 0%, #07345d 62%, #062b50 100%);
+}
+
+@media (max-height: 700px) and (min-width: 1024px) {
+  .ww-sidebar-promo {
+    display: none;
+  }
+
+  .ww-sidebar-logout {
+    margin-top: auto;
+  }
+}
+
 .ww-lime-text-gradient {
   background: linear-gradient(105deg, #b7e961, #cfe35a 48%, #eabf39);
   -webkit-background-clip: text;

@@ -17,7 +17,7 @@ export function BuyButton({
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-xl bg-[#b7e961] px-4 py-2 text-sm font-bold text-[#082b4b] transition hover:bg-[#c8f27a]"
+      className="inline-flex min-h-9 shrink-0 items-center justify-center gap-1.5 rounded-lg bg-[#b7e961] px-3 py-2 text-xs font-bold text-[#082b4b] transition hover:bg-[#c8f27a]"
     >
       <ShoppingBag className="h-4 w-4" />
       Mua trên {platformName}

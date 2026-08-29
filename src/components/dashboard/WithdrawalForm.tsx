@@ -9,7 +9,7 @@ import { SubmitButton } from "@/components/forms/SubmitButton";
 import { formatVnd } from "@/lib/config";
 
 const inputClass =
-  "w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-white placeholder-white/40 outline-none focus:border-[#b7e961]/60";
+  "w-full rounded-xl border border-[#d7e3f1] bg-white px-3 py-2.5 text-sm text-[#244a7c] placeholder:text-[#8ba1be] outline-none focus:border-[#8bd949] focus:ring-2 focus:ring-[#b7e961]/25";
 
 export function WithdrawalForm({
   balance,
@@ -63,17 +63,17 @@ export function WithdrawalForm({
         />
       </div>
       <div className="flex items-center justify-between gap-3">
-        <span className="text-sm text-white/60">
+        <span className="text-sm text-[#6681a7]">
           Số dư khả dụng:{" "}
-          <span className="font-semibold text-[#b7e961]">
+          <span className="font-semibold text-[#318516]">
             {formatVnd(balance)}
           </span>
         </span>
         <SubmitButton>Yêu cầu rút tiền</SubmitButton>
       </div>
-      {state?.error && <p className="text-sm text-red-300">{state.error}</p>}
+      {state?.error && <p className="text-sm text-red-600">{state.error}</p>}
       {state?.success && (
-        <p className="text-sm text-[#b7e961]">{state.success}</p>
+        <p className="text-sm text-[#318516]">{state.success}</p>
       )}
     </form>
   );
