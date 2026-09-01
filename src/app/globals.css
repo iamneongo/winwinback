@@ -198,9 +198,67 @@
 
 .ww-store-icon-tiktok { background: linear-gradient(145deg, #05111e, #1b3142); }
 .ww-store-icon-shopee { background: linear-gradient(145deg, #fc704b, #db3f26); }
-.ww-store-icon-lazada { background: linear-gradient(145deg, #7a5af8, #5b21b6); }
 
 .ww-arrow-icon { background: linear-gradient(145deg, #082b4b, #0d3d63); }
+
+/* Orders-page cashback tracker: illustration reserves a real, clear copy area. */
+.winwin-root section:has(> div > img[alt="Linh vật Win-Win Back theo dõi tiền hoàn"]) {
+  background-image: url("/images/dashboard-cashback-tracking-promo-v2.png");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+.winwin-root section:has(> div > img[alt="Linh vật Win-Win Back theo dõi tiền hoàn"]) > div:first-child {
+  display: none;
+}
+
+.winwin-root section:has(> div > img[alt="Linh vật Win-Win Back theo dõi tiền hoàn"]) > div[aria-hidden="true"] {
+  display: none;
+}
+
+/* Wallet-page shopping promo: dedicated illustration with a protected copy area. */
+.winwin-root section:has(> img[alt="Mua sắm để nhận hoàn tiền"]) {
+  min-height: 12rem;
+  background-image: url("/images/dashboard-wallet-promo-v4.png");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+.winwin-root section:has(> img[alt="Mua sắm để nhận hoàn tiền"]) > img {
+  display: none;
+}
+
+.winwin-root #rut-tien {
+  display: none;
+}
+
+/* Wallet overview: metrics span row one; history and helpful panels keep two columns. */
+@media (min-width: 1280px) {
+  .winwin-root main:has(#rut-tien) > section {
+    grid-template-columns: minmax(0, 1fr) 22.8rem !important;
+  }
+
+  .winwin-root main:has(#rut-tien) > section > div:first-child {
+    display: contents;
+  }
+
+  .winwin-root main:has(#rut-tien) > section > div:first-child > div:first-child {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-column: 1 / -1;
+  }
+
+  .winwin-root main:has(#rut-tien) > section > div:first-child > section {
+    grid-column: 1;
+  }
+
+  .winwin-root main:has(#rut-tien) > section > aside {
+    grid-column: 2;
+    grid-row: 2;
+    margin-top: 1rem;
+  }
+}
 
 /* ── Floating dock navigation (authenticated app) ── */
 .ww-dock {

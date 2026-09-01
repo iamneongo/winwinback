@@ -13,6 +13,7 @@ import { Empty, cardClass, sectionTitleClass } from "@/components/dashboard/ui";
 import { formatVnd } from "@/lib/config";
 import { orderStatusLabel, platformLabel } from "@/lib/labels";
 import { MetricIcon, StepIcon } from "@/components/dashboard/MetricIcon";
+import { ShopeeIcon, TikTokIcon } from "@/components/sections/BrandIcons";
 
 export const metadata = { title: "Tổng quan — Win-Win Back" };
 export const dynamic = "force-dynamic";
@@ -113,14 +114,13 @@ export default async function OverviewPage() {
             hoàn tiền
           </h1>
           <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold text-white/90">
-            <span className="rounded-full bg-white/10 px-3 py-1.5">
-              🛍️ Shopee
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5">
+              <ShopeeIcon className="h-4 w-4" white />
+              Shopee
             </span>
-            <span className="rounded-full bg-white/10 px-3 py-1.5">
-              ♪ TikTok Shop
-            </span>
-            <span className="rounded-full bg-white/10 px-3 py-1.5">
-              ✨ Lazada
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5">
+              <TikTokIcon className="h-4 w-4" white />
+              TikTok Shop
             </span>
           </div>
           <div id="tao-link" className="mt-3 max-w-[44rem] scroll-mt-6">

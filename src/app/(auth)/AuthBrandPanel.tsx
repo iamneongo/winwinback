@@ -14,7 +14,7 @@ const FEATURES = [
   {
     icon: BadgePercent,
     title: "Mã giảm giá luôn sẵn sàng",
-    desc: "Săn mã giảm giá độc quyền từ Shopee, TikTok Shop, Lazada.",
+    desc: "Săn mã giảm giá độc quyền từ Shopee và TikTok Shop.",
   },
 ];
 
