@@ -25,10 +25,6 @@ type MetricProps = {
   action: string;
   tone: "green" | "blue" | "gold" | "purple";
 };
-const platformTone: Record<string, string> = {
-  shopee: "bg-[#fff0e8] text-[#ee6031]",
-  tiktok: "bg-[#eef0ff] text-[#3d4aca]",
-};
 const orderStateTone: Record<string, string> = {
   pending: "bg-[#fff5df] text-[#d88700]",
   confirmed: "bg-[#e7f7ef] text-[#168146]",
@@ -58,12 +54,17 @@ function Metric({ label, value, href, action, tone }: MetricProps) {
   );
 }
 
-function PlatformBadge({ platform }: { platform: string }) {
+function PlatformMark({ platform }: { platform: "shopee" | "tiktok" }) {
   return (
     <span
-      className={`inline-flex rounded-md px-2 py-1 text-xs font-bold ${platformTone[platform] ?? "bg-[#eef4fc] text-[#315a90]"}`}
+      aria-label={platformLabel[platform]}
+      className={`inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md shadow-[0_2px_4px_rgba(20,51,93,0.12)] ${platform === "shopee" ? "bg-[#ee4d2d]" : "bg-[#090b0f]"}`}
     >
-      {platformLabel[platform]}
+      {platform === "shopee" ? (
+        <ShopeeIcon className="h-3.5 w-3.5" white />
+      ) : (
+        <TikTokIcon className="h-4 w-4" />
+      )}
     </span>
   );
 }
@@ -95,18 +96,31 @@ export default async function OverviewPage() {
   return (
     <main className="mx-auto w-full max-w-[1440px] px-4 py-5 sm:px-7 sm:py-7 lg:px-6 lg:pb-8 lg:pt-0">
       <section className="ww-dashboard-link-banner relative isolate overflow-hidden rounded-xl px-5 py-6 text-white shadow-[0_8px_24px_rgba(9,54,95,0.14)] sm:h-[13.5rem] sm:px-7">
+        <Image
+          src="/images/dashboard-overview-banner-v9.png"
+          alt=""
+          width={1792}
+          height={1024}
+          priority
+          sizes="(max-width: 1280px) 0px, 470px"
+          className="pointer-events-none absolute right-8 top-1/2 z-0 hidden h-[15rem] w-auto max-w-none -translate-y-1/2 [mask-image:linear-gradient(90deg,transparent_0%,black_38%)] xl:block"
+        />
         <div className="relative z-10 max-w-[44rem]">
           <h1 className="flex items-center gap-2 text-xl font-black tracking-tight sm:text-2xl">
             <span className="text-[#d7fb76]">✦</span> Nhập link sản phẩm để nhận
             hoàn tiền
           </h1>
-          <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold text-white/90">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5">
-              <ShopeeIcon className="h-4 w-4" white />
+          <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold text-white">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-[#0a3159] px-2.5 py-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
+              <span className="inline-flex h-5 w-5 items-center justify-center rounded-md bg-[#ee4d2d] shadow-[0_2px_5px_rgba(238,77,45,0.38)]">
+                <ShopeeIcon className="h-3 w-3" white />
+              </span>
               Shopee
             </span>
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5">
-              <TikTokIcon className="h-4 w-4" white />
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-[#0a3159] px-2.5 py-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
+              <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#090b0f] shadow-[0_2px_5px_rgba(0,0,0,0.36)]">
+                <TikTokIcon className="h-3.5 w-3.5" />
+              </span>
               TikTok Shop
             </span>
           </div>
@@ -182,7 +196,10 @@ export default async function OverviewPage() {
                   {recentOrders.map((order) => (
                     <tr key={order.id}>
                       <td className="px-5 py-3.5">
-                        <PlatformBadge platform={order.platform} />
+                        <span className="inline-flex items-center gap-2 text-xs font-bold text-[#244a7c]">
+                          <PlatformMark platform={order.platform} />
+                          {platformLabel[order.platform]}
+                        </span>
                       </td>
                       <td className="px-4 py-3.5 font-medium text-[#49688f]">
                         #{order.externalOrderId}
@@ -228,7 +245,7 @@ export default async function OverviewPage() {
             <div className="mt-3 divide-y divide-[#edf1f7]">
               {recentOrders.map((order) => (
                 <div key={order.id} className="flex items-center gap-3 py-3">
-                  <PlatformBadge platform={order.platform} />
+                  <PlatformMark platform={order.platform} />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-xs font-bold text-[#244a7c]">
                       {platformLabel[order.platform]}
@@ -247,53 +264,50 @@ export default async function OverviewPage() {
         </aside>
       </section>
 
-      <section className="mt-4 grid gap-4 xl:items-start xl:grid-cols-[minmax(0,1.9fr)_minmax(19rem,1fr)]">
+      <section className="mt-4 grid gap-4 xl:items-stretch xl:grid-cols-[minmax(0,1.9fr)_minmax(19rem,1fr)]">
         <div className={cardClass}>
           <h2 className={sectionTitleClass}>
             3 bước đơn giản để nhận hoàn tiền
           </h2>
-          <ol className="mt-5 grid gap-5 sm:grid-cols-3">
-            <li className="flex gap-3 sm:block">
-              <span className="relative flex h-11 w-11 shrink-0 items-center justify-center">
+          <ol className="mt-6 grid gap-6 sm:grid-cols-3 sm:gap-0">
+            <li className="relative flex items-start gap-4 sm:pr-7 after:absolute after:-right-3 after:top-2 after:hidden after:h-[5.75rem] after:w-px after:bg-[#e3ebf5] sm:after:block">
+              <span className="relative flex h-16 w-16 shrink-0 items-center justify-center [&_svg]:h-16 [&_svg]:w-16">
                 <StepIcon tone="link" />
-                <span className="absolute -bottom-1 left-1/2 flex h-3.5 w-3.5 -translate-x-1/2 items-center justify-center rounded-full bg-[#58bf2d] text-[8px] font-black text-white">1</span>
               </span>
-              <div className="sm:mt-3">
-                <b className="text-sm text-[#244a7c]">Dán link sản phẩm</b>
-                <p className="mt-1 text-xs leading-5 text-[#6681a7]">
-                  Sao chép link từ Shopee hoặc TikTok Shop.
+              <div className="pt-1.5">
+                <b className="text-sm font-bold text-[#173c6d]">Dán link sản phẩm</b>
+                <p className="mt-3 text-xs leading-5 text-[#6681a7]">
+                  Sao chép link từ Shopee, TikTok Shop.
                 </p>
               </div>
             </li>
-            <li className="flex gap-3 sm:block">
-              <span className="relative flex h-11 w-11 shrink-0 items-center justify-center">
+            <li className="relative flex items-start gap-4 sm:px-10 after:absolute after:-right-3 after:top-2 after:hidden after:h-[5.75rem] after:w-px after:bg-[#e3ebf5] sm:after:block">
+              <span className="relative flex h-16 w-16 shrink-0 items-center justify-center [&_svg]:h-16 [&_svg]:w-16">
                 <StepIcon tone="cart" />
-                <span className="absolute -bottom-1 left-1/2 flex h-3.5 w-3.5 -translate-x-1/2 items-center justify-center rounded-full bg-[#287be5] text-[8px] font-black text-white">2</span>
               </span>
-              <div className="sm:mt-3">
-                <b className="text-sm text-[#244a7c]">Mua hàng</b>
-                <p className="mt-1 text-xs leading-5 text-[#6681a7]">
-                  Mua hàng như bình thường qua link đã tạo.
+              <div className="pt-1.5">
+                <b className="text-sm font-bold text-[#173c6d]">Mua hàng</b>
+                <p className="mt-3 text-xs leading-5 text-[#6681a7]">
+                  Mua hàng như bình thường.
                 </p>
               </div>
             </li>
-            <li className="flex gap-3 sm:block">
-              <span className="relative flex h-11 w-11 shrink-0 items-center justify-center">
+            <li className="flex items-start gap-4 sm:pl-10">
+              <span className="relative flex h-16 w-16 shrink-0 items-center justify-center [&_svg]:h-16 [&_svg]:w-16">
                 <StepIcon tone="cashback" />
-                <span className="absolute -bottom-1 left-1/2 flex h-3.5 w-3.5 -translate-x-1/2 items-center justify-center rounded-full bg-[#9d52dd] text-[8px] font-black text-white">3</span>
               </span>
-              <div className="sm:mt-3">
-                <b className="text-sm text-[#244a7c]">Nhận hoàn tiền</b>
-                <p className="mt-1 text-xs leading-5 text-[#6681a7]">
+              <div className="pt-1.5">
+                <b className="text-sm font-bold text-[#173c6d]">Nhận hoàn tiền</b>
+                <p className="mt-3 text-xs leading-5 text-[#6681a7]">
                   Theo dõi đơn hàng và rút tiền về ví.
                 </p>
               </div>
             </li>
           </ol>
         </div>
-        <div className="relative min-h-32 overflow-hidden rounded-xl bg-[#062c52] p-5 text-white">
+        <div className="relative min-h-40 overflow-hidden rounded-xl bg-[#062c52] p-5 text-white xl:h-full">
           <Image
-            src="/images/dashboard-wallet-promo-v3.png"
+            src="/images/dashboard-overview-wallet-promo-v4.png"
             alt=""
             fill
             sizes="(max-width: 1280px) 100vw, 25rem"

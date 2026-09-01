@@ -153,11 +153,7 @@
 }
 
 .ww-dashboard-link-banner {
-  background-color: #062b50;
-  background-image: url("/images/dashboard-overview-banner-v6.png");
-  background-position: center;
-  background-repeat: no-repeat;
-  background-size: cover;
+  background-color: #021c40;
 }
 
 @media (max-height: 700px) and (min-width: 1024px) {
