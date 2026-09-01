@@ -4,6 +4,7 @@ import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { Link2, ArrowRight } from 'lucide-react';
 import { TikTokIcon, ShopeeIcon } from './BrandIcons';
+import { Button } from '@/components/ui/button';
 
 type Platform = 'tiktok' | 'shopee';
 
@@ -74,23 +75,13 @@ export function ConsoleSection() {
                 placeholder="Dán link sản phẩm vào đây (TikTok Shop hoặc Shopee)"
                 className="flex-1 hidden sm:block text-sm text-gray-700 outline-none bg-transparent placeholder:text-gray-400 min-w-0 py-1.5"
               />
-              <button
-                className="relative flex items-center justify-center gap-2 rounded-lg px-3 sm:px-4 py-2.5 text-sm font-semibold text-[#14334c] whitespace-nowrap flex-shrink-0 transition-all duration-200 hover:brightness-105"
-                style={{
-                  background: 'linear-gradient(135deg, #d4f57a 0%, #b7e961 50%, #9fd94e 100%)',
-                  boxShadow: '0 1px 0 0 rgba(255,255,255,0.55) inset, 0 -2px 0 0 rgba(0,0,0,0.12) inset, 0 4px 8px rgba(183,233,97,0.35), 0 1px 2px rgba(0,0,0,0.12)',
-                }}
+              <Button
+                variant="cta"
+                className="h-auto flex-shrink-0 gap-1.5 whitespace-nowrap rounded-lg px-3 py-2.5 sm:px-4"
               >
-                <span
-                  className="pointer-events-none absolute inset-x-0 top-0 h-1/2 rounded-t-lg"
-                  style={{ background: 'linear-gradient(180deg, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0) 100%)' }}
-                  aria-hidden="true"
-                />
-                <span className="relative flex items-center gap-1.5">
-                  <span className="hidden sm:inline">Kiểm tra hoàn tiền</span>
-                  <ArrowRight className="h-4 w-4" />
-                </span>
-              </button>
+                <span className="hidden sm:inline">Kiểm tra hoàn tiền</span>
+                <ArrowRight className="h-4 w-4" />
+              </Button>
             </div>
           </div>
 

@@ -62,7 +62,7 @@ export function WithdrawalForm({
           className={inputClass}
         />
       </div>
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <span className="text-sm text-[#6681a7]">
           Số dư khả dụng:{" "}
           <span className="font-semibold text-[#318516]">

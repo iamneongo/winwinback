@@ -1,4 +1,5 @@
 import { ArrowRight } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 function FacebookIcon() {
   return (
@@ -97,25 +98,16 @@ export function CommunitySection() {
               </div>
 
               {/* Lime glass CTA button */}
-              <a
-                href={c.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="relative flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-[#14334c] transition-all duration-200 hover:brightness-105"
-                style={{
-                  background: 'linear-gradient(135deg, #d4f57a 0%, #b7e961 50%, #9fd94e 100%)',
-                  boxShadow: '0 1px 0 0 rgba(255,255,255,0.55) inset, 0 -2px 0 0 rgba(0,0,0,0.12) inset, 0 4px 8px rgba(183,233,97,0.35), 0 1px 2px rgba(0,0,0,0.12)',
-                }}
+              <Button
+                variant="cta"
+                nativeButton={false}
+                className="h-auto w-full gap-1.5 rounded-xl px-4 py-2.5"
+                render={
+                  <a href={c.href} target="_blank" rel="noopener noreferrer" />
+                }
               >
-                <span
-                  className="pointer-events-none absolute inset-x-0 top-0 h-1/2 rounded-t-xl"
-                  style={{ background: 'linear-gradient(180deg, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0) 100%)' }}
-                  aria-hidden="true"
-                />
-                <span className="relative flex items-center gap-1.5">
-                  {c.cta} <ArrowRight className="h-3.5 w-3.5" />
-                </span>
-              </a>
+                {c.cta} <ArrowRight className="h-3.5 w-3.5" />
+              </Button>
             </div>
           ))}
         </div>

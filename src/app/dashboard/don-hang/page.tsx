@@ -1,6 +1,6 @@
 import { desc, eq } from "drizzle-orm";
 import Link from "next/link";
-import { BadgeCheck, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, CircleDollarSign, Clock3, Copy, Filter, MoreVertical, PackageCheck, RotateCcw, Search, ShoppingBag, Sparkles, WalletCards, XCircle } from "lucide-react";
+import { BadgeCheck, Check, ChevronDown, ChevronLeft, ChevronRight, CircleDollarSign, Clock3, Copy, Filter, MoreVertical, PackageCheck, RotateCcw, Search, ShoppingBag, Sparkles, WalletCards, XCircle } from "lucide-react";
 import Image from "next/image";
 import { db } from "@/db";
 import { orders } from "@/db/schema";
@@ -8,6 +8,8 @@ import { requireUser } from "@/lib/auth/guards";
 import { formatVnd } from "@/lib/config";
 import { platformLabel } from "@/lib/labels";
 import { ShopeeIcon, TikTokIcon } from "@/components/sections/BrandIcons";
+import { DateRangeFilter } from "@/components/dashboard/DateRangeFilter";
+import { Button } from "@/components/ui/button";
 
 export const metadata = { title: "Đơn hàng — Win-Win Back" };
 export const dynamic = "force-dynamic";
@@ -29,14 +31,6 @@ function ProductTile({ name }: { name: string }) {
 function SummaryCard({ icon: Icon, iconClass, label, value, detail }: { icon: typeof ShoppingBag; iconClass: string; label: string; value: string; detail: React.ReactNode }) {
   return <article className="min-h-[8.25rem] rounded-xl border border-[#e1eaf6] bg-white px-5 py-5 shadow-[0_5px_14px_rgba(26,73,124,0.04)]"><div className="flex items-start gap-4"><span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${iconClass}`}><Icon className="h-6 w-6" strokeWidth={2.2} /></span><div className="min-w-0"><p className="text-sm font-medium text-[#34527d]">{label}</p><p className="mt-1 text-[26px] font-black leading-none tracking-tight text-[#12335f]">{value}</p><p className="mt-3 text-xs leading-4 text-[#7790b1]">{detail}</p></div></div></article>;
 }
-function dateInputValue(date: Date | undefined) {
-  if (!date) return "";
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
-
 export default async function OrdersPage({ searchParams }: { searchParams: Promise<{ status?: string; platform?: string; q?: string; from?: string; to?: string }> }) {
   const user = await requireUser();
   const query = await searchParams;
@@ -62,9 +56,9 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
     <form className="mb-5 grid gap-3 lg:grid-cols-[1.15fr_1.25fr_1.25fr_auto_auto]" action="/dashboard/don-hang">
       <label className="grid gap-1.5 text-xs font-bold text-[#213e67]">Sàn mua sắm<span className="relative"><select name="platform" defaultValue={query.platform ?? ""} className="h-11 w-full appearance-none rounded-lg border border-[#d9e5f4] bg-white px-3 pr-10 text-sm font-medium text-[#35537c] outline-none transition focus:border-[#8bd950] focus:ring-2 focus:ring-[#b7e961]/25"><option value="">Tất cả sàn</option><option value="shopee">Shopee</option><option value="tiktok">TikTok Shop</option></select><ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#547299]" /></span></label>
       <label className="grid gap-1.5 text-xs font-bold text-[#213e67]">Mã đơn hàng<span className="relative"><Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#5779a7]" /><input name="q" defaultValue={query.q} placeholder="Nhập mã đơn hàng, sản phẩm..." className="h-11 w-full rounded-lg border border-[#d9e5f4] bg-white px-10 text-sm text-[#35537c] outline-none placeholder:text-[#8ba0bd] focus:border-[#8bd950] focus:ring-2 focus:ring-[#b7e961]/25" /></span></label>
-      <label className="grid gap-1.5 text-xs font-bold text-[#213e67]"><span>Thời gian</span><span className="flex h-11 items-center gap-2 rounded-lg border border-[#d9e5f4] bg-white px-3 text-sm font-medium text-[#35537c] focus-within:border-[#8bd950] focus-within:ring-2 focus-within:ring-[#b7e961]/25"><CalendarDays className="h-4 w-4 shrink-0 text-[#3d70b6]" /><input type="date" name="from" defaultValue={query.from ?? dateInputValue(rows.at(-1)?.orderedAt)} aria-label="Từ ngày" className="min-w-0 flex-1 bg-transparent text-xs font-medium text-[#35537c] outline-none" /><span className="text-[#8ba0bd]">—</span><input type="date" name="to" defaultValue={query.to ?? dateInputValue(rows[0]?.orderedAt)} aria-label="Đến ngày" className="min-w-0 flex-1 bg-transparent text-xs font-medium text-[#35537c] outline-none" /></span></label>
+      <DateRangeFilter defaultFrom={query.from} defaultTo={query.to} />
       <div className="flex items-end"><Link href="/dashboard/don-hang" className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-[#d9e5f4] bg-white px-4 text-sm font-bold text-[#34527d] transition hover:bg-[#f6f9fd]"><RotateCcw className="h-4 w-4" /> Xóa bộ lọc</Link></div>
-      <div className="flex items-end"><button type="submit" className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[#a9e75e] px-5 text-sm font-bold text-[#173b5e] shadow-[0_5px_12px_rgba(112,195,49,0.22)] transition hover:bg-[#b7e961]"><Filter className="h-4 w-4" /> Lọc kết quả</button></div>
+      <div className="flex items-end"><Button type="submit" variant="cta" className="h-11 gap-2 rounded-lg px-5 text-sm font-bold"><Filter className="h-4 w-4" /> Lọc kết quả</Button></div>
     </form>
     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4"><SummaryCard icon={ShoppingBag} iconClass="bg-[#e7f1ff] text-[#287be5]" label="Tổng đơn hàng" value={String(rows.length)} detail="Trong khoảng thời gian đã chọn" /><SummaryCard icon={Clock3} iconClass="bg-[#fff1d9] text-[#e99a10]" label="Đang chờ hoàn tiền" value={String(waiting.length)} detail={<>Tổng tiền: <b className="text-[#f06b2e]">{formatVnd(waitingCashback)}</b></>} /><SummaryCard icon={PackageCheck} iconClass="bg-[#e8f9df] text-[#3ba818]" label="Đã hoàn tất" value={String(complete.length)} detail={<>Tổng tiền: <b className="text-[#168146]">{formatVnd(completeCashback)}</b></>} /><SummaryCard icon={WalletCards} iconClass="bg-[#f6e9ff] text-[#aa34de]" label="Tổng tiền hoàn" value={formatVnd(totalCashback)} detail="Tất cả đơn hàng" /></div>
     <section className="mt-5 grid gap-4 xl:grid-cols-[minmax(0,1fr)_18rem]">

@@ -1,4 +1,5 @@
 import { ShoppingBag } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 /**
  * Primary call-to-action for the self-cashback flow: opens the tracked short
@@ -13,14 +14,14 @@ export function BuyButton({
   platformName: string;
 }) {
   return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="inline-flex min-h-9 shrink-0 items-center justify-center gap-1.5 rounded-lg bg-[#b7e961] px-3 py-2 text-xs font-bold text-[#082b4b] transition hover:bg-[#c8f27a]"
+    <Button
+      variant="cta"
+      nativeButton={false}
+      className="h-auto min-h-9 shrink-0 gap-1.5 rounded-lg px-3 py-2 text-xs font-bold"
+      render={<a href={href} target="_blank" rel="noopener noreferrer" />}
     >
       <ShoppingBag className="h-4 w-4" />
       Mua trên {platformName}
-    </a>
+    </Button>
   );
 }

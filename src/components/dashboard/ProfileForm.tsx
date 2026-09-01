@@ -4,10 +4,11 @@ import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { Pencil, Save } from "lucide-react";
 import { type ActionState, updateProfileAction } from "@/app/dashboard/actions";
+import { Button } from "@/components/ui/button";
 
 function SaveButton() {
   const { pending } = useFormStatus();
-  return <button type="submit" disabled={pending} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-[#b7e961] px-4 text-sm font-bold text-[#123758] transition hover:bg-[#c8f27a] disabled:opacity-60">{pending ? "Đang lưu…" : <><Save className="h-4 w-4" /> Lưu thay đổi</>}</button>;
+  return <Button type="submit" variant="cta" disabled={pending} className="h-auto min-h-10 gap-2 rounded-lg px-4 text-sm font-bold">{pending ? "Đang lưu…" : <><Save className="h-4 w-4" /> Lưu thay đổi</>}</Button>;
 }
 
 export function ProfileForm({ name, email }: { name: string; email: string }) {
