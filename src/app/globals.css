@@ -154,10 +154,10 @@
 
 .ww-dashboard-link-banner {
   background-color: #062b50;
-  background-image:
-    radial-gradient(circle at 79% 36%, rgba(183, 233, 97, 0.22), transparent 14rem),
-    radial-gradient(circle at 62% 116%, rgba(22, 111, 152, 0.32), transparent 19rem),
-    linear-gradient(105deg, #062b50 0%, #07345d 62%, #062b50 100%);
+  background-image: url("/images/dashboard-overview-banner-v6.png");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
 }
 
 @media (max-height: 700px) and (min-width: 1024px) {

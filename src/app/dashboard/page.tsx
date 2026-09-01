@@ -95,19 +95,6 @@ export default async function OverviewPage() {
   return (
     <main className="mx-auto w-full max-w-[1440px] px-4 py-5 sm:px-7 sm:py-7 lg:px-6 lg:pb-8 lg:pt-0">
       <section className="ww-dashboard-link-banner relative isolate overflow-hidden rounded-xl px-5 py-6 text-white shadow-[0_8px_24px_rgba(9,54,95,0.14)] sm:h-[13.5rem] sm:px-7">
-        <div aria-hidden="true" className="pointer-events-none absolute right-[29%] top-5 hidden text-xl text-[#d9fb89]/80 sm:block">✦</div>
-        <div aria-hidden="true" className="pointer-events-none absolute bottom-5 right-[35%] hidden text-sm text-[#f6c94c]/80 sm:block">✦</div>
-        <div aria-hidden="true" className="pointer-events-none absolute right-[24%] top-16 hidden h-1.5 w-1.5 rounded-full bg-[#b7e961]/80 sm:block" />
-        <div className="pointer-events-none absolute right-40 top-0 hidden h-[calc(100%+7rem)] w-[31%] sm:block">
-          <Image
-            src="/images/dashboard-overview-mascot-banner-v5.png"
-            alt=""
-            fill
-            priority
-            sizes="31vw"
-            className="object-contain object-right"
-          />
-        </div>
         <div className="relative z-10 max-w-[44rem]">
           <h1 className="flex items-center gap-2 text-xl font-black tracking-tight sm:text-2xl">
             <span className="text-[#d7fb76]">✦</span> Nhập link sản phẩm để nhận
