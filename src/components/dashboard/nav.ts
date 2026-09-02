@@ -4,6 +4,8 @@ import {
   Wallet,
   Settings,
   LayoutDashboard,
+  BadgeDollarSign,
+  UsersRound,
   Plug,
   Store,
   ShieldCheck,
@@ -30,6 +32,9 @@ export const customerNav: NavItem[] = [
 /** Admin navigation. */
 export const adminNav: NavItem[] = [
   { href: "/admin", icon: LayoutDashboard, label: "Tổng quan", exact: true },
+  { href: "/admin/nguoi-dung", icon: UsersRound, label: "Quản lý người dùng", short: "Người dùng" },
+  { href: "/admin/yeu-cau-hoan-tien", icon: BadgeDollarSign, label: "Yêu cầu hoàn tiền", short: "Yêu cầu" },
+  { href: "/admin/don-hang", icon: ShoppingBag, label: "Đơn hàng", short: "Đơn hàng" },
   { href: "/admin/integrations", icon: Plug, label: "Kết nối sàn", short: "Kết nối" },
 ];
 

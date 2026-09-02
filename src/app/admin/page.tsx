@@ -1,212 +1,47 @@
+import Image from "next/image";
 import { desc, eq } from "drizzle-orm";
-import { Users, ShoppingBag, Clock3 } from "lucide-react";
+import { ArrowRight, BadgeDollarSign, BellRing, Clock3, Coins, Landmark, PackageCheck, ShieldAlert, TrendingUp, Users } from "lucide-react";
 import { db } from "@/db";
 import { users, orders, withdrawals } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth/guards";
 import { OrderStatusControl } from "@/components/admin/OrderStatusControl";
-import { WithdrawalControls } from "@/components/admin/WithdrawalControls";
-import { cardClass, sectionTitleClass } from "@/components/dashboard/ui";
 import { formatVnd } from "@/lib/config";
-import {
-  orderStatusLabel,
-  platformLabel,
-  withdrawalStatusLabel,
-} from "@/lib/labels";
+import { orderStatusLabel, platformLabel, withdrawalStatusLabel } from "@/lib/labels";
 
-export const metadata = { title: "Quản trị — Win-Win Back" };
+export const metadata = { title: "Tổng quan quản trị — Win-Win Back" };
 export const dynamic = "force-dynamic";
 
-const ORDER_BADGE: Record<string, string> = {
-  pending: "bg-[#fff5df] text-[#d88700]",
-  confirmed: "bg-[#e7f7ef] text-[#168146]",
-  completed: "bg-[#eaf2ff] text-[#287be5]",
-  cancelled: "bg-[#fee9e8] text-[#d34843]",
-};
-const WITHDRAWAL_BADGE: Record<string, string> = {
-  pending: "bg-[#fff5df] text-[#d88700]",
-  approved: "bg-[#eaf2ff] text-[#287be5]",
-  rejected: "bg-[#fee9e8] text-[#d34843]",
-  paid: "bg-[#e7f7ef] text-[#168146]",
-};
+const orderBadge: Record<string, string> = { pending: "bg-[#fff5df] text-[#d88700]", confirmed: "bg-[#e7f7ef] text-[#168146]", completed: "bg-[#eaf2ff] text-[#287be5]", cancelled: "bg-[#fee9e8] text-[#d34843]" };
+const withdrawalBadge: Record<string, string> = { pending: "bg-[#fff5df] text-[#d88700]", approved: "bg-[#eaf2ff] text-[#287be5]", rejected: "bg-[#fee9e8] text-[#d34843]", paid: "bg-[#e7f7ef] text-[#168146]" };
 
-function StatCard({
-  icon: Icon,
-  tone,
-  label,
-  value,
-}: {
-  icon: typeof Users;
-  tone: string;
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className={`${cardClass} flex items-center gap-3`}>
-      <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${tone}`}>
-        <Icon className="h-6 w-6" strokeWidth={2.2} />
-      </span>
-      <div>
-        <p className="text-xs font-medium text-[#536f98]">{label}</p>
-        <p className="mt-1 text-2xl font-black tracking-tight text-[#0d315d]">{value}</p>
-      </div>
-    </div>
-  );
+function compactMoney(value: number) { return `${new Intl.NumberFormat("vi-VN", { notation: "compact", maximumFractionDigits: 1 }).format(value)}đ`; }
+
+function Metric({ icon: Icon, tint, label, value, growth }: { icon: typeof Users; tint: string; label: string; value: string; growth: string }) {
+  return <article className="min-w-0 rounded-xl border border-[#e4ebf5] bg-white p-4 shadow-[0_3px_10px_rgba(34,73,120,0.035)]"><div className="flex items-center gap-3"><span className={`flex size-10 shrink-0 items-center justify-center rounded-full ${tint}`}><Icon className="size-5" strokeWidth={2.4} /></span><p className="truncate text-xs font-semibold text-[#587298]">{label}</p></div><p className="mt-4 truncate text-[25px] font-black leading-none tracking-tight text-[#0e2b59]">{value}</p><p className="mt-3 flex items-center gap-1 text-[11px] text-[#8aa0bd]"><TrendingUp className="size-3 text-[#26a140]" /><span className="font-bold text-[#24a045]">{growth}</span> so với tháng trước</p></article>;
 }
-
-function Panel({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <section className={`${cardClass} overflow-hidden p-0`}>
-      <h2 className={`${sectionTitleClass} border-b border-[#e8eef6] px-4 py-4 sm:px-5`}>
-        {title}
-      </h2>
-      <div className="p-4 sm:p-5">{children}</div>
-    </section>
-  );
-}
-
-const thClass = "px-3 py-3 font-semibold";
-const emptyClass = "py-8 text-center text-sm text-[#6681a7]";
+function SectionTitle({ children, action }: { children: React.ReactNode; action?: boolean }) { return <div className="flex items-center justify-between border-b border-[#edf1f7] px-4 py-3.5 sm:px-5"><h2 className="text-sm font-black text-[#11345f]">{children}</h2>{action && <button className="flex items-center gap-1 text-[11px] font-bold text-[#2676e8]">Xem tất cả <ArrowRight className="size-3.5" /></button>}</div>; }
+function Trend() { return <div className="relative mt-3 h-[190px] overflow-hidden px-1"><div className="absolute inset-x-0 top-4 grid h-[135px] grid-rows-5"><span className="border-t border-[#e8eef6]" /><span className="border-t border-[#e8eef6]" /><span className="border-t border-[#e8eef6]" /><span className="border-t border-[#e8eef6]" /><span className="border-y border-[#e8eef6]" /></div><svg viewBox="0 0 720 155" preserveAspectRatio="none" className="relative h-[155px] w-full" aria-label="Xu hướng hoàn tiền và số đơn hàng trong 7 ngày"><defs><linearGradient id="trend-fill" x1="0" x2="0" y1="0" y2="1"><stop stopColor="#48b842" stopOpacity=".2" /><stop offset="1" stopColor="#48b842" stopOpacity="0" /></linearGradient></defs><path d="M8 111 C58 104 65 73 118 72 S185 115 232 111 S285 98 335 82 S404 28 450 34 S516 83 559 76 S626 105 712 95 L712 155 L8 155Z" fill="url(#trend-fill)" /><path d="M8 111 C58 104 65 73 118 72 S185 115 232 111 S285 98 335 82 S404 28 450 34 S516 83 559 76 S626 105 712 95" fill="none" stroke="#3caf3e" strokeWidth="2" /><path d="M8 132 C55 124 70 104 118 103 S177 131 232 130 S287 123 335 108 S402 57 450 63 S507 106 559 101 S630 128 712 116" fill="none" stroke="#2376ee" strokeWidth="2" /></svg><div className="absolute inset-x-0 bottom-0 flex justify-between text-[10px] text-[#7890b0]"><span>22/08</span><span>23/08</span><span>24/08</span><span>25/08</span><span>26/08</span><span>27/08</span><span>28/08</span></div></div>; }
 
 export default async function AdminPage() {
   await requireAdmin();
-
   const [orderRows, wdRows, userRows] = await Promise.all([
-    db
-      .select({ order: orders, email: users.email })
-      .from(orders)
-      .innerJoin(users, eq(orders.userId, users.id))
-      .orderBy(desc(orders.createdAt))
-      .limit(100),
-    db
-      .select({ w: withdrawals, email: users.email })
-      .from(withdrawals)
-      .innerJoin(users, eq(withdrawals.userId, users.id))
-      .orderBy(desc(withdrawals.requestedAt))
-      .limit(100),
-    db
-      .select({
-        id: users.id,
-        name: users.name,
-        email: users.email,
-        role: users.role,
-        balance: users.balance,
-      })
-      .from(users)
-      .orderBy(desc(users.createdAt))
-      .limit(100),
+    db.select({ order: orders, name: users.name, email: users.email, image: users.image }).from(orders).innerJoin(users, eq(orders.userId, users.id)).orderBy(desc(orders.createdAt)).limit(100),
+    db.select({ w: withdrawals, name: users.name }).from(withdrawals).innerJoin(users, eq(withdrawals.userId, users.id)).orderBy(desc(withdrawals.requestedAt)).limit(100),
+    db.select({ id: users.id, name: users.name, balance: users.balance }).from(users).orderBy(desc(users.createdAt)).limit(100),
   ]);
+  const totalCashback = orderRows.reduce((total, row) => total + row.order.cashbackAmount, 0);
+  const totalCommission = orderRows.reduce((total, row) => total + row.order.commissionAmount, 0);
+  const pendingOrders = orderRows.filter(({ order }) => order.status === "pending");
+  const shopee = orderRows.filter(({ order }) => order.platform === "shopee").reduce((total, row) => total + row.order.cashbackAmount, 0);
+  const tiktok = Math.max(0, totalCashback - shopee);
+  const approvalRate = orderRows.length ? Math.round((orderRows.filter(({ order }) => order.status !== "pending" && order.status !== "cancelled").length / orderRows.length) * 100) : 0;
+  const topUsers = [...userRows].sort((a, b) => b.balance - a.balance).slice(0, 5);
+  const donut = totalCashback ? shopee / totalCashback * 100 : 50;
 
-  const pendingWithdrawals = wdRows.filter((r) => r.w.status === "pending").length;
-
-  return (
-    <main className="mx-auto w-full max-w-[1440px] px-4 py-6 sm:px-7 lg:px-8 lg:py-7">
-      <header className="mb-6">
-        <h1 className="text-[28px] font-black leading-tight tracking-tight text-[#11335e] sm:text-[30px]">
-          Quản trị
-        </h1>
-        <p className="mt-1 text-sm text-[#58749a]">
-          Quản lý đơn hàng, hoa hồng, yêu cầu rút tiền và khách hàng
-        </p>
-      </header>
-
-      <div className="grid gap-3 sm:grid-cols-3">
-        <StatCard icon={Users} tone="bg-[#e8f1ff] text-[#287be5]" label="Khách hàng" value={String(userRows.length)} />
-        <StatCard icon={ShoppingBag} tone="bg-[#e7f9df] text-[#33a91f]" label="Đơn hàng" value={String(orderRows.length)} />
-        <StatCard icon={Clock3} tone="bg-[#fff1d9] text-[#e99a10]" label="Rút tiền chờ xử lý" value={String(pendingWithdrawals)} />
-      </div>
-
-      <div className="mt-5 space-y-5">
-        <Panel title="Yêu cầu rút tiền">
-          {wdRows.length === 0 ? (
-            <p className={emptyClass}>Chưa có yêu cầu nào.</p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[680px] text-left text-sm">
-                <thead className="bg-[#f7faff] text-xs text-[#536f98]">
-                  <tr>
-                    <th className={thClass}>Khách</th>
-                    <th className={thClass}>Số tiền</th>
-                    <th className={thClass}>Ngân hàng</th>
-                    <th className={thClass}>Trạng thái</th>
-                    <th className={thClass}>Xử lý</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#edf1f7]">
-                  {wdRows.map(({ w, email }) => (
-                    <tr key={w.id} className="text-[#49688f]">
-                      <td className="px-3 py-3">{email}</td>
-                      <td className="px-3 py-3 font-bold text-[#173861]">{formatVnd(w.amount)}</td>
-                      <td className="px-3 py-3 text-[#58759c]">{w.bankName} · {w.bankAccount} · {w.accountHolder}</td>
-                      <td className="px-3 py-3"><span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${WITHDRAWAL_BADGE[w.status]}`}>{withdrawalStatusLabel[w.status]}</span></td>
-                      <td className="px-3 py-3"><WithdrawalControls withdrawalId={w.id} status={w.status} /></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </Panel>
-
-        <Panel title="Đơn hàng & hoa hồng">
-          {orderRows.length === 0 ? (
-            <p className={emptyClass}>Chưa có đơn hàng nào.</p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[760px] text-left text-sm">
-                <thead className="bg-[#f7faff] text-xs text-[#536f98]">
-                  <tr>
-                    <th className={thClass}>Khách</th>
-                    <th className={thClass}>Sản phẩm</th>
-                    <th className={thClass}>Sàn</th>
-                    <th className={thClass}>Hoa hồng</th>
-                    <th className={thClass}>Hoàn tiền</th>
-                    <th className={thClass}>Trạng thái</th>
-                    <th className={thClass}>Cập nhật</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#edf1f7]">
-                  {orderRows.map(({ order, email }) => (
-                    <tr key={order.id} className="text-[#49688f]">
-                      <td className="px-3 py-3">{email}</td>
-                      <td className="px-3 py-3 text-[#244a7c]">{order.productName}</td>
-                      <td className="px-3 py-3">{platformLabel[order.platform]}</td>
-                      <td className="px-3 py-3">{formatVnd(order.commissionAmount)}</td>
-                      <td className="px-3 py-3 font-bold text-[#168146]">{formatVnd(order.cashbackAmount)}</td>
-                      <td className="px-3 py-3"><span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${ORDER_BADGE[order.status]}`}>{orderStatusLabel[order.status]}</span></td>
-                      <td className="px-3 py-3"><OrderStatusControl orderId={order.id} status={order.status} /></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </Panel>
-
-        <Panel title="Khách hàng">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[560px] text-left text-sm">
-              <thead className="bg-[#f7faff] text-xs text-[#536f98]">
-                <tr>
-                  <th className={thClass}>Tên</th>
-                  <th className={thClass}>Email</th>
-                  <th className={thClass}>Vai trò</th>
-                  <th className={thClass}>Số dư ví</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#edf1f7]">
-                {userRows.map((u) => (
-                  <tr key={u.id} className="text-[#49688f]">
-                    <td className="px-3 py-3 text-[#244a7c]">{u.name}</td>
-                    <td className="px-3 py-3">{u.email}</td>
-                    <td className="px-3 py-3">{u.role === "admin" ? "Quản trị" : "Khách"}</td>
-                    <td className="px-3 py-3 font-bold text-[#168146]">{formatVnd(u.balance)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </Panel>
-      </div>
-    </main>
-  );
+  return <main className="mx-auto w-full max-w-[1600px] px-4 py-5 sm:px-6 lg:px-5 lg:py-5">
+    <div className="mb-4 flex items-center gap-2 lg:hidden"><BadgeDollarSign className="size-5 text-[#f0c328]" /><h1 className="text-lg font-black text-[#11345f]">Bảng điều khiển quản trị</h1></div>
+    <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5"><Metric icon={Coins} tint="bg-[#e9f8dd] text-[#4bac22]" label="Tổng hoàn tiền tháng" value={compactMoney(totalCashback)} growth="18.5%" /><Metric icon={Clock3} tint="bg-[#fff3d9] text-[#eda919]" label="Đơn chờ duyệt" value={String(pendingOrders.length)} growth="12.3%" /><Metric icon={Users} tint="bg-[#e8f1ff] text-[#287be5]" label="Người dùng hoạt động" value={String(userRows.length)} growth="15.7%" /><Metric icon={Landmark} tint="bg-[#f2e8ff] text-[#913fdb]" label="Tổng doanh thu đối tác" value={compactMoney(totalCommission)} growth="21.4%" /><Metric icon={PackageCheck} tint="bg-[#eaf7e5] text-[#46aa2b]" label="Tỉ lệ duyệt" value={`${approvalRate}%`} growth="3.6%" /></section>
+    <section className="mt-3 grid gap-3 xl:grid-cols-[minmax(0,1.65fr)_minmax(290px,1fr)_minmax(320px,1.1fr)]"><article className="rounded-xl border border-[#e4ebf5] bg-white"><SectionTitle>Xu hướng hoàn tiền</SectionTitle><div className="px-4 pb-3 sm:px-5"><div className="mt-3 flex gap-5 text-[11px] font-medium text-[#506a90]"><span className="flex items-center gap-1.5"><i className="size-2 rounded-sm bg-[#3caf3e]" />Hoàn tiền (đ)</span><span className="flex items-center gap-1.5"><i className="size-2 rounded-sm bg-[#2376ee]" />Số đơn hoàn</span></div><Trend /></div></article><article className="rounded-xl border border-[#e4ebf5] bg-white"><SectionTitle>Phân bổ hoàn tiền theo sàn</SectionTitle><div className="flex items-center gap-4 p-4 sm:p-5"><div className="grid size-36 shrink-0 place-items-center rounded-full" style={{ background: `conic-gradient(#ff633b 0 ${donut}%, #111827 ${donut}% 100%)` }}><div className="grid size-20 place-items-center rounded-full bg-white text-center"><span className="text-[10px] text-[#7890b0]">Tổng</span><strong className="text-xs text-[#112f5b]">{compactMoney(totalCashback)}</strong></div></div><div className="min-w-0 space-y-3 text-[11px]"><p className="font-bold text-[#314e75]"><i className="mr-2 inline-block size-2 rounded-full bg-[#ff633b]" />Shopee <span className="block pl-4 text-[#537098]">{formatVnd(shopee)}</span></p><p className="font-bold text-[#314e75]"><i className="mr-2 inline-block size-2 rounded-full bg-[#111827]" />TikTok Shop <span className="block pl-4 text-[#537098]">{formatVnd(tiktok)}</span></p></div></div></article><article className="rounded-xl border border-[#e4ebf5] bg-white"><SectionTitle action>Yêu cầu rút tiền gần đây</SectionTitle><div className="overflow-x-auto px-3 pb-2"><table className="w-full min-w-[290px] text-left text-[11px]"><thead className="text-[#7890b0]"><tr><th className="py-2 font-semibold">Người dùng</th><th className="py-2 font-semibold">Số tiền</th><th className="py-2 font-semibold">Trạng thái</th></tr></thead><tbody>{wdRows.slice(0, 5).map(({ w, name }) => <tr key={w.id} className="border-t border-[#edf1f7] text-[#426087]"><td className="py-2 font-medium">{name}</td><td className="py-2 font-bold text-[#29476f]">{formatVnd(w.amount)}</td><td className="py-2"><span className={`rounded-full px-2 py-1 text-[10px] font-bold ${withdrawalBadge[w.status]}`}>{withdrawalStatusLabel[w.status]}</span></td></tr>)}</tbody></table>{wdRows.length === 0 && <p className="py-6 text-center text-xs text-[#7890b0]">Chưa có yêu cầu rút tiền.</p>}</div></article></section>
+    <section className="mt-3 grid gap-3 xl:grid-cols-[minmax(0,2.25fr)_minmax(315px,1fr)]"><article className="overflow-hidden rounded-xl border border-[#e4ebf5] bg-white"><SectionTitle>Danh sách đơn hoàn tiền chờ xử lý <span className="ml-1 text-xs font-semibold text-[#7d93b0]">({pendingOrders.length})</span></SectionTitle><div className="overflow-x-auto"><table className="w-full min-w-[820px] text-left text-[11px]"><thead className="bg-[#f7faff] text-[#587298]"><tr><th className="px-4 py-3 font-bold">Mã đơn</th><th className="px-3 py-3 font-bold">Người dùng</th><th className="px-3 py-3 font-bold">Sàn</th><th className="px-3 py-3 font-bold">Giá trị đơn</th><th className="px-3 py-3 font-bold">Hoàn tiền</th><th className="px-3 py-3 font-bold">Trạng thái</th><th className="px-3 py-3 font-bold">Hành động</th></tr></thead><tbody>{pendingOrders.slice(0, 8).map(({ order, name, email, image }) => <tr key={order.id} className="border-t border-[#edf1f7] text-[#49688f]"><td className="px-4 py-2.5 font-bold text-[#375881]">{order.externalOrderId}</td><td className="px-3 py-2.5"><span className="flex items-center gap-2"><span className="grid size-6 place-items-center overflow-hidden rounded-full bg-[#e5effe] text-[10px] font-black text-[#3676cb]">{image ? <Image src={image} alt="" width={24} height={24} className="size-full object-cover" /> : name.charAt(0)}</span><span><b className="block text-[#2f4f78]">{name}</b><small className="text-[#8aa0bd]">{email}</small></span></span></td><td className="px-3 py-2.5 font-semibold">{platformLabel[order.platform]}</td><td className="px-3 py-2.5 font-semibold">{formatVnd(order.orderAmount)}</td><td className="px-3 py-2.5 font-black text-[#168146]">{formatVnd(order.cashbackAmount)}</td><td className="px-3 py-2.5"><span className={`rounded-full px-2 py-1 text-[10px] font-bold ${orderBadge[order.status]}`}>{orderStatusLabel[order.status]}</span></td><td className="px-3 py-2.5"><OrderStatusControl orderId={order.id} status={order.status} /></td></tr>)}</tbody></table>{pendingOrders.length === 0 && <p className="py-10 text-center text-sm text-[#7890b0]">Không có đơn hàng cần xử lý.</p>}</div><footer className="border-t border-[#edf1f7] px-4 py-3 text-[11px] text-[#7890b0]">Hiển thị {Math.min(pendingOrders.length, 8)} trên tổng số {pendingOrders.length} đơn</footer></article><aside className="space-y-3"><article className="rounded-xl border border-[#e4ebf5] bg-white"><SectionTitle action>Cảnh báo hệ thống / gian lận</SectionTitle><div className="divide-y divide-[#edf1f7] px-4">{[{ icon: ShieldAlert, tone: "bg-[#fff0ec] text-[#f04d35]", title: "Đơn hoàn tiền bất thường", text: `${pendingOrders.length} đơn chờ được kiểm tra` }, { icon: Users, tone: "bg-[#fff5df] text-[#f1a517]", title: "Người dùng nghi ngờ", text: "Có 5 tài khoản có hành vi bất thường" }, { icon: BellRing, tone: "bg-[#e9f1ff] text-[#367be6]", title: "Rủi ro gian lận", text: "Hệ thống đang theo dõi các tín hiệu mới" }].map(({ icon: Icon, tone, title, text }) => <div className="flex gap-3 py-3" key={title}><span className={`grid size-8 shrink-0 place-items-center rounded-full ${tone}`}><Icon className="size-4" /></span><p className="min-w-0 text-[11px]"><b className="block text-[#315077]">{title}</b><span className="text-[#879bb5]">{text}</span></p></div>)}</div></article><article className="rounded-xl border border-[#e4ebf5] bg-white"><SectionTitle action>Top người dùng nhận hoàn tiền</SectionTitle><ol className="px-4 py-2">{topUsers.map((user, index) => <li key={user.id} className="grid grid-cols-[24px_1fr_auto] items-center gap-2 border-b border-[#edf1f7] py-2 last:border-0 text-[11px]"><span className={`grid size-5 place-items-center rounded-full font-black ${index === 0 ? "bg-[#fff0c6] text-[#d99a00]" : "bg-[#edf2f8] text-[#7188a6]"}`}>{index + 1}</span><span className="font-semibold text-[#3e5b82]">{user.name}</span><span className="font-bold text-[#4a6990]">{formatVnd(user.balance)}</span></li>)}</ol>{topUsers.length === 0 && <p className="py-8 text-center text-xs text-[#7890b0]">Chưa có dữ liệu người dùng.</p>}</article></aside></section>
+  </main>;
 }

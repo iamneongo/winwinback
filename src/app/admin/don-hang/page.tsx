@@ -1,0 +1,27 @@
+import Image from "next/image";
+import { desc, eq } from "drizzle-orm";
+import { Clock3, ShoppingBag, CircleCheck, CircleX, Search, Filter } from "lucide-react";
+import { db } from "@/db";
+import { orders, users } from "@/db/schema";
+import { requireAdmin } from "@/lib/auth/guards";
+import { formatVnd } from "@/lib/config";
+import { orderStatusLabel, platformLabel } from "@/lib/labels";
+import { OrderStatusControl } from "@/components/admin/OrderStatusControl";
+
+export const metadata = { title: "Đơn hàng — Win-Win Back" };
+export const dynamic = "force-dynamic";
+
+const badge: Record<string, string> = { pending: "bg-[#fff5df] text-[#d88700]", confirmed: "bg-[#eaf2ff] text-[#287be5]", completed: "bg-[#e7f7ef] text-[#168146]", cancelled: "bg-[#fee9e8] text-[#d34843]" };
+
+function Metric({ icon: Icon, tone, label, value }: { icon: typeof ShoppingBag; tone: string; label: string; value: string }) {
+  return <article className="rounded-xl border border-[#e4ebf5] bg-white p-4"><span className={`grid size-10 place-items-center rounded-full ${tone}`}><Icon className="size-5" /></span><p className="mt-3 text-xs font-semibold text-[#587298]">{label}</p><p className="mt-1 text-2xl font-black text-[#102e5c]">{value}</p></article>;
+}
+
+export default async function OrdersPage() {
+  await requireAdmin();
+  const rows = await db.select({ order: orders, name: users.name, email: users.email, image: users.image }).from(orders).innerJoin(users, eq(orders.userId, users.id)).orderBy(desc(orders.createdAt)).limit(100);
+  const pending = rows.filter(({ order }) => order.status === "pending").length;
+  const completed = rows.filter(({ order }) => order.status === "completed").length;
+  const cancelled = rows.filter(({ order }) => order.status === "cancelled").length;
+  return <main className="mx-auto w-full max-w-[1600px] px-4 py-5 sm:px-6 lg:px-5"><div className="mb-4 lg:hidden"><h1 className="text-xl font-black text-[#11345f]">Quản lý đơn hàng</h1><p className="mt-1 text-sm text-[#60799c]">Theo dõi đơn hàng và hoa hồng từ các sàn</p></div><section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4"><Metric icon={ShoppingBag} tone="bg-[#e8f1ff] text-[#2877ec]" label="Tổng đơn hàng" value={String(rows.length)} /><Metric icon={Clock3} tone="bg-[#fff3dc] text-[#eda815]" label="Chờ xác nhận" value={String(pending)} /><Metric icon={CircleCheck} tone="bg-[#e7f7ef] text-[#31a141]" label="Đã hoàn tất" value={String(completed)} /><Metric icon={CircleX} tone="bg-[#feeae8] text-[#ea4b38]" label="Đã huỷ" value={String(cancelled)} /></section><section className="mt-3 overflow-hidden rounded-xl border border-[#e4ebf5] bg-white"><div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#edf1f7] px-5 py-4"><div><h2 className="text-base font-black text-[#12355f]">Danh sách đơn hàng</h2><p className="mt-1 text-xs text-[#6c86a8]">Cập nhật trạng thái và theo dõi số tiền hoàn của từng đơn</p></div><div className="flex gap-2"><label className="hidden h-9 w-56 items-center gap-2 rounded-lg border border-[#dbe6f2] px-3 text-xs text-[#8298b6] sm:flex"><Search className="size-4" /><input className="w-full bg-transparent outline-none" placeholder="Tìm mã đơn, người dùng..." /></label><button className="inline-flex h-9 items-center gap-2 rounded-lg border border-[#dbe6f2] px-3 text-xs font-bold text-[#506a90]"><Filter className="size-4" />Bộ lọc</button></div></div><div className="overflow-x-auto"><table className="w-full min-w-[1040px] text-left text-[11px]"><thead className="bg-[#f7faff] text-[#587298]"><tr><th className="px-5 py-3">Mã đơn</th><th className="px-3 py-3">Người dùng</th><th className="px-3 py-3">Sản phẩm</th><th className="px-3 py-3">Sàn</th><th className="px-3 py-3">Giá trị đơn</th><th className="px-3 py-3">Hoa hồng</th><th className="px-3 py-3">Hoàn tiền</th><th className="px-3 py-3">Trạng thái</th><th className="px-3 py-3">Cập nhật</th></tr></thead><tbody>{rows.map(({ order, name, email, image }) => <tr className="border-t border-[#edf1f7] text-[#49688f]" key={order.id}><td className="px-5 py-3 font-bold text-[#365780]">{order.externalOrderId}</td><td className="px-3 py-3"><span className="flex items-center gap-2"><span className="grid size-7 place-items-center overflow-hidden rounded-full bg-[#e5effe] font-black text-[#3676cb]">{image ? <Image src={image} alt="" width={28} height={28} className="size-full object-cover" /> : name.charAt(0)}</span><span><b className="block text-[#2f4f78]">{name}</b><small className="text-[#8aa0bd]">{email}</small></span></span></td><td className="max-w-44 truncate px-3 py-3 font-medium text-[#405e84]">{order.productName}</td><td className="px-3 py-3 font-semibold">{platformLabel[order.platform]}</td><td className="px-3 py-3 font-semibold">{formatVnd(order.orderAmount)}</td><td className="px-3 py-3">{formatVnd(order.commissionAmount)}</td><td className="px-3 py-3 font-black text-[#168146]">{formatVnd(order.cashbackAmount)}</td><td className="px-3 py-3"><span className={`rounded-full px-2 py-1 text-[10px] font-bold ${badge[order.status]}`}>{orderStatusLabel[order.status]}</span></td><td className="px-3 py-3"><OrderStatusControl orderId={order.id} status={order.status} /></td></tr>)}</tbody></table>{rows.length === 0 && <p className="py-14 text-center text-sm text-[#7890b0]">Chưa có đơn hàng nào.</p>}</div><footer className="border-t border-[#edf1f7] px-5 py-3 text-[11px] text-[#7890b0]">Hiển thị {rows.length} đơn hàng gần nhất</footer></section></main>;
+}
