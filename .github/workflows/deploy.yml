@@ -62,26 +62,3 @@ jobs:
     steps:
       - name: Call Dokploy deploy webhook
         run: curl -fsSL -X POST "${{ secrets.DOKPLOY_WEBHOOK }}"
-
-  notify:
-    name: Telegram notification
-    needs: [build, deploy]
-    if: always()
-    runs-on: ubuntu-latest
-    steps:
-      - name: Send Telegram message
-        uses: appleboy/telegram-action@master
-        with:
-          to: ${{ secrets.TELEGRAM_TO }}
-          token: ${{ secrets.TELEGRAM_TOKEN }}
-          format: markdown
-          disable_web_page_preview: true
-          message: |
-            ${{ (needs.build.result == 'success' && needs.deploy.result == 'success') && '✅' || '❌' }} *WinWinBack* — Deploy `${{ github.ref_name }}`
-
-            *build:* ${{ needs.build.result }}  |  *deploy:* ${{ needs.deploy.result }}
-            *commit:* `${{ github.sha }}`
-            *by:* ${{ github.actor }}
-            ${{ github.event.head_commit.message }}
-
-            🔗 https://winwinback.com
