@@ -55,8 +55,14 @@ ENV NODE_ENV=production
 # secret is provided at runtime.
 ARG NEXT_PUBLIC_BASE_URL="https://winwinback.com"
 ARG BETTER_AUTH_SECRET="build-time-placeholder-secret-not-used-at-runtime-0001"
+# Dummy connection string so the lazy DB getter (used by the Better Auth
+# adapter at module load) doesn't throw during `next build`. The Pool connects
+# lazily on first query only, so no real DB is contacted at build time. The real
+# DATABASE_URL is injected at runtime by the platform and overrides this.
+ARG DATABASE_URL="postgres://build:build@localhost:5432/build"
 ENV NEXT_PUBLIC_BASE_URL=${NEXT_PUBLIC_BASE_URL}
 ENV BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
+ENV DATABASE_URL=${DATABASE_URL}
 
 # Next.js collects completely anonymous telemetry data about general usage.
 # Learn more here: https://nextjs.org/telemetry
