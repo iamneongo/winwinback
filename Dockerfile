@@ -48,6 +48,16 @@ COPY . .
 
 ENV NODE_ENV=production
 
+# Build-time only. Runtime values are injected by the container platform and
+# override these. NEXT_PUBLIC_BASE_URL is inlined at build so it must be the
+# real public URL here. BETTER_AUTH_SECRET just needs to be non-default so
+# Better Auth does not refuse to initialise during `next build`; the real
+# secret is provided at runtime.
+ARG NEXT_PUBLIC_BASE_URL="https://winwinback.com"
+ARG BETTER_AUTH_SECRET="build-time-placeholder-secret-not-used-at-runtime-0001"
+ENV NEXT_PUBLIC_BASE_URL=${NEXT_PUBLIC_BASE_URL}
+ENV BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
+
 # Next.js collects completely anonymous telemetry data about general usage.
 # Learn more here: https://nextjs.org/telemetry
 # Uncomment the following line in case you want to disable telemetry during the build.
