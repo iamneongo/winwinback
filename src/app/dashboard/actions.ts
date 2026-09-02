@@ -11,8 +11,16 @@ import { getAffiliateProvider } from "@/lib/affiliate/providers";
 import { generateShortCode } from "@/lib/shortcode";
 import { recordWalletTx } from "@/lib/wallet";
 import { minWithdrawal } from "@/lib/config";
+import { platformLabel } from "@/lib/labels";
 
-export type ActionState = { error?: string; success?: string } | undefined;
+export type ActionState =
+  | {
+      error?: string;
+      success?: string;
+      /** Set after a link is created so the client can offer to open it. */
+      link?: { goPath: string; platformName: string };
+    }
+  | undefined;
 
 const profileSchema = z.object({
   name: z.string().trim().min(1, "Vui lòng nhập tên hiển thị").max(80),
@@ -85,7 +93,13 @@ export async function createLinkAction(
         title,
       });
       revalidatePath("/dashboard");
-      return { success: "Đã tạo link affiliate" };
+      return {
+        success: "Đã tạo link affiliate",
+        link: {
+          goPath: `/go/${shortCode}`,
+          platformName: platformLabel[platform] ?? "cửa hàng",
+        },
+      };
     } catch (e) {
       const msg = e instanceof Error ? e.message : "";
       if (!msg.includes("short_code")) {
