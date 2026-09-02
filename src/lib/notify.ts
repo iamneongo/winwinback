@@ -5,11 +5,22 @@ import { users } from "@/db/schema";
 import { sendEmail, emailLayout } from "@/lib/email";
 import { formatVnd, baseUrl } from "@/lib/config";
 
-async function recipient(
-  userId: string,
-): Promise<{ email: string; name: string } | null> {
+async function recipient(userId: string): Promise<
+  | {
+      email: string;
+      name: string;
+      notifyOrders: boolean;
+      notifyCashback: boolean;
+    }
+  | null
+> {
   const rows = await db
-    .select({ email: users.email, name: users.name })
+    .select({
+      email: users.email,
+      name: users.name,
+      notifyOrders: users.notifyOrders,
+      notifyCashback: users.notifyCashback,
+    })
     .from(users)
     .where(eq(users.id, userId))
     .limit(1);
@@ -23,7 +34,7 @@ export async function notifyCashbackCredited(input: {
   amount: number;
 }): Promise<void> {
   const to = await recipient(input.userId);
-  if (!to) return;
+  if (!to || !to.notifyCashback) return;
   await sendEmail({
     to: to.email,
     subject: "Đã cộng hoàn tiền vào ví — Win-Win Back",
@@ -58,7 +69,7 @@ export async function notifyWithdrawalStatus(input: {
   amount: number;
 }): Promise<void> {
   const to = await recipient(input.userId);
-  if (!to) return;
+  if (!to || !to.notifyOrders) return;
   const copy = withdrawalCopy[input.status];
   if (!copy) return;
   await sendEmail({

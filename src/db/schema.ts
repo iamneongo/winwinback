@@ -59,6 +59,10 @@ export const users = pgTable("users", {
   role: userRole("role").notNull().default("user"),
   // Cached wallet balance in VND, kept in sync with wallet_transactions.
   balance: bigint("balance", { mode: "number" }).notNull().default(0),
+  // Email notification preferences (gate the transactional emails in notify.ts).
+  notifyOrders: boolean("notify_orders").notNull().default(true),
+  notifyCashback: boolean("notify_cashback").notNull().default(true),
+  notifySystemEmail: boolean("notify_system_email").notNull().default(true),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

@@ -45,6 +45,24 @@ export async function updateProfileAction(
   return { success: "Đã cập nhật tên hiển thị" };
 }
 
+export async function updateNotificationPrefsAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const user = await requireUser();
+  const flag = (key: string) => formData.get(key) === "true";
+  await db
+    .update(users)
+    .set({
+      notifyOrders: flag("notifyOrders"),
+      notifyCashback: flag("notifyCashback"),
+      notifySystemEmail: flag("notifySystemEmail"),
+    })
+    .where(eq(users.id, user.id));
+  revalidatePath("/dashboard/tai-khoan");
+  return { success: "Đã lưu tùy chọn thông báo" };
+}
+
 const linkSchema = z.object({
   url: z.string().trim().url("Link sản phẩm không hợp lệ"),
 });

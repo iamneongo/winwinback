@@ -2,18 +2,18 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  Home,
-  LogOut,
-  Settings,
-  ShoppingBag,
-  Wallet,
-  type LucideIcon,
-} from "lucide-react";
+import { LogOut } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { signOut } from "@/lib/auth-client";
 import { BrandLogo } from "@/components/BrandLogo";
+import {
+  customerNav,
+  adminNav,
+  customerAdminLink,
+  adminCustomerLink,
+  type NavItem,
+} from "@/components/dashboard/nav";
 import {
   Sidebar as SidebarRoot,
   SidebarContent,
@@ -24,22 +24,22 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 
-type NavigationItem = {
-  href: string;
-  icon: LucideIcon;
-  label: string;
-  exact?: boolean;
-};
-const navigation: NavigationItem[] = [
-  { href: "/dashboard", icon: Home, label: "Tổng quan", exact: true },
-  { href: "/dashboard/don-hang", icon: ShoppingBag, label: "Đơn hàng của tôi" },
-  { href: "/dashboard/vi", icon: Wallet, label: "Ví hoàn tiền" },
-  { href: "/dashboard/tai-khoan", icon: Settings, label: "Cài đặt" },
-];
-
-export function Sidebar() {
+export function Sidebar({
+  variant = "customer",
+  showAdminLink = false,
+}: {
+  variant?: "customer" | "admin";
+  showAdminLink?: boolean;
+}) {
   const pathname = usePathname();
   const router = useRouter();
+  const items: NavItem[] =
+    variant === "admin"
+      ? [...adminNav, adminCustomerLink]
+      : showAdminLink
+        ? [...customerNav, customerAdminLink]
+        : customerNav;
+  const homeHref = variant === "admin" ? "/admin" : "/dashboard";
   return (
     <SidebarRoot
       collapsible="icon"
@@ -48,7 +48,7 @@ export function Sidebar() {
       <SidebarHeader className="overflow-hidden px-3 pt-5 pb-0">
         {/* Constant padding => the mark never moves; only the name fades. */}
         <Link
-          href="/dashboard"
+          href={homeHref}
           aria-label="Win-Win Back"
           className="flex w-full items-center overflow-hidden px-0 py-2"
         >
@@ -60,7 +60,7 @@ export function Sidebar() {
       </SidebarHeader>
       <SidebarContent className="px-3 pt-6 pb-5">
         <SidebarMenu className="gap-1.5">
-          {navigation.map((item) => {
+          {items.map((item) => {
             const Icon = item.icon;
             const active = item.exact
               ? pathname === item.href

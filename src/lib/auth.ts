@@ -38,6 +38,21 @@ export const auth = betterAuth({
     requireEmailVerification: true,
     autoSignIn: false,
     minPasswordLength: 6,
+    sendResetPassword: async ({ user, url }) => {
+      const sent = await sendEmail({
+        to: user.email,
+        subject: "Đặt lại mật khẩu — Win-Win Back",
+        html: emailLayout(
+          "Đặt lại mật khẩu",
+          `Chào ${user.name || "bạn"}, bạn (hoặc ai đó) đã yêu cầu đặt lại mật khẩu. Nhấn nút bên dưới để tạo mật khẩu mới. Nếu không phải bạn, hãy bỏ qua email này.
+           <p style="margin:20px 0"><a href="${url}" style="display:inline-block;background:#b7e961;color:#0d315d;font-weight:700;text-decoration:none;padding:12px 20px;border-radius:10px">Đặt lại mật khẩu</a></p>
+           Nếu nút không hoạt động, mở liên kết: <br><a href="${url}">${url}</a>`,
+        ),
+      });
+      if (!sent) {
+        console.info(`[reset-password] ${user.email}: ${url}`);
+      }
+    },
   },
   emailVerification: {
     sendOnSignUp: true,

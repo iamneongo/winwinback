@@ -1,10 +1,9 @@
-import Link from "next/link";
 import { requireAdmin } from "@/lib/auth/guards";
-import { AppHeader } from "@/components/dashboard/AppHeader";
 import {
   TikTokIntegration,
   type TikTokStatus,
 } from "@/components/admin/TikTokIntegration";
+import { cardClass, sectionTitleClass } from "@/components/dashboard/ui";
 import { isTikTokConfigured } from "@/lib/affiliate/tiktok/config";
 import { getStoredTikTokToken } from "@/lib/affiliate/tiktok/tokens";
 
@@ -31,7 +30,7 @@ export default async function IntegrationsPage({
 }: {
   searchParams: Promise<{ tiktok?: string; reason?: string }>;
 }) {
-  const admin = await requireAdmin();
+  await requireAdmin();
   const { tiktok, reason } = await searchParams;
 
   const stored = await getStoredTikTokToken();
@@ -53,52 +52,46 @@ export default async function IntegrationsPage({
   const banner = tiktok ? CALLBACK_MESSAGES[tiktok] : undefined;
 
   return (
-    <div className="min-h-screen bg-[#082b4b] text-white">
-      <AppHeader name={admin.name} role={admin.role} />
-      <main className="mx-auto max-w-3xl space-y-6 px-6 py-8">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-black">Kết nối sàn affiliate</h1>
-          <Link
-            href="/admin"
-            className="text-sm text-white/60 underline hover:text-white"
-          >
-            ← Về Quản trị
-          </Link>
+    <main className="mx-auto w-full max-w-[900px] px-4 py-6 sm:px-7 lg:px-8 lg:py-7">
+      <header className="mb-6">
+        <h1 className="text-[28px] font-black leading-tight tracking-tight text-[#11335e] sm:text-[30px]">
+          Kết nối sàn affiliate
+        </h1>
+        <p className="mt-1 text-sm text-[#58749a]">
+          Kết nối tài khoản Affiliate Creator để tạo link và đồng bộ đơn hàng
+        </p>
+      </header>
+
+      {banner && (
+        <div
+          className={`mb-5 rounded-xl border p-4 text-sm ${
+            banner.ok
+              ? "border-[#b7e961]/60 bg-[#eefbe0] text-[#2f7a1c]"
+              : "border-red-200 bg-red-50 text-red-600"
+          }`}
+        >
+          {banner.text}
+          {!banner.ok && reason && (
+            <span className="mt-1 block font-mono text-xs text-red-500/90">
+              Chi tiết: {reason}
+            </span>
+          )}
         </div>
+      )}
 
-        {banner && (
-          <div
-            className={`rounded-2xl border p-4 text-sm ${
-              banner.ok
-                ? "border-[#b7e961]/30 bg-[#b7e961]/10 text-[#b7e961]"
-                : "border-red-400/30 bg-red-500/10 text-red-200"
-            }`}
-          >
-            {banner.text}
-            {!banner.ok && reason && (
-              <span className="mt-1 block font-mono text-xs text-red-300/90">
-                Chi tiết: {reason}
-              </span>
-            )}
-          </div>
-        )}
+      <section className={cardClass}>
+        <h2 className={`${sectionTitleClass} mb-4`}>
+          TikTok Shop (Affiliate Creator)
+        </h2>
+        <TikTokIntegration status={status} />
+      </section>
 
-        <section className="rounded-3xl border border-white/10 bg-white/5 p-6">
-          <div className="mb-4 flex items-center gap-3">
-            <h2 className="text-lg font-bold text-white">
-              TikTok Shop (Affiliate Creator)
-            </h2>
-          </div>
-          <TikTokIntegration status={status} />
-        </section>
-
-        <section className="rounded-3xl border border-white/10 bg-white/5 p-6 opacity-70">
-          <h2 className="text-lg font-bold text-white">Shopee</h2>
-          <p className="mt-2 text-sm text-white/50">
-            Sẽ triển khai sau. Hiện link Shopee vẫn dùng chế độ mock.
-          </p>
-        </section>
-      </main>
-    </div>
+      <section className={`${cardClass} mt-5 opacity-70`}>
+        <h2 className={sectionTitleClass}>Shopee</h2>
+        <p className="mt-2 text-sm text-[#6681a7]">
+          Sẽ triển khai sau. Hiện link Shopee vẫn dùng chế độ mock.
+        </p>
+      </section>
+    </main>
   );
 }

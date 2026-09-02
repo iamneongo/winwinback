@@ -22,9 +22,9 @@ export function SubmitButton({
       className={cn(
         "h-auto gap-2 rounded-full px-5 py-2.5 text-sm font-semibold",
         variant === "ghost" &&
-          "border border-white/20 text-white hover:bg-white/10 hover:text-white",
+          "border border-[#d9e5f4] text-[#35537c] hover:bg-[#f1f6fc] hover:text-[#0d315d]",
         variant === "danger" &&
-          "border border-red-400/40 text-red-200 hover:bg-red-500/10 hover:text-red-200",
+          "border border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700",
         className,
       )}
     >

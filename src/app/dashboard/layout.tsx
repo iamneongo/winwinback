@@ -17,6 +17,7 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }) {
   const user = await requireUser();
+  const isAdmin = user.role === "admin";
 
   return (
     <TooltipProvider>
@@ -24,7 +25,7 @@ export default async function DashboardLayout({
         className="winwin-root overflow-x-hidden bg-[#f5f8fc] text-[#0d315d]"
         style={{ "--sidebar-width-icon": "3.5rem" } as React.CSSProperties}
       >
-        <Sidebar />
+        <Sidebar showAdminLink={isAdmin} />
         <div className="flex min-h-svh min-w-0 flex-1 flex-col bg-[#f5f8fc] pb-24 lg:pb-0">
           <header className="flex h-[76px] items-center justify-between border-b border-[#e4edf8] bg-white px-4 sm:px-7 lg:px-8">
             <SidebarTrigger
@@ -59,7 +60,7 @@ export default async function DashboardLayout({
               <HeaderMenus name={user.name} role={user.role} />
             </div>
           </header>
-          <Dock role={user.role} />
+          <Dock showAdminLink={isAdmin} />
           {children}
         </div>
       </SidebarProvider>

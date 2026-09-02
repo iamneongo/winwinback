@@ -9,8 +9,11 @@ import { db } from "@/db";
 import { affiliateLinks, orders } from "@/db/schema";
 import { requireUser } from "@/lib/auth/guards";
 import { CreateLinkForm } from "@/components/dashboard/CreateLinkForm";
+import { BuyButton } from "@/components/dashboard/BuyButton";
+import { CopyLink } from "@/components/dashboard/CopyLink";
 import { Empty, cardClass, sectionTitleClass } from "@/components/dashboard/ui";
 import { formatVnd } from "@/lib/config";
+import { getRequestBaseUrl } from "@/lib/baseUrl";
 import { orderStatusLabel, platformLabel } from "@/lib/labels";
 import { MetricIcon, StepIcon } from "@/components/dashboard/MetricIcon";
 import { ShopeeIcon, TikTokIcon } from "@/components/sections/BrandIcons";
@@ -92,6 +95,7 @@ export default async function OverviewPage() {
     .reduce((sum, order) => sum + order.cashbackAmount, 0);
   const clicks = links.reduce((sum, link) => sum + link.clicks, 0);
   const recentOrders = orderRows.slice(0, 5);
+  const baseUrl = await getRequestBaseUrl();
 
   return (
     <main className="mx-auto w-full max-w-[1440px] px-4 py-5 sm:px-7 sm:py-7 lg:px-6 lg:pb-8 lg:pt-0">
@@ -262,6 +266,54 @@ export default async function OverviewPage() {
             </div>
           )}
         </aside>
+      </section>
+
+      <section id="link-cua-ban" className="mt-5 scroll-mt-6">
+        <div className={`${cardClass} overflow-hidden p-0`}>
+          <div className="flex items-center justify-between border-b border-[#e8eef6] px-4 py-4 sm:px-5">
+            <h2 className={`${sectionTitleClass} flex items-center gap-2`}>
+              <List className="h-4 w-4 text-[#1766e7]" /> Link của bạn
+            </h2>
+            <span className="text-xs font-semibold text-[#6681a7]">
+              {links.length} link
+            </span>
+          </div>
+          {links.length === 0 ? (
+            <div className="p-5">
+              <Empty text="Chưa có link nào. Dán link sản phẩm ở trên để tạo link hoàn tiền." />
+            </div>
+          ) : (
+            <ul className="divide-y divide-[#edf1f7]">
+              {links.map((link) => (
+                <li
+                  key={link.id}
+                  className="flex flex-col gap-3 px-4 py-3.5 sm:flex-row sm:items-center sm:px-5"
+                >
+                  <PlatformMark platform={link.platform} />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-bold text-[#244a7c]">
+                      {link.title ?? link.originalUrl}
+                    </p>
+                    <p className="mt-0.5 flex items-center gap-2 text-[11px] text-[#6681a7]">
+                      <span>{platformLabel[link.platform]}</span>
+                      <span aria-hidden>•</span>
+                      <span className="whitespace-nowrap">
+                        {link.clicks} lượt bấm
+                      </span>
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <CopyLink value={`${baseUrl}/go/${link.shortCode}`} />
+                    <BuyButton
+                      href={`/go/${link.shortCode}`}
+                      platformName={platformLabel[link.platform]}
+                    />
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </section>
 
       <section className="mt-4 grid gap-4 xl:items-stretch xl:grid-cols-[minmax(0,1.9fr)_minmax(19rem,1fr)]">

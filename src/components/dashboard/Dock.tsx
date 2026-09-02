@@ -2,33 +2,31 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { LogOut } from "lucide-react";
 import { signOut } from "@/lib/auth-client";
 import {
-  Home,
-  LogOut,
-  Settings,
-  ShieldCheck,
-  ShoppingBag,
-  Wallet,
-  type LucideIcon,
-} from "lucide-react";
+  customerNav,
+  adminNav,
+  customerAdminLink,
+  adminCustomerLink,
+  type NavItem,
+} from "@/components/dashboard/nav";
 
-type DockItem = {
-  href: string;
-  label: string;
-  icon: LucideIcon;
-  exact?: boolean;
-};
-const items: DockItem[] = [
-  { href: "/dashboard", label: "Tổng quan", icon: Home, exact: true },
-  { href: "/dashboard/don-hang", label: "Đơn hàng", icon: ShoppingBag },
-  { href: "/dashboard/vi", label: "Ví", icon: Wallet },
-  { href: "/dashboard/tai-khoan", label: "Cài đặt", icon: Settings },
-];
-
-export function Dock({ role }: { role: "user" | "admin" }) {
+export function Dock({
+  variant = "customer",
+  showAdminLink = false,
+}: {
+  variant?: "customer" | "admin";
+  showAdminLink?: boolean;
+}) {
   const pathname = usePathname();
   const router = useRouter();
+  const items: NavItem[] =
+    variant === "admin"
+      ? [...adminNav, adminCustomerLink]
+      : showAdminLink
+        ? [...customerNav, customerAdminLink]
+        : customerNav;
   return (
     <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[#e4edf8] bg-white/95 px-3 py-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] shadow-[0_-4px_12px_rgba(13,49,93,0.06)] backdrop-blur lg:hidden">
       <nav
@@ -52,22 +50,10 @@ export function Dock({ role }: { role: "user" | "admin" }) {
               >
                 <Icon className="h-5 w-5" />
               </span>
-              {item.label}
+              {item.short ?? item.label}
             </Link>
           );
         })}
-        {role === "admin" && (
-          <a
-            href="/admin"
-            aria-label="Quản trị"
-            className="flex min-w-0 flex-1 flex-col items-center gap-1 text-[10px] font-semibold text-[#6681a7]"
-          >
-            <span className="flex h-10 w-10 items-center justify-center rounded-full">
-              <ShieldCheck className="h-5 w-5" />
-            </span>
-            Quản trị
-          </a>
-        )}
         <div className="flex min-w-0 flex-1">
           <button
             type="button"

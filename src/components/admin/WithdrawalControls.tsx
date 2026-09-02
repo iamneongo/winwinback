@@ -44,7 +44,7 @@ export function WithdrawalControls({
   status: string;
 }) {
   if (status === "rejected" || status === "paid") {
-    return <span className="text-xs text-white/40">—</span>;
+    return <span className="text-xs text-[#8aa0bd]">—</span>;
   }
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -53,7 +53,7 @@ export function WithdrawalControls({
           withdrawalId={withdrawalId}
           action="approve"
           label="Duyệt"
-          className="bg-sky-400/20 text-sky-100"
+          className="bg-[#e8f1ff] text-[#1f66c2]"
         />
       )}
       {status === "approved" && (
@@ -61,14 +61,14 @@ export function WithdrawalControls({
           withdrawalId={withdrawalId}
           action="paid"
           label="Đã chi"
-          className="bg-[#b7e961] text-[#14334c]"
+          className="bg-[#b7e961] text-[#173b5e]"
         />
       )}
       <ActionButton
         withdrawalId={withdrawalId}
         action="reject"
         label="Từ chối"
-        className="bg-red-400/20 text-red-100"
+        className="bg-[#fee9e8] text-[#d34843]"
       />
     </div>
   );

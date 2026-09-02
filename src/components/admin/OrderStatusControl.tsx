@@ -24,7 +24,7 @@ export function OrderStatusControl({
         name="status"
         defaultValue={status}
         disabled={pending}
-        className="rounded-lg border border-white/15 bg-[#0d3557] px-2 py-1 text-xs text-white outline-none"
+        className="rounded-lg border border-[#d9e5f4] bg-white px-2 py-1 text-xs text-[#35537c] outline-none focus:border-[#8bd950]"
       >
         <option value="pending">Chờ duyệt</option>
         <option value="confirmed">Đã xác nhận</option>

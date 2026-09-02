@@ -1,41 +1,74 @@
-import Link from "next/link";
 import { desc, eq } from "drizzle-orm";
+import { Users, ShoppingBag, Clock3 } from "lucide-react";
 import { db } from "@/db";
 import { users, orders, withdrawals } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth/guards";
-import { AppHeader } from "@/components/dashboard/AppHeader";
-import { CreateOrderForm } from "@/components/admin/CreateOrderForm";
 import { OrderStatusControl } from "@/components/admin/OrderStatusControl";
 import { WithdrawalControls } from "@/components/admin/WithdrawalControls";
+import { cardClass, sectionTitleClass } from "@/components/dashboard/ui";
 import { formatVnd } from "@/lib/config";
 import {
-  orderStatusClass,
   orderStatusLabel,
   platformLabel,
-  withdrawalStatusClass,
   withdrawalStatusLabel,
 } from "@/lib/labels";
 
 export const metadata = { title: "Quản trị — Win-Win Back" };
 export const dynamic = "force-dynamic";
 
-function Card({
-  title,
-  children,
+const ORDER_BADGE: Record<string, string> = {
+  pending: "bg-[#fff5df] text-[#d88700]",
+  confirmed: "bg-[#e7f7ef] text-[#168146]",
+  completed: "bg-[#eaf2ff] text-[#287be5]",
+  cancelled: "bg-[#fee9e8] text-[#d34843]",
+};
+const WITHDRAWAL_BADGE: Record<string, string> = {
+  pending: "bg-[#fff5df] text-[#d88700]",
+  approved: "bg-[#eaf2ff] text-[#287be5]",
+  rejected: "bg-[#fee9e8] text-[#d34843]",
+  paid: "bg-[#e7f7ef] text-[#168146]",
+};
+
+function StatCard({
+  icon: Icon,
+  tone,
+  label,
+  value,
 }: {
-  title: string;
-  children: React.ReactNode;
+  icon: typeof Users;
+  tone: string;
+  label: string;
+  value: string;
 }) {
   return (
-    <section className="rounded-3xl border border-white/10 bg-white/5 p-6">
-      <h2 className="mb-4 text-lg font-bold text-white">{title}</h2>
-      {children}
+    <div className={`${cardClass} flex items-center gap-3`}>
+      <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${tone}`}>
+        <Icon className="h-6 w-6" strokeWidth={2.2} />
+      </span>
+      <div>
+        <p className="text-xs font-medium text-[#536f98]">{label}</p>
+        <p className="mt-1 text-2xl font-black tracking-tight text-[#0d315d]">{value}</p>
+      </div>
+    </div>
+  );
+}
+
+function Panel({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section className={`${cardClass} overflow-hidden p-0`}>
+      <h2 className={`${sectionTitleClass} border-b border-[#e8eef6] px-4 py-4 sm:px-5`}>
+        {title}
+      </h2>
+      <div className="p-4 sm:p-5">{children}</div>
     </section>
   );
 }
 
+const thClass = "px-3 py-3 font-semibold";
+const emptyClass = "py-8 text-center text-sm text-[#6681a7]";
+
 export default async function AdminPage() {
-  const admin = await requireAdmin();
+  await requireAdmin();
 
   const [orderRows, wdRows, userRows] = await Promise.all([
     db
@@ -57,189 +90,123 @@ export default async function AdminPage() {
         email: users.email,
         role: users.role,
         balance: users.balance,
-        createdAt: users.createdAt,
       })
       .from(users)
       .orderBy(desc(users.createdAt))
       .limit(100),
   ]);
 
-  const pendingWithdrawals = wdRows.filter(
-    (r) => r.w.status === "pending",
-  ).length;
+  const pendingWithdrawals = wdRows.filter((r) => r.w.status === "pending").length;
 
   return (
-    <div className="min-h-screen bg-[#082b4b] text-white">
-      <AppHeader name={admin.name} role={admin.role} />
-      <main className="mx-auto max-w-6xl space-y-6 px-6 py-8">
-        <div className="flex justify-end">
-          <Link
-            href="/admin/integrations"
-            className="rounded-full border border-white/20 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10"
-          >
-            Kết nối sàn affiliate →
-          </Link>
-        </div>
-        <div className="grid gap-4 sm:grid-cols-3">
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
-            <p className="text-sm text-white/70">Khách hàng</p>
-            <p className="mt-1 text-2xl font-black text-white">
-              {userRows.length}
-            </p>
-          </div>
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
-            <p className="text-sm text-white/70">Đơn hàng</p>
-            <p className="mt-1 text-2xl font-black text-white">
-              {orderRows.length}
-            </p>
-          </div>
-          <div className="rounded-3xl border border-amber-400/30 bg-amber-400/10 p-6">
-            <p className="text-sm text-white/70">Rút tiền chờ xử lý</p>
-            <p className="mt-1 text-2xl font-black text-amber-200">
-              {pendingWithdrawals}
-            </p>
-          </div>
-        </div>
+    <main className="mx-auto w-full max-w-[1440px] px-4 py-6 sm:px-7 lg:px-8 lg:py-7">
+      <header className="mb-6">
+        <h1 className="text-[28px] font-black leading-tight tracking-tight text-[#11335e] sm:text-[30px]">
+          Quản trị
+        </h1>
+        <p className="mt-1 text-sm text-[#58749a]">
+          Quản lý đơn hàng, hoa hồng, yêu cầu rút tiền và khách hàng
+        </p>
+      </header>
 
-        <Card title="Thêm đơn hàng thủ công">
-          <CreateOrderForm />
-          <p className="mt-3 text-xs text-white/40">
-            Mẹo: có thể tự động hoá bằng webhook POST /api/webhooks/affiliate
-            (header x-webhook-secret).
-          </p>
-        </Card>
+      <div className="grid gap-3 sm:grid-cols-3">
+        <StatCard icon={Users} tone="bg-[#e8f1ff] text-[#287be5]" label="Khách hàng" value={String(userRows.length)} />
+        <StatCard icon={ShoppingBag} tone="bg-[#e7f9df] text-[#33a91f]" label="Đơn hàng" value={String(orderRows.length)} />
+        <StatCard icon={Clock3} tone="bg-[#fff1d9] text-[#e99a10]" label="Rút tiền chờ xử lý" value={String(pendingWithdrawals)} />
+      </div>
 
-        <Card title="Yêu cầu rút tiền">
+      <div className="mt-5 space-y-5">
+        <Panel title="Yêu cầu rút tiền">
           {wdRows.length === 0 ? (
-            <p className="py-6 text-center text-sm text-white/40">
-              Chưa có yêu cầu nào.
-            </p>
+            <p className={emptyClass}>Chưa có yêu cầu nào.</p>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead className="text-white/50">
-                  <tr className="border-b border-white/10">
-                    <th className="py-2 pr-4">Khách</th>
-                    <th className="py-2 pr-4">Số tiền</th>
-                    <th className="py-2 pr-4">Ngân hàng</th>
-                    <th className="py-2 pr-4">Trạng thái</th>
-                    <th className="py-2 pr-4">Xử lý</th>
+              <table className="w-full min-w-[680px] text-left text-sm">
+                <thead className="bg-[#f7faff] text-xs text-[#536f98]">
+                  <tr>
+                    <th className={thClass}>Khách</th>
+                    <th className={thClass}>Số tiền</th>
+                    <th className={thClass}>Ngân hàng</th>
+                    <th className={thClass}>Trạng thái</th>
+                    <th className={thClass}>Xử lý</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-[#edf1f7]">
                   {wdRows.map(({ w, email }) => (
-                    <tr key={w.id} className="border-b border-white/5">
-                      <td className="py-2 pr-4 text-white/70">{email}</td>
-                      <td className="py-2 pr-4 font-semibold">
-                        {formatVnd(w.amount)}
-                      </td>
-                      <td className="py-2 pr-4 text-white/60">
-                        {w.bankName} · {w.bankAccount} · {w.accountHolder}
-                      </td>
-                      <td className="py-2 pr-4">
-                        <span
-                          className={`rounded-full px-2.5 py-0.5 text-xs ${withdrawalStatusClass[w.status]}`}
-                        >
-                          {withdrawalStatusLabel[w.status]}
-                        </span>
-                      </td>
-                      <td className="py-2 pr-4">
-                        <WithdrawalControls
-                          withdrawalId={w.id}
-                          status={w.status}
-                        />
-                      </td>
+                    <tr key={w.id} className="text-[#49688f]">
+                      <td className="px-3 py-3">{email}</td>
+                      <td className="px-3 py-3 font-bold text-[#173861]">{formatVnd(w.amount)}</td>
+                      <td className="px-3 py-3 text-[#58759c]">{w.bankName} · {w.bankAccount} · {w.accountHolder}</td>
+                      <td className="px-3 py-3"><span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${WITHDRAWAL_BADGE[w.status]}`}>{withdrawalStatusLabel[w.status]}</span></td>
+                      <td className="px-3 py-3"><WithdrawalControls withdrawalId={w.id} status={w.status} /></td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
           )}
-        </Card>
+        </Panel>
 
-        <Card title="Đơn hàng & hoa hồng">
+        <Panel title="Đơn hàng & hoa hồng">
           {orderRows.length === 0 ? (
-            <p className="py-6 text-center text-sm text-white/40">
-              Chưa có đơn hàng nào.
-            </p>
+            <p className={emptyClass}>Chưa có đơn hàng nào.</p>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead className="text-white/50">
-                  <tr className="border-b border-white/10">
-                    <th className="py-2 pr-4">Khách</th>
-                    <th className="py-2 pr-4">Sản phẩm</th>
-                    <th className="py-2 pr-4">Sàn</th>
-                    <th className="py-2 pr-4">Hoa hồng</th>
-                    <th className="py-2 pr-4">Hoàn tiền</th>
-                    <th className="py-2 pr-4">Trạng thái</th>
-                    <th className="py-2 pr-4">Cập nhật</th>
+              <table className="w-full min-w-[760px] text-left text-sm">
+                <thead className="bg-[#f7faff] text-xs text-[#536f98]">
+                  <tr>
+                    <th className={thClass}>Khách</th>
+                    <th className={thClass}>Sản phẩm</th>
+                    <th className={thClass}>Sàn</th>
+                    <th className={thClass}>Hoa hồng</th>
+                    <th className={thClass}>Hoàn tiền</th>
+                    <th className={thClass}>Trạng thái</th>
+                    <th className={thClass}>Cập nhật</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-[#edf1f7]">
                   {orderRows.map(({ order, email }) => (
-                    <tr key={order.id} className="border-b border-white/5">
-                      <td className="py-2 pr-4 text-white/70">{email}</td>
-                      <td className="py-2 pr-4">{order.productName}</td>
-                      <td className="py-2 pr-4">
-                        {platformLabel[order.platform]}
-                      </td>
-                      <td className="py-2 pr-4">
-                        {formatVnd(order.commissionAmount)}
-                      </td>
-                      <td className="py-2 pr-4 font-semibold text-[#b7e961]">
-                        {formatVnd(order.cashbackAmount)}
-                      </td>
-                      <td className="py-2 pr-4">
-                        <span
-                          className={`rounded-full px-2.5 py-0.5 text-xs ${orderStatusClass[order.status]}`}
-                        >
-                          {orderStatusLabel[order.status]}
-                        </span>
-                      </td>
-                      <td className="py-2 pr-4">
-                        <OrderStatusControl
-                          orderId={order.id}
-                          status={order.status}
-                        />
-                      </td>
+                    <tr key={order.id} className="text-[#49688f]">
+                      <td className="px-3 py-3">{email}</td>
+                      <td className="px-3 py-3 text-[#244a7c]">{order.productName}</td>
+                      <td className="px-3 py-3">{platformLabel[order.platform]}</td>
+                      <td className="px-3 py-3">{formatVnd(order.commissionAmount)}</td>
+                      <td className="px-3 py-3 font-bold text-[#168146]">{formatVnd(order.cashbackAmount)}</td>
+                      <td className="px-3 py-3"><span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${ORDER_BADGE[order.status]}`}>{orderStatusLabel[order.status]}</span></td>
+                      <td className="px-3 py-3"><OrderStatusControl orderId={order.id} status={order.status} /></td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
           )}
-        </Card>
+        </Panel>
 
-        <Card title="Khách hàng">
+        <Panel title="Khách hàng">
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="text-white/50">
-                <tr className="border-b border-white/10">
-                  <th className="py-2 pr-4">Tên</th>
-                  <th className="py-2 pr-4">Email</th>
-                  <th className="py-2 pr-4">Vai trò</th>
-                  <th className="py-2 pr-4">Số dư ví</th>
+            <table className="w-full min-w-[560px] text-left text-sm">
+              <thead className="bg-[#f7faff] text-xs text-[#536f98]">
+                <tr>
+                  <th className={thClass}>Tên</th>
+                  <th className={thClass}>Email</th>
+                  <th className={thClass}>Vai trò</th>
+                  <th className={thClass}>Số dư ví</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-[#edf1f7]">
                 {userRows.map((u) => (
-                  <tr key={u.id} className="border-b border-white/5">
-                    <td className="py-2 pr-4">{u.name}</td>
-                    <td className="py-2 pr-4 text-white/70">{u.email}</td>
-                    <td className="py-2 pr-4">
-                      {u.role === "admin" ? "Quản trị" : "Khách"}
-                    </td>
-                    <td className="py-2 pr-4 font-semibold text-[#b7e961]">
-                      {formatVnd(u.balance)}
-                    </td>
+                  <tr key={u.id} className="text-[#49688f]">
+                    <td className="px-3 py-3 text-[#244a7c]">{u.name}</td>
+                    <td className="px-3 py-3">{u.email}</td>
+                    <td className="px-3 py-3">{u.role === "admin" ? "Quản trị" : "Khách"}</td>
+                    <td className="px-3 py-3 font-bold text-[#168146]">{formatVnd(u.balance)}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-        </Card>
-      </main>
-    </div>
+        </Panel>
+      </div>
+    </main>
   );
 }
