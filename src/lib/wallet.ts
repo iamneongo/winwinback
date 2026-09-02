@@ -2,6 +2,7 @@ import "server-only";
 import { eq, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { users, orders, walletTransactions } from "@/db/schema";
+import { notifyCashbackCredited } from "@/lib/notify";
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 type WalletTxType = "cashback" | "withdrawal" | "refund" | "adjustment";
@@ -58,7 +59,7 @@ export async function recordWalletTx(
  * "completed" (from webhook or admin).
  */
 export async function settleOrderCashback(orderId: string): Promise<boolean> {
-  return db.transaction(async (tx) => {
+  const credited = await db.transaction(async (tx) => {
     const rows = await tx
       .select()
       .from(orders)
@@ -67,15 +68,15 @@ export async function settleOrderCashback(orderId: string): Promise<boolean> {
       .limit(1);
 
     const order = rows[0];
-    if (!order) return false;
-    if (order.status !== "completed") return false;
-    if (order.cashbackCreditedAt) return false;
+    if (!order) return null;
+    if (order.status !== "completed") return null;
+    if (order.cashbackCreditedAt) return null;
     if (order.cashbackAmount <= 0) {
       await tx
         .update(orders)
         .set({ cashbackCreditedAt: new Date() })
         .where(eq(orders.id, orderId));
-      return false;
+      return null;
     }
 
     await recordWalletTx(tx, {
@@ -91,8 +92,18 @@ export async function settleOrderCashback(orderId: string): Promise<boolean> {
       .set({ cashbackCreditedAt: new Date() })
       .where(eq(orders.id, orderId));
 
-    return true;
+    return {
+      userId: order.userId,
+      externalOrderId: order.externalOrderId,
+      amount: order.cashbackAmount,
+    };
   });
+
+  if (!credited) return false;
+
+  // Best-effort notification; never block or fail the settlement.
+  void notifyCashbackCredited(credited).catch(() => {});
+  return true;
 }
 
 /** Increment an affiliate link's click counter (best effort). */

@@ -1,56 +1,25 @@
 import "server-only";
 import { cache } from "react";
-import { cookies } from "next/headers";
-import { randomBytes } from "crypto";
+import { headers } from "next/headers";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
-import { sessions, users } from "@/db/schema";
-import type { User } from "@/db/schema";
+import { users, type User } from "@/db/schema";
+import { auth } from "@/lib/auth";
 
-const COOKIE_NAME = "winwin_session";
-const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 30; // 30 days
-
-export async function createSession(userId: string): Promise<void> {
-  const token = randomBytes(32).toString("hex");
-  const expiresAt = new Date(Date.now() + SESSION_TTL_MS);
-  await db.insert(sessions).values({ id: token, userId, expiresAt });
-
-  const cookieStore = await cookies();
-  cookieStore.set(COOKIE_NAME, token, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    expires: expiresAt,
-  });
-}
-
-export async function destroySession(): Promise<void> {
-  const cookieStore = await cookies();
-  const token = cookieStore.get(COOKIE_NAME)?.value;
-  if (token) {
-    await db.delete(sessions).where(eq(sessions.id, token));
-    cookieStore.delete(COOKIE_NAME);
-  }
-}
-
+/**
+ * Resolve the current app user from the Better Auth session.
+ *
+ * Returns the full `users` row (including role + balance) so the rest of the
+ * app can key on users.id. Wrapped in React `cache()` to run once per request.
+ */
 export const getCurrentUser = cache(async (): Promise<User | null> => {
-  const cookieStore = await cookies();
-  const token = cookieStore.get(COOKIE_NAME)?.value;
-  if (!token) return null;
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session?.user) return null;
 
-  const row = await db
-    .select({ user: users, expiresAt: sessions.expiresAt })
-    .from(sessions)
-    .innerJoin(users, eq(sessions.userId, users.id))
-    .where(eq(sessions.id, token))
+  const rows = await db
+    .select()
+    .from(users)
+    .where(eq(users.id, session.user.id))
     .limit(1);
-
-  const record = row[0];
-  if (!record) return null;
-  if (record.expiresAt.getTime() < Date.now()) {
-    await db.delete(sessions).where(eq(sessions.id, token));
-    return null;
-  }
-  return record.user;
+  return rows[0] ?? null;
 });

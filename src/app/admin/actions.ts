@@ -7,6 +7,7 @@ import { db } from "@/db";
 import { users, orders, withdrawals } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth/guards";
 import { settleOrderCashback, recordWalletTx } from "@/lib/wallet";
+import { notifyWithdrawalStatus } from "@/lib/notify";
 import { cashbackRate } from "@/lib/config";
 
 export type ActionState = { error?: string; success?: string } | undefined;
@@ -129,8 +130,9 @@ export async function processWithdrawalAction(
   if (!parsed.success) return { error: "Dữ liệu không hợp lệ" };
   const { withdrawalId, action } = parsed.data;
 
+  let processed: { userId: string; amount: number; status: "approved" | "rejected" | "paid" };
   try {
-    await db.transaction(async (tx) => {
+    processed = await db.transaction(async (tx) => {
       const rows = await tx
         .select()
         .from(withdrawals)
@@ -155,17 +157,20 @@ export async function processWithdrawalAction(
           .update(withdrawals)
           .set({ status: "rejected", processedAt: new Date() })
           .where(eq(withdrawals.id, withdrawalId));
+        return { userId: w.userId, amount: w.amount, status: "rejected" as const };
       } else if (action === "approve") {
         await tx
           .update(withdrawals)
           .set({ status: "approved", processedAt: new Date() })
           .where(eq(withdrawals.id, withdrawalId));
+        return { userId: w.userId, amount: w.amount, status: "approved" as const };
       } else {
         // paid
         await tx
           .update(withdrawals)
           .set({ status: "paid", processedAt: new Date() })
           .where(eq(withdrawals.id, withdrawalId));
+        return { userId: w.userId, amount: w.amount, status: "paid" as const };
       }
     });
   } catch (e) {
@@ -174,6 +179,9 @@ export async function processWithdrawalAction(
     if (msg === "ALREADY_FINAL") return { error: "Yêu cầu đã xử lý xong" };
     return { error: "Không xử lý được yêu cầu" };
   }
+
+  // Best-effort notification; never block the response.
+  void notifyWithdrawalStatus(processed).catch(() => {});
 
   revalidatePath("/admin");
   return { success: "Đã xử lý yêu cầu rút tiền" };

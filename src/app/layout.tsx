@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { SmoothScroll } from "@/components/SmoothScroll";
 import { ScrollReveal } from "@/components/ScrollReveal";
 
 export const metadata: Metadata = {
@@ -46,10 +45,8 @@ export default function RootLayout({
         <link rel="icon" href="/favicon.png" type="image/png" />
       </head>
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
-        <SmoothScroll>
-          <ScrollReveal />
-          {children}
-        </SmoothScroll>
+        <ScrollReveal />
+        {children}
       </body>
     </html>
   );

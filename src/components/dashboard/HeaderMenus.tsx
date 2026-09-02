@@ -1,9 +1,9 @@
 "use client";
 
-import { useRef } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { signOut } from "@/lib/auth-client";
 import { Bell, ChevronDown, LogOut, Settings, ShieldCheck } from "lucide-react";
-import { logoutAction } from "@/app/(auth)/actions";
 import {
   Popover,
   PopoverContent,
@@ -26,10 +26,9 @@ export function HeaderMenus({
   role: "user" | "admin";
 }) {
   const initial = name.trim().charAt(0).toUpperCase();
-  const logoutFormRef = useRef<HTMLFormElement>(null);
+  const router = useRouter();
   return (
     <>
-      <form ref={logoutFormRef} action={logoutAction} className="hidden" />
       <Popover>
         <PopoverTrigger
           render={
@@ -88,7 +87,10 @@ export function HeaderMenus({
           <DropdownMenuSeparator />
           <DropdownMenuItem
             variant="destructive"
-            onClick={() => logoutFormRef.current?.requestSubmit()}
+            onClick={async () => {
+              await signOut();
+              router.push("/login");
+            }}
           >
             <LogOut /> Đăng xuất
           </DropdownMenuItem>

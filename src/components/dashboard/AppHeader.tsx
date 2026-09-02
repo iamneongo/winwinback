@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { logoutAction } from "@/app/(auth)/actions";
+import { SignOutButton } from "@/components/dashboard/SignOutButton";
 
 export function AppHeader({
   name,
@@ -25,14 +25,9 @@ export function AppHeader({
           )}
           <span className="hidden text-white/50 sm:inline">|</span>
           <span className="hidden text-white/70 sm:inline">{name}</span>
-          <form action={logoutAction}>
-            <button
-              type="submit"
-              className="rounded-full border border-white/20 px-3 py-1.5 text-white/80 hover:bg-white/10"
-            >
-              Đăng xuất
-            </button>
-          </form>
+          <SignOutButton className="rounded-full border border-white/20 px-3 py-1.5 text-white/80 hover:bg-white/10">
+            Đăng xuất
+          </SignOutButton>
         </nav>
       </div>
     </header>

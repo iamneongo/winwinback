@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { signOut } from "@/lib/auth-client";
 import {
   Home,
   LogOut,
@@ -11,7 +12,6 @@ import {
   Wallet,
   type LucideIcon,
 } from "lucide-react";
-import { logoutAction } from "@/app/(auth)/actions";
 
 type DockItem = {
   href: string;
@@ -28,6 +28,7 @@ const items: DockItem[] = [
 
 export function Dock({ role }: { role: "user" | "admin" }) {
   const pathname = usePathname();
+  const router = useRouter();
   return (
     <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[#e4edf8] bg-white/95 px-3 py-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] shadow-[0_-4px_12px_rgba(13,49,93,0.06)] backdrop-blur lg:hidden">
       <nav
@@ -67,10 +68,14 @@ export function Dock({ role }: { role: "user" | "admin" }) {
             Quản trị
           </a>
         )}
-        <form className="flex min-w-0 flex-1" action={logoutAction}>
+        <div className="flex min-w-0 flex-1">
           <button
-            type="submit"
+            type="button"
             aria-label="Đăng xuất"
+            onClick={async () => {
+              await signOut();
+              router.push("/login");
+            }}
             className="flex w-full flex-col items-center gap-1 text-[10px] font-semibold text-[#6681a7]"
           >
             <span className="flex h-10 w-10 items-center justify-center rounded-full text-[#6681a7]">
@@ -78,7 +83,7 @@ export function Dock({ role }: { role: "user" | "admin" }) {
             </span>
             Thoát
           </button>
-        </form>
+        </div>
       </nav>
     </div>
   );

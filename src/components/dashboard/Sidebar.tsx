@@ -11,7 +11,8 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import Image from "next/image";
-import { logoutAction } from "@/app/(auth)/actions";
+import { useRouter } from "next/navigation";
+import { signOut } from "@/lib/auth-client";
 import { BrandLogo } from "@/components/BrandLogo";
 import {
   Sidebar as SidebarRoot,
@@ -38,6 +39,7 @@ const navigation: NavigationItem[] = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   return (
     <SidebarRoot
       collapsible="icon"
@@ -104,9 +106,13 @@ export function Sidebar() {
         </div>
       </SidebarContent>
       <SidebarFooter className="overflow-hidden px-3 pt-0 pb-5">
-        <form action={logoutAction} className="ww-sidebar-logout shrink-0">
+        <div className="ww-sidebar-logout shrink-0">
           <button
-            type="submit"
+            type="button"
+            onClick={async () => {
+              await signOut();
+              router.push("/login");
+            }}
             className="flex h-11 w-full items-center gap-3 overflow-hidden whitespace-nowrap rounded-xl px-2 text-sm font-semibold text-white/75 transition-colors hover:bg-white/8 hover:text-white"
           >
             <LogOut className="size-[18px] shrink-0" />
@@ -114,7 +120,7 @@ export function Sidebar() {
               Đăng xuất
             </span>
           </button>
-        </form>
+        </div>
       </SidebarFooter>
     </SidebarRoot>
   );
