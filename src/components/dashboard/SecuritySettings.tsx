@@ -1,13 +1,36 @@
 "use client";
 
 import { useState } from "react";
-import { AlertCircle, CheckCircle2, Loader2, LockKeyhole } from "lucide-react";
+import { AlertCircle, CheckCircle2, Eye, EyeOff, Loader2, LockKeyhole } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 
-const inputClass =
-  "mt-1.5 h-11 w-full rounded-xl border border-[#dbe7f6] bg-[#f9fbff] px-3.5 text-sm text-[#173861] outline-none transition-colors focus:border-[#9ddd5d] focus:ring-2 focus:ring-[#b7e961]/25";
+const inputBase =
+  "h-11 w-full rounded-xl border border-[#dbe7f6] bg-[#f9fbff] px-3.5 text-sm text-[#173861] outline-none transition-colors focus:border-[#9ddd5d] focus:ring-2 focus:ring-[#b7e961]/25";
 const labelClass = "block text-sm font-semibold text-[#244a7c]";
+
+/** Password field with a show/hide eye toggle. */
+function PasswordInput(props: React.ComponentProps<"input">) {
+  const [show, setShow] = useState(false);
+  return (
+    <div className="relative mt-1.5">
+      <input
+        {...props}
+        type={show ? "text" : "password"}
+        className={`${inputBase} pr-11`}
+      />
+      <button
+        type="button"
+        tabIndex={-1}
+        onClick={() => setShow((s) => !s)}
+        aria-label={show ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+        className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8298b6] transition-colors hover:text-[#35537c]"
+      >
+        {show ? <EyeOff className="h-[18px] w-[18px]" /> : <Eye className="h-[18px] w-[18px]" />}
+      </button>
+    </div>
+  );
+}
 
 /** Real change-password form backed by Better Auth. */
 export function SecuritySettings() {
@@ -76,13 +99,11 @@ export function SecuritySettings() {
             <label className={labelClass} htmlFor="currentPassword">
               Mật khẩu hiện tại
             </label>
-            <input
+            <PasswordInput
               id="currentPassword"
               name="currentPassword"
-              type="password"
               required
               autoComplete="current-password"
-              className={inputClass}
             />
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
@@ -90,28 +111,24 @@ export function SecuritySettings() {
               <label className={labelClass} htmlFor="newPassword">
                 Mật khẩu mới
               </label>
-              <input
+              <PasswordInput
                 id="newPassword"
                 name="newPassword"
-                type="password"
                 required
                 minLength={6}
                 autoComplete="new-password"
-                className={inputClass}
               />
             </div>
             <div>
               <label className={labelClass} htmlFor="confirm">
                 Xác nhận mật khẩu mới
               </label>
-              <input
+              <PasswordInput
                 id="confirm"
                 name="confirm"
-                type="password"
                 required
                 minLength={6}
                 autoComplete="new-password"
-                className={inputClass}
               />
             </div>
           </div>

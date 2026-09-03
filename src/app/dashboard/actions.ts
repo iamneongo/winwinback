@@ -19,6 +19,11 @@ export type ActionState =
       success?: string;
       /** Set after a link is created so the client can offer to open it. */
       link?: { goPath: string; platformName: string };
+      /**
+       * Set when the pasted product cannot earn cashback (no affiliate program
+       * for it). The UI shows a friendly popup instead of a raw error.
+       */
+      ineligible?: { platformName: string };
     }
   | undefined;
 
@@ -82,6 +87,8 @@ export async function createLinkAction(
     return { error: "Chỉ hỗ trợ link từ Shopee hoặc TikTok Shop" };
   }
 
+  const platformName = platformLabel[platform] ?? "sàn này";
+
   let affiliateUrl: string;
   let title: string | undefined;
   try {
@@ -92,10 +99,14 @@ export async function createLinkAction(
     affiliateUrl = result.affiliateUrl;
     title = result.title;
   } catch (e) {
-    return {
-      error:
-        e instanceof Error ? e.message : "Không tạo được link affiliate",
-    };
+    const msg = e instanceof Error ? e.message : "";
+    // Admin/config problems (provider not set up / not connected) are real
+    // system errors — surface them so they can be fixed, not masked.
+    if (/chưa cấu hình|chưa được kết nối|not configured|not connected/i.test(msg)) {
+      return { error: msg || "Không tạo được link affiliate" };
+    }
+    // Otherwise the product simply isn't in an affiliate/cashback program.
+    return { ineligible: { platformName } };
   }
 
   // Generate a unique short code (retry on the rare collision).

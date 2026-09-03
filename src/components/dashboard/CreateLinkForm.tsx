@@ -9,6 +9,7 @@ import {
   CheckCircle2,
   AlertCircle,
   ShoppingBag,
+  PackageX,
 } from "lucide-react";
 import { createLinkAction, type ActionState } from "@/app/dashboard/actions";
 import { Button } from "@/components/ui/button";
@@ -34,19 +35,21 @@ export function CreateLinkForm({ defaultUrl }: { defaultUrl?: string }) {
     undefined,
   );
   const formRef = useRef<HTMLFormElement>(null);
-  // Which link the user already dismissed. Deriving `open` during render (rather
-  // than syncing via an effect) avoids cascading re-renders and reopens the
-  // dialog automatically when a *new* link is created.
-  const [dismissed, setDismissed] = useState<string | null>(null);
+  // Track the last dismissed action-state by identity. Each submit produces a
+  // new state object, so a dialog auto-reopens on a *new* result without an
+  // effect. One flag covers both the success and the "not eligible" dialogs.
+  const [dismissed, setDismissed] = useState<ActionState>(undefined);
   const created = state?.link ?? null;
-  const open = created !== null && created.goPath !== dismissed;
+  const ineligible = state?.ineligible ?? null;
+  const showSuccess = created !== null && state !== dismissed;
+  const showIneligible = ineligible !== null && state !== dismissed;
 
   useEffect(() => {
     if (state?.success) formRef.current?.reset();
   }, [state]);
 
   function close() {
-    if (created) setDismissed(created.goPath);
+    setDismissed(state);
   }
 
   return (
@@ -77,7 +80,7 @@ export function CreateLinkForm({ defaultUrl }: { defaultUrl?: string }) {
       </form>
 
       <Dialog.Root
-        open={open}
+        open={showSuccess}
         onOpenChange={(next) => {
           if (!next) close();
         }}
@@ -121,6 +124,42 @@ export function CreateLinkForm({ defaultUrl }: { defaultUrl?: string }) {
                 }
               >
                 Để sau
+              </Dialog.Close>
+            </div>
+          </Dialog.Popup>
+        </Dialog.Portal>
+      </Dialog.Root>
+
+      <Dialog.Root
+        open={showIneligible}
+        onOpenChange={(next) => {
+          if (!next) close();
+        }}
+      >
+        <Dialog.Portal>
+          <Dialog.Backdrop className="fixed inset-0 z-50 bg-black/45 backdrop-blur-[2px] transition-opacity duration-150 data-ending-style:opacity-0 data-starting-style:opacity-0" />
+          <Dialog.Popup className="fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-6 text-center shadow-[0_24px_60px_rgba(9,54,95,0.28)] transition duration-150 data-ending-style:scale-95 data-ending-style:opacity-0 data-starting-style:scale-95 data-starting-style:opacity-0">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#fff2e2] text-[#e08a1e]">
+              <PackageX className="h-6 w-6" />
+            </div>
+            <Dialog.Title className="mt-4 text-lg font-black tracking-tight text-[#0d315d]">
+              Sản phẩm chưa thuộc diện hoàn tiền
+            </Dialog.Title>
+            <Dialog.Description className="mt-1.5 text-sm leading-6 text-[#6681a7]">
+              Sản phẩm này trên {ineligible?.platformName} hiện không tham gia
+              chương trình tiếp thị liên kết nên chưa thể tạo link hoàn tiền. Bạn
+              hãy thử một sản phẩm khác nhé.
+            </Dialog.Description>
+            <div className="mt-5">
+              <Dialog.Close
+                render={
+                  <Button
+                    variant="cta"
+                    className="h-auto w-full rounded-xl px-4 py-2.5 font-bold"
+                  />
+                }
+              >
+                Đã hiểu
               </Dialog.Close>
             </div>
           </Dialog.Popup>

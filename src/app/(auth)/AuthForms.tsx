@@ -3,15 +3,39 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { AlertCircle, CheckCircle2, Loader2, MailCheck } from "lucide-react";
+import { AlertCircle, CheckCircle2, Eye, EyeOff, Loader2, MailCheck } from "lucide-react";
 import { signIn, signUp, authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 
 const cardClass =
   "w-full max-w-[26rem] rounded-2xl bg-white p-7 shadow-[0_24px_60px_rgba(4,20,40,0.45)]";
 const labelClass = "block text-sm font-semibold text-[#0d315d]";
-const inputClass =
-  "mt-1.5 h-11 w-full rounded-xl border border-[#dbe7f6] bg-[#f9fbff] px-3.5 text-sm text-[#173861] outline-none transition-colors focus:border-[#9ddd5d] focus:ring-2 focus:ring-[#b7e961]/25";
+const inputBase =
+  "h-11 w-full rounded-xl border border-[#dbe7f6] bg-[#f9fbff] px-3.5 text-sm text-[#173861] outline-none transition-colors focus:border-[#9ddd5d] focus:ring-2 focus:ring-[#b7e961]/25";
+const inputClass = `mt-1.5 ${inputBase}`;
+
+/** Password field with a show/hide eye toggle. */
+function PasswordInput(props: React.ComponentProps<"input">) {
+  const [show, setShow] = useState(false);
+  return (
+    <div className="relative mt-1.5">
+      <input
+        {...props}
+        type={show ? "text" : "password"}
+        className={`${inputBase} pr-11`}
+      />
+      <button
+        type="button"
+        tabIndex={-1}
+        onClick={() => setShow((s) => !s)}
+        aria-label={show ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+        className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8298b6] transition-colors hover:text-[#35537c]"
+      >
+        {show ? <EyeOff className="h-[18px] w-[18px]" /> : <Eye className="h-[18px] w-[18px]" />}
+      </button>
+    </div>
+  );
+}
 
 function FieldError({ message }: { message: string }) {
   return (
@@ -38,7 +62,7 @@ export function LoginForm() {
     const form = new FormData(e.currentTarget);
     const email = String(form.get("email"));
     setLoading(true);
-    const { error } = await signIn.email({
+    const { data, error } = await signIn.email({
       email,
       password: String(form.get("password")),
     });
@@ -52,7 +76,9 @@ export function LoginForm() {
       }
       return;
     }
-    router.push("/dashboard");
+    // Admins land on the admin panel; everyone else on the customer dashboard.
+    const role = (data?.user as { role?: string } | undefined)?.role;
+    router.push(role === "admin" ? "/admin" : "/dashboard");
     router.refresh();
   }
 
@@ -81,7 +107,7 @@ export function LoginForm() {
               Quên mật khẩu?
             </Link>
           </div>
-          <input id="password" name="password" type="password" required autoComplete="current-password" className={inputClass} placeholder="••••••••" />
+          <PasswordInput id="password" name="password" required autoComplete="current-password" placeholder="••••••••" />
         </div>
         {error && <FieldError message={error} />}
         {unverifiedEmail &&
@@ -167,7 +193,7 @@ export function RegisterForm() {
         </div>
         <div>
           <label className={labelClass} htmlFor="password">Mật khẩu</label>
-          <input id="password" name="password" type="password" required minLength={6} autoComplete="new-password" className={inputClass} placeholder="Tối thiểu 6 ký tự" />
+          <PasswordInput id="password" name="password" required minLength={6} autoComplete="new-password" placeholder="Tối thiểu 6 ký tự" />
         </div>
         {error && <FieldError message={error} />}
         <Button type="submit" variant="cta" disabled={loading} className="h-11 w-full gap-2 rounded-xl font-bold">
@@ -292,11 +318,11 @@ export function ResetPasswordForm() {
       <form onSubmit={onSubmit} className="mt-5 space-y-4">
         <div>
           <label className={labelClass} htmlFor="password">Mật khẩu mới</label>
-          <input id="password" name="password" type="password" required minLength={6} autoComplete="new-password" className={inputClass} placeholder="Tối thiểu 6 ký tự" />
+          <PasswordInput id="password" name="password" required minLength={6} autoComplete="new-password" placeholder="Tối thiểu 6 ký tự" />
         </div>
         <div>
           <label className={labelClass} htmlFor="confirm">Xác nhận mật khẩu</label>
-          <input id="confirm" name="confirm" type="password" required minLength={6} autoComplete="new-password" className={inputClass} placeholder="Nhập lại mật khẩu" />
+          <PasswordInput id="confirm" name="confirm" required minLength={6} autoComplete="new-password" placeholder="Nhập lại mật khẩu" />
         </div>
         {error && <FieldError message={error} />}
         <Button type="submit" variant="cta" disabled={loading} className="h-11 w-full gap-2 rounded-xl font-bold">
