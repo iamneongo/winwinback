@@ -1,5 +1,6 @@
 import Image from "next/image";
-import { desc, eq } from "drizzle-orm";
+import Link from "next/link";
+import { and, desc, eq, ilike, or, sql } from "drizzle-orm";
 import {
   AlertTriangle,
   BadgeDollarSign,
@@ -7,8 +8,6 @@ import {
   ChevronRight,
   CircleX,
   Clock3,
-  Filter,
-  Search,
   ShieldAlert,
   TrendingUp,
 } from "lucide-react";
@@ -18,15 +17,28 @@ import { requireAdmin } from "@/lib/auth/guards";
 import { formatVnd } from "@/lib/config";
 import { orderStatusLabel, platformLabel } from "@/lib/labels";
 import { OrderDecisionControls } from "@/components/admin/OrderDecisionControls";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { AdminFilters } from "@/components/admin/AdminFilters";
+import { TrendChart, DonutChart } from "@/components/admin/charts";
+import { getOrderTrend } from "@/lib/admin-metrics";
+import { cn } from "@/lib/utils";
 
 export const metadata = { title: "Yêu cầu hoàn tiền — Win-Win Back" };
 export const dynamic = "force-dynamic";
 
-const statusClass: Record<string, string> = {
-  pending: "bg-[#fff5df] text-[#d88700]",
-  confirmed: "bg-[#e7f7ef] text-[#168146]",
-  completed: "bg-[#e7f7ef] text-[#168146]",
-  cancelled: "bg-[#fee9e8] text-[#d34843]",
+const statusVariant: Record<string, "warning" | "success" | "destructive"> = {
+  pending: "warning",
+  confirmed: "success",
+  completed: "success",
+  cancelled: "destructive",
 };
 
 function Metric({ icon: Icon, tone, label, value, change }: { icon: typeof Clock3; tone: string; label: string; value: string; change: string }) {
@@ -46,37 +58,51 @@ function PanelTitle({ children }: { children: React.ReactNode }) {
   return <h2 className="border-b border-[#edf1f7] px-5 py-3.5 text-sm font-black text-[#12355f]">{children}</h2>;
 }
 
-function TrendChart() {
-  return (
-    <div className="relative h-[155px] px-4 pb-5 pt-3">
-      <div className="absolute inset-x-4 top-6 grid h-[105px] grid-rows-4"><span className="border-t border-[#e7eef7]" /><span className="border-t border-[#e7eef7]" /><span className="border-t border-[#e7eef7]" /><span className="border-y border-[#e7eef7]" /></div>
-      <svg className="relative h-[112px] w-full" viewBox="0 0 660 112" preserveAspectRatio="none" aria-label="Xu hướng yêu cầu hoàn tiền 7 ngày qua">
-        <defs><linearGradient id="requests" x1="0" y1="0" x2="0" y2="1"><stop stopColor="#39b34a" stopOpacity=".2" /><stop offset="1" stopColor="#39b34a" stopOpacity="0" /></linearGradient></defs>
-        <path d="M8 79 L105 57 L200 77 L295 51 L390 79 L485 63 L580 51 L652 64 L652 112 L8 112Z" fill="url(#requests)" />
-        <path d="M8 79 L105 57 L200 77 L295 51 L390 79 L485 63 L580 51 L652 64" fill="none" stroke="#36a944" strokeWidth="2" />
-        <path d="M8 105 L105 95 L200 101 L295 95 L390 105 L485 95 L580 84 L652 94" fill="none" stroke="#1676ef" strokeWidth="2" />
-      </svg>
-      <div className="absolute inset-x-5 bottom-0 flex justify-between text-[10px] text-[#7890b0]"><span>22/08</span><span>23/08</span><span>24/08</span><span>25/08</span><span>26/08</span><span>27/08</span><span>28/08</span></div>
-    </div>
-  );
-}
+const tabs = [
+  { label: "Tất cả", value: undefined as string | undefined },
+  { label: "Chờ duyệt", value: "pending" },
+  { label: "Đã duyệt", value: "confirmed" },
+  { label: "Từ chối", value: "cancelled" },
+];
 
-export default async function CashbackRequestsPage() {
+export default async function CashbackRequestsPage({ searchParams }: { searchParams: Promise<{ q?: string; status?: string }> }) {
   await requireAdmin();
+  const { q, status } = await searchParams;
+
+  const conditions = [];
+  if (q) conditions.push(or(ilike(orders.externalOrderId, `%${q}%`), ilike(users.name, `%${q}%`), ilike(users.email, `%${q}%`)));
+  if (status === "pending" || status === "confirmed" || status === "completed" || status === "cancelled") conditions.push(eq(orders.status, status));
+  const where = conditions.length ? and(...conditions) : undefined;
+
+  const [stats] = await db
+    .select({
+      total: sql<number>`count(*)::int`,
+      pending: sql<number>`count(*) filter (where ${orders.status} = 'pending')::int`,
+      approved: sql<number>`count(*) filter (where ${orders.status} in ('confirmed', 'completed'))::int`,
+      rejected: sql<number>`count(*) filter (where ${orders.status} = 'cancelled')::int`,
+      processing: sql<number>`coalesce(sum(${orders.cashbackAmount}) filter (where ${orders.status} = 'pending'), 0)::float8`,
+    })
+    .from(orders);
+
   const rows = await db
     .select({ order: orders, name: users.name, email: users.email, image: users.image })
     .from(orders)
     .innerJoin(users, eq(orders.userId, users.id))
+    .where(where)
     .orderBy(desc(orders.createdAt))
-    .limit(100);
+    .limit(20);
 
-  const pending = rows.filter(({ order }) => order.status === "pending");
-  const approved = rows.filter(({ order }) => order.status === "confirmed" || order.status === "completed");
-  const rejected = rows.filter(({ order }) => order.status === "cancelled");
-  const processing = pending.reduce((sum, row) => sum + row.order.cashbackAmount, 0);
-  const selected = pending[0] ?? rows[0];
-  const total = rows.length || 1;
-  const approvalRate = Math.round((approved.length / total) * 100);
+  const selectedRow = await db
+    .select({ order: orders, name: users.name, email: users.email, image: users.image })
+    .from(orders)
+    .innerJoin(users, eq(orders.userId, users.id))
+    .orderBy(sql`case when ${orders.status} = 'pending' then 0 else 1 end`, desc(orders.createdAt))
+    .limit(1);
+  const selected = selectedRow[0];
+  const trend = await getOrderTrend(7);
+
+  const total = stats.total || 1;
+  const approvalRate = Math.round((stats.approved / total) * 100);
 
   return (
     <main className="mx-auto w-full max-w-[1600px] px-4 py-5 sm:px-6 lg:px-5">
@@ -85,10 +111,10 @@ export default async function CashbackRequestsPage() {
         <h1 className="text-xl font-black text-[#11345f]">Quản lý yêu cầu hoàn tiền</h1>
       </header>
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
-        <Metric icon={Clock3} tone="bg-[#fff2d4] text-[#e9a414]" label="Yêu cầu chờ duyệt" value={String(pending.length)} change="12,4%" />
-        <Metric icon={CheckCircle2} tone="bg-[#e5f7e5] text-[#35a948]" label="Đã duyệt hôm nay" value={String(approved.length)} change="8,7%" />
-        <Metric icon={CircleX} tone="bg-[#feeae8] text-[#ed4832]" label="Đã từ chối" value={String(rejected.length)} change="5,3%" />
-        <Metric icon={BadgeDollarSign} tone="bg-[#e8f0ff] text-[#2878eb]" label="Tổng tiền hoàn đang xử lý" value={formatVnd(processing)} change="15,2%" />
+        <Metric icon={Clock3} tone="bg-[#fff2d4] text-[#e9a414]" label="Yêu cầu chờ duyệt" value={String(stats.pending)} change="12,4%" />
+        <Metric icon={CheckCircle2} tone="bg-[#e5f7e5] text-[#35a948]" label="Đã duyệt" value={String(stats.approved)} change="8,7%" />
+        <Metric icon={CircleX} tone="bg-[#feeae8] text-[#ed4832]" label="Đã từ chối" value={String(stats.rejected)} change="5,3%" />
+        <Metric icon={BadgeDollarSign} tone="bg-[#e8f0ff] text-[#2878eb]" label="Tổng tiền hoàn đang xử lý" value={formatVnd(stats.processing)} change="15,2%" />
         <Metric icon={TrendingUp} tone="bg-[#f2e6ff] text-[#9c3bd9]" label="Tỷ lệ duyệt" value={`${approvalRate}%`} change="3,6%" />
         <article className="relative hidden min-h-[120px] overflow-hidden rounded-xl bg-[#062a51] p-4 xl:block">
           <Image src="/images/dashboard-overview-mascot-banner-v5.png" alt="" fill sizes="18rem" className="object-cover object-[76%_35%] opacity-80" />
@@ -98,10 +124,39 @@ export default async function CashbackRequestsPage() {
       </section>
 
       <section className="mt-3 grid gap-3 xl:grid-cols-[minmax(0,1.8fr)_minmax(320px,1fr)_minmax(330px,1fr)]">
-        <article className="rounded-xl border border-[#e4ebf5] bg-white"><PanelTitle>Xu hướng yêu cầu hoàn tiền 7 ngày qua</PanelTitle><div className="px-5 pt-3 text-[11px] text-[#587298]"><span className="mr-5 inline-flex items-center gap-1.5"><i className="size-2 rounded-sm bg-[#36a944]" />Tổng yêu cầu</span><span className="inline-flex items-center gap-1.5"><i className="size-2 rounded-sm bg-[#1676ef]" />Đã duyệt</span></div><TrendChart /></article>
-        <article className="rounded-xl border border-[#e4ebf5] bg-white"><PanelTitle>Tỷ lệ xử lý</PanelTitle><div className="flex items-center gap-5 p-5"><div className="grid size-36 shrink-0 place-items-center rounded-full" style={{ background: `conic-gradient(#f7bc1a 0 ${(pending.length / total) * 100}%, #3cad49 0 ${((pending.length + approved.length) / total) * 100}%, #f1503d 0 100%)` }}><div className="grid size-20 place-items-center rounded-full bg-white text-center"><span className="text-[11px] text-[#7890b0]">Tổng</span><strong className="text-lg text-[#102e5c]">{rows.length}</strong></div></div><div className="space-y-3 text-[11px]"><p className="font-bold text-[#405d84]"><i className="mr-2 inline-block size-2 rounded-full bg-[#f7bc1a]" />Chờ duyệt <span className="block pl-4 text-[#7890b0]">{pending.length} ({Math.round((pending.length / total) * 100)}%)</span></p><p className="font-bold text-[#405d84]"><i className="mr-2 inline-block size-2 rounded-full bg-[#3cad49]" />Đã duyệt <span className="block pl-4 text-[#7890b0]">{approved.length} ({approvalRate}%)</span></p><p className="font-bold text-[#405d84]"><i className="mr-2 inline-block size-2 rounded-full bg-[#f1503d]" />Từ chối <span className="block pl-4 text-[#7890b0]">{rejected.length}</span></p></div></div></article>
-        {selected && <aside className="row-span-2 rounded-xl border border-[#e4ebf5] bg-white"><PanelTitle>Chi tiết yêu cầu đang chọn</PanelTitle><div className="p-5"><div className="flex items-center gap-3"><span className="grid size-10 place-items-center overflow-hidden rounded-full bg-[#e8f1ff] font-black text-[#3676cb]">{selected.image ? <Image src={selected.image} alt="" width={40} height={40} className="size-full object-cover" /> : selected.name.charAt(0)}</span><div><b className="text-sm text-[#18375f]">{selected.name}</b><p className="text-[10px] text-[#7188a6]">{selected.email}</p></div><span className="ml-auto rounded-full bg-[#fff5df] px-2 py-1 text-[10px] font-bold text-[#d88700]">{orderStatusLabel[selected.order.status]}</span></div><dl className="mt-5 space-y-2 text-[11px]"><div className="flex justify-between"><dt className="text-[#7188a6]">Mã yêu cầu</dt><dd className="font-bold text-[#35557e]">YC{selected.order.externalOrderId}</dd></div><div className="flex justify-between"><dt className="text-[#7188a6]">Mã đơn hàng</dt><dd className="font-bold text-[#35557e]">{selected.order.externalOrderId}</dd></div><div className="flex justify-between"><dt className="text-[#7188a6]">Thời gian mua</dt><dd className="font-bold text-[#35557e]">{selected.order.orderedAt.toLocaleDateString("vi-VN")}</dd></div><div className="flex justify-between"><dt className="text-[#7188a6]">Giá trị đơn hàng</dt><dd className="font-bold text-[#35557e]">{formatVnd(selected.order.orderAmount)}</dd></div><div className="flex justify-between"><dt className="text-[#7188a6]">Số tiền hoàn</dt><dd className="font-black text-[#168146]">{formatVnd(selected.order.cashbackAmount)}</dd></div><div className="flex justify-between"><dt className="text-[#7188a6]">Sàn</dt><dd className="font-bold text-[#35557e]">{platformLabel[selected.order.platform]}</dd></div></dl>{selected.order.status === "pending" && <div className="mt-5"><OrderDecisionControls orderId={selected.order.id} /></div>}</div><div className="border-t border-[#edf1f7] p-5"><h3 className="text-xs font-black text-[#1b3b65]">Cảnh báo / kiểm tra</h3>{["Tài khoản có nhiều yêu cầu hoàn trong 7 ngày", "Số tiền hoàn cao bất thường", "Nguy cơ trùng đơn hàng"].map((item, index) => <button className="mt-3 flex w-full items-center gap-2 text-left text-[11px] text-[#526d92]" key={item}>{index === 0 ? <AlertTriangle className="size-4 text-[#f04e43]" /> : <ShieldAlert className="size-4 text-[#eead15]" />}<span className="flex-1">{item}</span><ChevronRight className="size-4" /></button>)}</div></aside>}
-        <article className="overflow-hidden rounded-xl border border-[#e4ebf5] bg-white xl:col-span-2"><div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#edf1f7] px-4 py-3"><div className="flex items-center gap-2 text-[11px] font-bold"><span className="rounded-md bg-[#35a647] px-3 py-2 text-white">Tất cả</span><span className="rounded-md bg-[#f5f8fc] px-3 py-2 text-[#607a9d]">Chờ duyệt <b>{pending.length}</b></span><span className="rounded-md bg-[#f5f8fc] px-3 py-2 text-[#607a9d]">Đã duyệt <b>{approved.length}</b></span></div><div className="flex items-center gap-2"><label className="hidden h-8 w-48 items-center gap-2 rounded-md border border-[#e1eaf6] px-2 text-[11px] text-[#879bb5] sm:flex"><Search className="size-3.5" /><input placeholder="Tìm yêu cầu..." className="w-full bg-transparent outline-none" /></label><button className="flex h-8 items-center gap-1 rounded-md border border-[#e1eaf6] px-2 text-[11px] font-semibold text-[#506a90]"><Filter className="size-3.5" />Bộ lọc</button></div></div><PanelTitle>Danh sách yêu cầu hoàn tiền</PanelTitle><div className="overflow-x-auto"><table className="w-full min-w-[920px] text-left text-[11px]"><thead className="bg-[#f7faff] text-[#587298]"><tr><th className="px-4 py-3">Mã YC</th><th className="px-3 py-3">Người dùng</th><th className="px-3 py-3">Sàn</th><th className="px-3 py-3">Mã đơn</th><th className="px-3 py-3">Giá trị đơn</th><th className="px-3 py-3">Hoàn tiền</th><th className="px-3 py-3">Trạng thái</th><th className="px-3 py-3">Hành động</th></tr></thead><tbody>{rows.slice(0, 8).map(({ order, name, email, image }) => <tr className="border-t border-[#edf1f7] text-[#49688f]" key={order.id}><td className="px-4 py-2.5 font-bold text-[#385a83]">YC{order.externalOrderId}</td><td className="px-3 py-2.5"><span className="flex items-center gap-2"><span className="grid size-6 place-items-center overflow-hidden rounded-full bg-[#e5effe] font-black text-[#3676cb]">{image ? <Image src={image} alt="" width={24} height={24} className="size-full object-cover" /> : name.charAt(0)}</span><span><b className="block text-[#2f4f78]">{name}</b><small className="text-[#8aa0bd]">{email}</small></span></span></td><td className="px-3 py-2.5 font-semibold">{platformLabel[order.platform]}</td><td className="px-3 py-2.5">{order.externalOrderId}</td><td className="px-3 py-2.5 font-semibold">{formatVnd(order.orderAmount)}</td><td className="px-3 py-2.5 font-black text-[#168146]">{formatVnd(order.cashbackAmount)}</td><td className="px-3 py-2.5"><span className={`rounded-full px-2 py-1 text-[10px] font-bold ${statusClass[order.status]}`}>{orderStatusLabel[order.status]}</span></td><td className="px-3 py-2.5">{order.status === "pending" ? <OrderDecisionControls orderId={order.id} /> : <span className="text-[#8ba0bb]">Đã xử lý</span>}</td></tr>)}</tbody></table>{rows.length === 0 && <p className="py-12 text-center text-sm text-[#7890b0]">Chưa có yêu cầu hoàn tiền.</p>}</div><footer className="border-t border-[#edf1f7] px-4 py-3 text-[11px] text-[#7890b0]">Hiển thị 1 - {Math.min(rows.length, 8)} trong tổng số {rows.length} yêu cầu</footer></article>
+        <article className="rounded-xl border border-[#e4ebf5] bg-white"><PanelTitle>Xu hướng yêu cầu hoàn tiền 7 ngày qua</PanelTitle><div className="px-5 pt-3 text-[11px] text-[#587298]"><span className="mr-5 inline-flex items-center gap-1.5"><i className="size-2 rounded-sm bg-[#36a944]" />Tổng yêu cầu</span><span className="inline-flex items-center gap-1.5"><i className="size-2 rounded-sm bg-[#1676ef]" />Đã duyệt</span></div><div className="px-3 pb-3 pt-2"><TrendChart ariaLabel="Xu hướng yêu cầu hoàn tiền 7 ngày qua" labels={trend.labels} data={[trend.total, trend.approved]} series={[{ name: "Tổng yêu cầu", color: "#36a944", fill: true, format: "int" }, { name: "Đã duyệt", color: "#1676ef", format: "int" }]} /></div></article>
+        <article className="rounded-xl border border-[#e4ebf5] bg-white"><PanelTitle>Tỷ lệ xử lý</PanelTitle><div className="p-5"><DonutChart size={144} centerTitle="Tổng" format="int" segments={[{ label: "Chờ duyệt", value: stats.pending, color: "#f7bc1a" }, { label: "Đã duyệt", value: stats.approved, color: "#3cad49" }, { label: "Từ chối", value: stats.rejected, color: "#f1503d" }]} /></div></article>
+        {selected && <aside className="row-span-2 rounded-xl border border-[#e4ebf5] bg-white"><PanelTitle>Chi tiết yêu cầu đang chọn</PanelTitle><div className="p-5"><div className="flex items-center gap-3"><span className="grid size-10 place-items-center overflow-hidden rounded-full bg-[#e8f1ff] font-black text-[#3676cb]">{selected.image ? <Image src={selected.image} alt="" width={40} height={40} className="size-full object-cover" /> : selected.name.charAt(0)}</span><div><b className="text-sm text-[#18375f]">{selected.name}</b><p className="text-[10px] text-[#7188a6]">{selected.email}</p></div><Badge className="ml-auto" variant={statusVariant[selected.order.status]}>{orderStatusLabel[selected.order.status]}</Badge></div><dl className="mt-5 space-y-2 text-[11px]"><div className="flex justify-between"><dt className="text-[#7188a6]">Mã yêu cầu</dt><dd className="font-bold text-[#35557e]">YC{selected.order.externalOrderId}</dd></div><div className="flex justify-between"><dt className="text-[#7188a6]">Mã đơn hàng</dt><dd className="font-bold text-[#35557e]">{selected.order.externalOrderId}</dd></div><div className="flex justify-between"><dt className="text-[#7188a6]">Thời gian mua</dt><dd className="font-bold text-[#35557e]">{selected.order.orderedAt.toLocaleDateString("vi-VN")}</dd></div><div className="flex justify-between"><dt className="text-[#7188a6]">Giá trị đơn hàng</dt><dd className="font-bold text-[#35557e]">{formatVnd(selected.order.orderAmount)}</dd></div><div className="flex justify-between"><dt className="text-[#7188a6]">Số tiền hoàn</dt><dd className="font-black text-[#168146]">{formatVnd(selected.order.cashbackAmount)}</dd></div><div className="flex justify-between"><dt className="text-[#7188a6]">Sàn</dt><dd className="font-bold text-[#35557e]">{platformLabel[selected.order.platform]}</dd></div></dl><div className="mt-5 flex items-center gap-2"><Link href={`/admin/yeu-cau-hoan-tien/${selected.order.id}`} className="inline-flex h-8 items-center rounded-md border border-[#dbe6f3] px-3 text-[11px] font-bold text-[#466184] hover:bg-[#f1f6fc]">Xem chi tiết</Link>{selected.order.status === "pending" && <OrderDecisionControls orderId={selected.order.id} />}</div></div><div className="border-t border-[#edf1f7] p-5"><h3 className="text-xs font-black text-[#1b3b65]">Cảnh báo / kiểm tra</h3>{["Tài khoản có nhiều yêu cầu hoàn trong 7 ngày", "Số tiền hoàn cao bất thường", "Nguy cơ trùng đơn hàng"].map((item, index) => <Link href={`/admin/yeu-cau-hoan-tien/${selected.order.id}`} className="mt-3 flex w-full items-center gap-2 text-left text-[11px] text-[#526d92] hover:text-[#2576e9]" key={item}>{index === 0 ? <AlertTriangle className="size-4 text-[#f04e43]" /> : <ShieldAlert className="size-4 text-[#eead15]" />}<span className="flex-1">{item}</span><ChevronRight className="size-4" /></Link>)}</div></aside>}
+        <article className="overflow-hidden rounded-xl border border-[#e4ebf5] bg-white xl:col-span-2"><div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#edf1f7] px-4 py-3"><div className="flex items-center gap-2 text-[11px] font-bold">{tabs.map((tab) => { const active = (tab.value ?? "") === (status ?? ""); return <Link key={tab.label} href={tab.value ? `/admin/yeu-cau-hoan-tien?status=${tab.value}` : "/admin/yeu-cau-hoan-tien"} className={cn("rounded-md px-3 py-2", active ? "bg-[#35a647] text-white" : "bg-[#f5f8fc] text-[#607a9d] hover:bg-[#eaf1f9]")}>{tab.label}</Link>; })}</div><AdminFilters searchPlaceholder="Tìm yêu cầu..." /></div><PanelTitle>Danh sách yêu cầu hoàn tiền</PanelTitle>
+          <Table className="min-w-[920px] text-[11px]">
+            <TableHeader className="bg-[#f7faff] text-[#587298]">
+              <TableRow className="hover:bg-transparent">
+                <TableHead className="px-4 py-3">Mã YC</TableHead>
+                <TableHead className="py-3">Người dùng</TableHead>
+                <TableHead className="py-3">Sàn</TableHead>
+                <TableHead className="py-3">Mã đơn</TableHead>
+                <TableHead className="py-3">Giá trị đơn</TableHead>
+                <TableHead className="py-3">Hoàn tiền</TableHead>
+                <TableHead className="py-3">Trạng thái</TableHead>
+                <TableHead className="py-3">Hành động</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody className="text-[#49688f]">
+              {rows.map(({ order, name, email, image }) => <TableRow key={order.id}>
+                <TableCell className="px-4 py-2.5 font-bold text-[#385a83]">YC{order.externalOrderId}</TableCell>
+                <TableCell className="py-2.5"><span className="flex items-center gap-2"><span className="grid size-6 place-items-center overflow-hidden rounded-full bg-[#e5effe] font-black text-[#3676cb]">{image ? <Image src={image} alt="" width={24} height={24} className="size-full object-cover" /> : name.charAt(0)}</span><span><b className="block text-[#2f4f78]">{name}</b><small className="text-[#8aa0bd]">{email}</small></span></span></TableCell>
+                <TableCell className="py-2.5 font-semibold">{platformLabel[order.platform]}</TableCell>
+                <TableCell className="py-2.5">{order.externalOrderId}</TableCell>
+                <TableCell className="py-2.5 font-semibold">{formatVnd(order.orderAmount)}</TableCell>
+                <TableCell className="py-2.5 font-black text-[#168146]">{formatVnd(order.cashbackAmount)}</TableCell>
+                <TableCell className="py-2.5"><Badge variant={statusVariant[order.status]}>{orderStatusLabel[order.status]}</Badge></TableCell>
+                <TableCell className="py-2.5">{order.status === "pending" ? <OrderDecisionControls orderId={order.id} /> : <span className="text-[#8ba0bb]">Đã xử lý</span>}</TableCell>
+              </TableRow>)}
+            </TableBody>
+          </Table>
+          {rows.length === 0 && <p className="py-12 text-center text-sm text-[#7890b0]">Không tìm thấy yêu cầu phù hợp.</p>}
+          <footer className="border-t border-[#edf1f7] px-4 py-3 text-[11px] text-[#7890b0]">Hiển thị {rows.length} yêu cầu {q || status ? "(đã lọc)" : "gần nhất"}</footer>
+        </article>
       </section>
     </main>
   );

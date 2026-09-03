@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signOut } from "@/lib/auth-client";
-import { Bell, ChevronDown, LogOut, Settings, ShieldCheck } from "lucide-react";
+import { Bell, ChevronDown, LogOut, Settings, ShieldCheck, Store } from "lucide-react";
 import {
   Popover,
   PopoverContent,
@@ -21,9 +21,11 @@ import {
 export function HeaderMenus({
   name,
   role,
+  variant = "customer",
 }: {
   name: string;
   role: "user" | "admin";
+  variant?: "customer" | "admin";
 }) {
   const initial = name.trim().charAt(0).toUpperCase();
   const router = useRouter();
@@ -79,10 +81,16 @@ export function HeaderMenus({
           <DropdownMenuItem render={<Link href="/dashboard/tai-khoan" />}>
             <Settings /> Cài đặt
           </DropdownMenuItem>
-          {role === "admin" && (
-            <DropdownMenuItem render={<Link href="/admin" />}>
-              <ShieldCheck /> Quản trị
+          {variant === "admin" ? (
+            <DropdownMenuItem render={<Link href="/dashboard" />}>
+              <Store /> Trang khách hàng
             </DropdownMenuItem>
+          ) : (
+            role === "admin" && (
+              <DropdownMenuItem render={<Link href="/admin" />}>
+                <ShieldCheck /> Quản trị
+              </DropdownMenuItem>
+            )
           )}
           <DropdownMenuSeparator />
           <DropdownMenuItem

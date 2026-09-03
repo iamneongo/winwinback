@@ -28,7 +28,7 @@ function SubmitButton() {
   );
 }
 
-export function CreateLinkForm() {
+export function CreateLinkForm({ defaultUrl }: { defaultUrl?: string }) {
   const [state, action] = useActionState<ActionState, FormData>(
     createLinkAction,
     undefined,
@@ -59,6 +59,7 @@ export function CreateLinkForm() {
               name="url"
               type="url"
               required
+              defaultValue={defaultUrl}
               placeholder="Dán link sản phẩm TikTok Shop hoặc Shopee…"
               className="min-w-0 flex-1 bg-transparent py-1.5 text-sm text-gray-700 outline-none placeholder:text-gray-400"
             />

@@ -11,7 +11,6 @@ import {
   customerNav,
   adminNav,
   customerAdminLink,
-  adminCustomerLink,
   type NavItem,
 } from "@/components/dashboard/nav";
 import {
@@ -35,7 +34,7 @@ export function Sidebar({
   const router = useRouter();
   const items: NavItem[] =
     variant === "admin"
-      ? [...adminNav, adminCustomerLink]
+      ? adminNav
       : showAdminLink
         ? [...customerNav, customerAdminLink]
         : customerNav;
@@ -49,11 +48,12 @@ export function Sidebar({
         {/* Constant padding => the mark never moves; only the name fades. */}
         <Link
           href={homeHref}
-          aria-label="Win-Win Back"
+          aria-label={variant === "admin" ? "Win-Win Back Admin" : "Win-Win Back"}
           className="flex w-full items-center overflow-hidden px-0 py-2"
         >
           <BrandLogo
             light
+            subtitle={variant === "admin" ? "Admin" : undefined}
             className="[&>span:last-child]:transition-opacity [&>span:last-child]:duration-200 group-data-[collapsible=icon]:[&>span:last-child]:opacity-0"
           />
         </Link>

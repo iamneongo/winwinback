@@ -6,8 +6,9 @@ import { HeaderMenus } from "@/components/dashboard/HeaderMenus";
 import { BrandLogo } from "@/components/BrandLogo";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { CalendarDays, Search } from "lucide-react";
 import { AdminHeaderTitle } from "@/components/admin/AdminHeaderTitle";
+import { AdminSearchInput } from "@/components/admin/AdminFilters";
+import { HeaderDateRange } from "@/components/admin/HeaderDateRange";
 
 export const dynamic = "force-dynamic";
 
@@ -40,15 +41,12 @@ export default async function AdminLayout({
             </Link>
             <AdminHeaderTitle />
             <div className="ml-auto flex items-center gap-3 sm:gap-4">
-              <label className="hidden h-9 w-[264px] items-center gap-2 rounded-lg border border-[#e4ebf5] px-3 text-xs text-[#8aa0bd] xl:flex">
-                <Search className="size-4" />
-                <input className="min-w-0 flex-1 bg-transparent outline-none placeholder:text-[#9aabc3]" placeholder="Tìm kiếm đơn hàng, người dùng, mã đơn..." />
-              </label>
-              <button type="button" className="hidden h-9 items-center gap-2 rounded-lg border border-[#e4ebf5] px-3 text-xs font-medium text-[#7187a6] xl:flex">
-                <CalendarDays className="size-4" />
-                01/08/2026 - 28/08/2026
-              </button>
-              <HeaderMenus name={admin.name} role={admin.role} />
+              <AdminSearchInput
+                action="/admin/don-hang"
+                placeholder="Tìm kiếm đơn hàng, người dùng, mã đơn..."
+              />
+              <HeaderDateRange />
+              <HeaderMenus name={admin.name} role={admin.role} variant="admin" />
             </div>
           </header>
           <Dock variant="admin" />

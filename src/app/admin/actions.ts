@@ -89,6 +89,29 @@ const statusSchema = z.object({
   status: z.enum(["pending", "confirmed", "completed", "cancelled"]),
 });
 
+type OrderStatus = z.infer<typeof statusSchema>["status"];
+
+/**
+ * Persist an order's status and, when it becomes `completed`, credit the
+ * cashback (idempotent). Shared by the quick status control and the detailed
+ * review form.
+ */
+async function applyOrderStatus(
+  orderId: string,
+  status: OrderStatus,
+  fields?: { adminNote?: string | null },
+): Promise<void> {
+  await db
+    .update(orders)
+    .set({ status, ...(fields ?? {}) })
+    .where(eq(orders.id, orderId));
+
+  // Crediting is idempotent and only fires when status === completed.
+  if (status === "completed") {
+    await settleOrderCashback(orderId);
+  }
+}
+
 export async function updateOrderStatusAction(
   _prev: ActionState,
   formData: FormData,
@@ -100,17 +123,40 @@ export async function updateOrderStatusAction(
   });
   if (!parsed.success) return { error: "Dữ liệu không hợp lệ" };
 
-  await db
-    .update(orders)
-    .set({ status: parsed.data.status })
-    .where(eq(orders.id, parsed.data.orderId));
-
-  // Crediting is idempotent and only fires when status === completed.
-  if (parsed.data.status === "completed") {
-    await settleOrderCashback(parsed.data.orderId);
-  }
+  await applyOrderStatus(parsed.data.orderId, parsed.data.status);
   revalidatePath("/admin");
+  revalidatePath("/admin/don-hang");
+  revalidatePath("/admin/yeu-cau-hoan-tien");
   return { success: "Đã cập nhật trạng thái đơn" };
+}
+
+const reviewSchema = z.object({
+  orderId: z.string().uuid(),
+  status: z.enum(["pending", "confirmed", "completed", "cancelled"]),
+  adminNote: z.string().trim().max(2000).optional(),
+});
+
+export async function reviewOrderAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  await requireAdmin();
+  const parsed = reviewSchema.safeParse({
+    orderId: formData.get("orderId"),
+    status: formData.get("status"),
+    adminNote: formData.get("adminNote") || undefined,
+  });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Dữ liệu không hợp lệ" };
+  }
+
+  await applyOrderStatus(parsed.data.orderId, parsed.data.status, {
+    adminNote: parsed.data.adminNote ?? null,
+  });
+  revalidatePath("/admin");
+  revalidatePath("/admin/yeu-cau-hoan-tien");
+  revalidatePath(`/admin/yeu-cau-hoan-tien/${parsed.data.orderId}`);
+  return { success: "Đã lưu kết quả kiểm duyệt" };
 }
 
 const withdrawalActionSchema = z.object({
@@ -184,5 +230,6 @@ export async function processWithdrawalAction(
   void notifyWithdrawalStatus(processed).catch(() => {});
 
   revalidatePath("/admin");
+  revalidatePath("/admin/rut-tien");
   return { success: "Đã xử lý yêu cầu rút tiền" };
 }

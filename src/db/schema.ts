@@ -184,6 +184,8 @@ export const orders = pgTable(
       .notNull()
       .default(0),
     status: orderStatus("status").notNull().default("pending"),
+    // Internal moderation note / feedback captured by an admin during review.
+    adminNote: text("admin_note"),
     // Set once cashback has been credited to the wallet (idempotency guard).
     cashbackCreditedAt: timestamp("cashback_credited_at", {
       withTimezone: true,

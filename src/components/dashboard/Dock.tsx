@@ -1,14 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { LogOut } from "lucide-react";
-import { signOut } from "@/lib/auth-client";
+import { usePathname } from "next/navigation";
 import {
   customerNav,
   adminNav,
   customerAdminLink,
-  adminCustomerLink,
   type NavItem,
 } from "@/components/dashboard/nav";
 
@@ -20,10 +17,9 @@ export function Dock({
   showAdminLink?: boolean;
 }) {
   const pathname = usePathname();
-  const router = useRouter();
   const items: NavItem[] =
     variant === "admin"
-      ? [...adminNav, adminCustomerLink]
+      ? adminNav
       : showAdminLink
         ? [...customerNav, customerAdminLink]
         : customerNav;
@@ -54,22 +50,6 @@ export function Dock({
             </Link>
           );
         })}
-        <div className="flex min-w-0 flex-1">
-          <button
-            type="button"
-            aria-label="Đăng xuất"
-            onClick={async () => {
-              await signOut();
-              router.push("/login");
-            }}
-            className="flex w-full flex-col items-center gap-1 text-[10px] font-semibold text-[#6681a7]"
-          >
-            <span className="flex h-10 w-10 items-center justify-center rounded-full text-[#6681a7]">
-              <LogOut className="h-5 w-5" />
-            </span>
-            Thoát
-          </button>
-        </div>
       </nav>
     </div>
   );

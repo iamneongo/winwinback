@@ -5,6 +5,21 @@ import {
   updateOrderStatusAction,
   type ActionState,
 } from "@/app/admin/actions";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+const statusOptions = [
+  { value: "pending", label: "Chờ duyệt" },
+  { value: "confirmed", label: "Đã xác nhận" },
+  { value: "completed", label: "Hoàn tất" },
+  { value: "cancelled", label: "Đã huỷ" },
+];
 
 export function OrderStatusControl({
   orderId,
@@ -20,24 +35,27 @@ export function OrderStatusControl({
   return (
     <form action={action} className="flex items-center gap-2">
       <input type="hidden" name="orderId" value={orderId} />
-      <select
-        name="status"
-        defaultValue={status}
-        disabled={pending}
-        className="rounded-lg border border-[#d9e5f4] bg-white px-2 py-1 text-xs text-[#35537c] outline-none focus:border-[#8bd950]"
-      >
-        <option value="pending">Chờ duyệt</option>
-        <option value="confirmed">Đã xác nhận</option>
-        <option value="completed">Hoàn tất</option>
-        <option value="cancelled">Đã huỷ</option>
-      </select>
-      <button
+      <Select name="status" defaultValue={status} disabled={pending}>
+        <SelectTrigger className="h-8 w-32 text-xs text-[#35537c]">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {statusOptions.map((option) => (
+            <SelectItem key={option.value} value={option.value}>
+              {option.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <Button
         type="submit"
         disabled={pending}
-        className="rounded-lg bg-[#b7e961] px-2.5 py-1 text-xs font-semibold text-[#14334c] disabled:opacity-60"
+        variant="cta"
+        size="sm"
+        className="text-xs font-semibold"
       >
         Lưu
-      </button>
+      </Button>
     </form>
   );
 }

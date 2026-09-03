@@ -9,6 +9,7 @@ import {
   Plug,
   Store,
   ShieldCheck,
+  Banknote,
   type LucideIcon,
 } from "lucide-react";
 
@@ -34,6 +35,7 @@ export const adminNav: NavItem[] = [
   { href: "/admin", icon: LayoutDashboard, label: "Tổng quan", exact: true },
   { href: "/admin/nguoi-dung", icon: UsersRound, label: "Quản lý người dùng", short: "Người dùng" },
   { href: "/admin/yeu-cau-hoan-tien", icon: BadgeDollarSign, label: "Yêu cầu hoàn tiền", short: "Yêu cầu" },
+  { href: "/admin/rut-tien", icon: Banknote, label: "Yêu cầu rút tiền", short: "Rút tiền" },
   { href: "/admin/don-hang", icon: ShoppingBag, label: "Đơn hàng", short: "Đơn hàng" },
   { href: "/admin/integrations", icon: Plug, label: "Kết nối sàn", short: "Kết nối" },
 ];

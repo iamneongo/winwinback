@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import type { ReactNode } from 'react';
+import { useRouter } from 'next/navigation';
 import { Link2, ArrowRight } from 'lucide-react';
 import { TikTokIcon, ShopeeIcon } from './BrandIcons';
 import { Button } from '@/components/ui/button';
@@ -31,8 +32,21 @@ const platforms: PlatformConfig[] = [
 ];
 
 export function ConsoleSection() {
+  const router = useRouter();
   const [active, setActive] = useState<Platform>('tiktok');
   const [inputValue, setInputValue] = useState('');
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const url = inputValue.trim();
+    // Hand off to the dashboard create-link flow (auth guard sends anonymous
+    // visitors to /login first, then back here). The url is prefilled.
+    router.push(
+      url
+        ? `/dashboard?url=${encodeURIComponent(url)}#tao-link`
+        : '/dashboard#tao-link',
+    );
+  }
 
   return (
     <section id="nhap-link" className="reference-console relative bg-[#082b4b] pb-16 z-10">
@@ -58,7 +72,7 @@ export function ConsoleSection() {
             </div>
 
             {/* Input row — button inside input */}
-            <div className="flex items-center gap-2 rounded-xl border border-gray-200 px-3 py-2 focus-within:border-[#b7e961] transition-colors">
+            <form onSubmit={handleSubmit} className="flex items-center gap-2 rounded-xl border border-gray-200 px-3 py-2 focus-within:border-[#b7e961] transition-colors">
               <Link2 className="h-4 w-4 text-[#6b8290] flex-shrink-0 ml-1" />
               <input
                 type="text"
@@ -76,13 +90,14 @@ export function ConsoleSection() {
                 className="flex-1 hidden sm:block text-sm text-gray-700 outline-none bg-transparent placeholder:text-gray-400 min-w-0 py-1.5"
               />
               <Button
+                type="submit"
                 variant="cta"
                 className="h-auto flex-shrink-0 gap-1.5 whitespace-nowrap rounded-lg px-3 py-2.5 sm:px-4"
               >
                 <span className="hidden sm:inline">Kiểm tra hoàn tiền</span>
                 <ArrowRight className="h-4 w-4" />
               </Button>
-            </div>
+            </form>
           </div>
 
         </div>

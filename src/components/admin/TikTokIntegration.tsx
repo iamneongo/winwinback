@@ -10,6 +10,14 @@ import {
   type OrdersState,
 } from "@/app/admin/integrations/actions";
 import { SubmitButton } from "@/components/forms/SubmitButton";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 const inputClass =
   "w-full rounded-xl border border-[#d9e5f4] bg-[#f9fbff] px-4 py-3 text-sm text-[#173861] placeholder-[#8ba0bd] outline-none focus:border-[#8bd950] focus:ring-2 focus:ring-[#b7e961]/25";
@@ -112,32 +120,30 @@ function OrdersPanel() {
               Chưa có đơn hàng affiliate nào cho creator này.
             </p>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-[#49688f]">
-                <thead className="text-[#536f98]">
-                  <tr>
-                    <th className="py-2 pr-3">Order ID</th>
-                    <th className="py-2 pr-3">Product ID</th>
-                    <th className="py-2 pr-3">Sản phẩm</th>
-                    <th className="py-2 pr-3">Giá</th>
-                    <th className="py-2 pr-3">Trạng thái</th>
-                    <th className="py-2">Thời gian</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {state.rows.map((row, i) => (
-                    <tr key={`${row.orderId}-${i}`} className="border-t border-[#e8eef6]">
-                      <td className="py-2 pr-3 font-mono">{row.orderId}</td>
-                      <td className="py-2 pr-3 font-mono">{row.productId}</td>
-                      <td className="py-2 pr-3">{row.productName}</td>
-                      <td className="py-2 pr-3">{row.price}</td>
-                      <td className="py-2 pr-3">{row.status}</td>
-                      <td className="py-2">{row.createdAt ?? "—"}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <Table className="text-xs text-[#49688f]">
+              <TableHeader className="text-[#536f98]">
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="py-2 pr-3">Order ID</TableHead>
+                  <TableHead className="py-2 pr-3">Product ID</TableHead>
+                  <TableHead className="py-2 pr-3">Sản phẩm</TableHead>
+                  <TableHead className="py-2 pr-3">Giá</TableHead>
+                  <TableHead className="py-2 pr-3">Trạng thái</TableHead>
+                  <TableHead className="py-2">Thời gian</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {state.rows.map((row, i) => (
+                  <TableRow key={`${row.orderId}-${i}`}>
+                    <TableCell className="py-2 pr-3 font-mono">{row.orderId}</TableCell>
+                    <TableCell className="py-2 pr-3 font-mono">{row.productId}</TableCell>
+                    <TableCell className="py-2 pr-3">{row.productName}</TableCell>
+                    <TableCell className="py-2 pr-3">{row.price}</TableCell>
+                    <TableCell className="py-2 pr-3">{row.status}</TableCell>
+                    <TableCell className="py-2">{row.createdAt ?? "—"}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           )}
         </>
       )}
