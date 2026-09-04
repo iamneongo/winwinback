@@ -16,7 +16,7 @@ export function HeroSection() {
             style={{ '--delay': '0ms' } as React.CSSProperties}
           >
             <span className="text-[9.28px] font-extrabold tracking-[1.392px] text-[#c5ed78]">
-              TIKTOK SHOP · SHOPEE
+              CASHBACK · HOÀN TIỀN · TIKTOK SHOP · SHOPEE
             </span>
           </div>
 
@@ -24,15 +24,15 @@ export function HeroSection() {
             className="ww-hero-enter mt-4 font-bold leading-[0.89] tracking-[-0.07em] text-white"
             style={{ fontSize: 'clamp(32px, 7vw, 60px)', '--delay': '80ms' } as React.CSSProperties}
           >
-            Dán link sản phẩm,<br />
-            <span className="ww-lime-text-gradient">nhận tiền hoàn về ví.</span>
+            Hoàn tiền mua sắm Shopee, TikTok Shop,<br />
+            <span className="ww-lime-text-gradient">cashback về ví mỗi đơn.</span>
           </h1>
 
           <p
             className="ww-hero-enter mt-5 text-base text-white/70 max-w-[490px] leading-6"
             style={{ '--delay': '180ms' } as React.CSSProperties}
           >
-            Dán link sản phẩm vào Win-Win Back trước khi mua trên TikTok Shop hoặc Shopee. Tiền hoàn về ví khi đơn hoàn tất.
+            Dán link sản phẩm vào Win-Win Back trước khi mua trên TikTok Shop hoặc Shopee để nhận cashback. Tiền hoàn về ví khi đơn hoàn tất — không mất phí, điều kiện công khai.
           </p>
 
           <div
