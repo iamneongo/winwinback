@@ -5,6 +5,8 @@ export interface ConvertResult {
   affiliateUrl: string;
   /** Optional product title if the provider resolves it. */
   title?: string;
+  /** Marketplace product id the link points to (TikTok: starts with 17...). */
+  productId?: string;
 }
 
 /**

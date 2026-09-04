@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { affiliateLinks } from "@/db/schema";
-import { incrementClicks } from "@/lib/wallet";
+import { recordLinkClick } from "@/lib/wallet";
 
 /** True for plain web links (one_link / sharing_link) safe to 302-redirect. */
 function isHttpUrl(url: string): boolean {
@@ -93,8 +93,14 @@ export async function GET(
     return NextResponse.redirect(new URL("/", _req.url), 302);
   }
 
-  // Best-effort click tracking; never block the redirect.
-  incrementClicks(link.id).catch(() => {});
+  // Best-effort click tracking (also feeds order→user attribution); never
+  // block the redirect.
+  recordLinkClick({
+    id: link.id,
+    userId: link.userId,
+    platform: link.platform,
+    productId: link.productId,
+  }).catch(() => {});
 
   // Web links (one_link / sharing_link) redirect straight away. Custom-scheme
   // deep links go through a client-side interstitial that reliably opens the

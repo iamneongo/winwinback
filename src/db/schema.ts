@@ -147,6 +147,10 @@ export const affiliateLinks = pgTable(
     platform: platform("platform").notNull(),
     originalUrl: text("original_url").notNull(),
     affiliateUrl: text("affiliate_url").notNull(),
+    // Marketplace product id resolved at creation (TikTok: starts with 17...).
+    // The join key that lets us attribute an incoming affiliate order to the
+    // user who generated the link for that product.
+    productId: text("product_id"),
     // Short code used in /go/<code> to track clicks then redirect.
     shortCode: text("short_code").notNull().unique(),
     title: text("title"),
@@ -184,6 +188,12 @@ export const orders = pgTable(
       .notNull()
       .default(0),
     status: orderStatus("status").notNull().default("pending"),
+    // Result of the last live check against the TikTok affiliate-orders API:
+    // "settled" | "pending" | "cancelled" | "not_found" | null (never checked).
+    // Used to gate cashback approval so admins never pay out an order the
+    // creator did not actually earn commission on.
+    tiktokVerifiedStatus: text("tiktok_verified_status"),
+    tiktokVerifiedAt: timestamp("tiktok_verified_at", { withTimezone: true }),
     // Internal moderation note / feedback captured by an admin during review.
     adminNote: text("admin_note"),
     // Set once cashback has been credited to the wallet (idempotency guard).
@@ -252,6 +262,41 @@ export const withdrawals = pgTable(
 );
 
 // ---------------------------------------------------------------------------
+// Link clicks (attribution log)
+// ---------------------------------------------------------------------------
+
+// One row per /go/<code> visit. Attribution matches an incoming affiliate
+// order to a click by (productId + time): the most recent unattributed click
+// for that product, made before the order was created, wins the order.
+export const linkClicks = pgTable(
+  "link_clicks",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    linkId: uuid("link_id")
+      .notNull()
+      .references(() => affiliateLinks.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    platform: platform("platform").notNull(),
+    // Denormalised from the link so attribution can match by product cheaply.
+    productId: text("product_id"),
+    // Set once this click has been used to attribute an order (prevents a
+    // single click being credited to more than one order).
+    attributedOrderId: uuid("attributed_order_id").references(() => orders.id, {
+      onDelete: "set null",
+    }),
+    clickedAt: timestamp("clicked_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    index("link_clicks_product_idx").on(t.productId, t.clickedAt),
+    index("link_clicks_link_idx").on(t.linkId),
+  ],
+);
+
+// ---------------------------------------------------------------------------
 // Integration tokens (OAuth credentials for affiliate providers)
 // ---------------------------------------------------------------------------
 //
@@ -286,3 +331,4 @@ export type IntegrationToken = typeof integrationTokens.$inferSelect;
 export type Order = typeof orders.$inferSelect;
 export type WalletTransaction = typeof walletTransactions.$inferSelect;
 export type Withdrawal = typeof withdrawals.$inferSelect;
+export type LinkClick = typeof linkClicks.$inferSelect;

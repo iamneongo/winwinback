@@ -110,7 +110,7 @@ class TikTokProvider implements AffiliateProvider {
       );
     }
 
-    return { affiliateUrl };
+    return { affiliateUrl, productId };
   }
 }
 

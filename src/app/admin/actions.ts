@@ -9,6 +9,48 @@ import { requireAdmin } from "@/lib/auth/guards";
 import { settleOrderCashback, recordWalletTx } from "@/lib/wallet";
 import { notifyWithdrawalStatus } from "@/lib/notify";
 import { cashbackRate } from "@/lib/config";
+import { verifyTikTokOrder } from "@/lib/affiliate/tiktok/orders";
+
+/**
+ * Anti-fraud gate: a TikTok order may only be marked completed (which credits
+ * cashback) after the creator's affiliate-orders API confirms it as SETTLED —
+ * proof the commission was actually earned. Auto re-checks live if needed and
+ * persists the verdict. Non-TikTok orders are not gated here.
+ */
+async function ensureTikTokSettled(orderId: string): Promise<{ error?: string }> {
+  const rows = await db
+    .select({
+      platform: orders.platform,
+      externalOrderId: orders.externalOrderId,
+      verified: orders.tiktokVerifiedStatus,
+    })
+    .from(orders)
+    .where(eq(orders.id, orderId))
+    .limit(1);
+  const order = rows[0];
+  if (!order) return { error: "Không tìm thấy đơn" };
+  if (order.platform !== "tiktok") return {};
+
+  let verified = order.verified;
+  if (verified !== "settled") {
+    try {
+      const r = await verifyTikTokOrder(order.externalOrderId);
+      verified = r.status;
+      await db
+        .update(orders)
+        .set({ tiktokVerifiedStatus: r.status, tiktokVerifiedAt: new Date() })
+        .where(eq(orders.id, orderId));
+    } catch {
+      // Treat a failed check as unverified — never let it unblock a payout.
+    }
+  }
+  if (verified !== "settled") {
+    return {
+      error: `Chưa xác minh "Settled" từ TikTok (hiện: ${verified ?? "chưa kiểm tra"}). Không thể duyệt hoàn tiền cho đơn này.`,
+    };
+  }
+  return {};
+}
 
 export type ActionState = { error?: string; success?: string } | undefined;
 
@@ -53,6 +95,20 @@ export async function createOrderAction(
   const cashback =
     data.cashbackAmount ?? Math.round(data.commissionAmount * cashbackRate);
 
+  // Anti-fraud gate: a completed TikTok order must be SETTLED on TikTok's side
+  // before it can be created as payable.
+  let tiktokVerified: "settled" | "pending" | "cancelled" | "not_found" | null =
+    null;
+  if (data.status === "completed" && data.platform === "tiktok") {
+    const r = await verifyTikTokOrder(data.externalOrderId).catch(() => null);
+    tiktokVerified = r?.status ?? null;
+    if (tiktokVerified !== "settled") {
+      return {
+        error: `Không thể tạo đơn hoàn tất: TikTok chưa xác minh "Settled" (hiện: ${tiktokVerified ?? "không kiểm tra được"}).`,
+      };
+    }
+  }
+
   let orderId: string;
   try {
     const inserted = await db
@@ -66,6 +122,8 @@ export async function createOrderAction(
         commissionAmount: data.commissionAmount,
         cashbackAmount: cashback,
         status: data.status,
+        tiktokVerifiedStatus: tiktokVerified ?? undefined,
+        tiktokVerifiedAt: tiktokVerified ? new Date() : undefined,
       })
       .returning({ id: orders.id });
     orderId = inserted[0].id;
@@ -100,7 +158,13 @@ async function applyOrderStatus(
   orderId: string,
   status: OrderStatus,
   fields?: { adminNote?: string | null },
-): Promise<void> {
+): Promise<{ error?: string }> {
+  // Gate before crediting: TikTok orders must be verified SETTLED.
+  if (status === "completed") {
+    const gate = await ensureTikTokSettled(orderId);
+    if (gate.error) return gate;
+  }
+
   await db
     .update(orders)
     .set({ status, ...(fields ?? {}) })
@@ -110,6 +174,7 @@ async function applyOrderStatus(
   if (status === "completed") {
     await settleOrderCashback(orderId);
   }
+  return {};
 }
 
 export async function updateOrderStatusAction(
@@ -123,7 +188,8 @@ export async function updateOrderStatusAction(
   });
   if (!parsed.success) return { error: "Dữ liệu không hợp lệ" };
 
-  await applyOrderStatus(parsed.data.orderId, parsed.data.status);
+  const res = await applyOrderStatus(parsed.data.orderId, parsed.data.status);
+  if (res.error) return { error: res.error };
   revalidatePath("/admin");
   revalidatePath("/admin/don-hang");
   revalidatePath("/admin/yeu-cau-hoan-tien");
@@ -150,13 +216,75 @@ export async function reviewOrderAction(
     return { error: parsed.error.issues[0]?.message ?? "Dữ liệu không hợp lệ" };
   }
 
-  await applyOrderStatus(parsed.data.orderId, parsed.data.status, {
+  const res = await applyOrderStatus(parsed.data.orderId, parsed.data.status, {
     adminNote: parsed.data.adminNote ?? null,
   });
+  if (res.error) return { error: res.error };
   revalidatePath("/admin");
   revalidatePath("/admin/yeu-cau-hoan-tien");
   revalidatePath(`/admin/yeu-cau-hoan-tien/${parsed.data.orderId}`);
   return { success: "Đã lưu kết quả kiểm duyệt" };
+}
+
+const verifyLabel: Record<string, string> = {
+  settled: 'Đã "Settled" — creator có hoa hồng ✓',
+  pending: "Đang chờ trên TikTok (chưa settle)",
+  cancelled: "Đã huỷ/hoàn — không có hoa hồng",
+  not_found: "Không tìm thấy đơn này trên TikTok",
+};
+
+const verifyOrderSchema = z.object({ orderId: z.string().uuid() });
+
+/**
+ * On-demand check of a TikTok order against the creator's affiliate-orders API,
+ * so an admin can confirm a payout is legitimate without opening TikTok. Caches
+ * the verdict on the order (tiktokVerifiedStatus/At).
+ */
+export async function verifyOrderAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  await requireAdmin();
+  const parsed = verifyOrderSchema.safeParse({ orderId: formData.get("orderId") });
+  if (!parsed.success) return { error: "Dữ liệu không hợp lệ" };
+
+  const rows = await db
+    .select({
+      platform: orders.platform,
+      externalOrderId: orders.externalOrderId,
+    })
+    .from(orders)
+    .where(eq(orders.id, parsed.data.orderId))
+    .limit(1);
+  const order = rows[0];
+  if (!order) return { error: "Không tìm thấy đơn" };
+  if (order.platform !== "tiktok") {
+    return { error: "Chỉ kiểm tra được đơn TikTok" };
+  }
+
+  let result;
+  try {
+    result = await verifyTikTokOrder(order.externalOrderId);
+  } catch {
+    return { error: "Không gọi được TikTok API để kiểm tra" };
+  }
+  if (!result.connected) {
+    return { error: "Chưa kết nối tài khoản Creator TikTok — không thể kiểm tra" };
+  }
+
+  await db
+    .update(orders)
+    .set({ tiktokVerifiedStatus: result.status, tiktokVerifiedAt: new Date() })
+    .where(eq(orders.id, parsed.data.orderId));
+  revalidatePath("/admin");
+  revalidatePath("/admin/don-hang");
+  revalidatePath("/admin/yeu-cau-hoan-tien");
+  revalidatePath(`/admin/yeu-cau-hoan-tien/${parsed.data.orderId}`);
+
+  const label = verifyLabel[result.status ?? "not_found"] ?? result.status;
+  return {
+    success: `TikTok: ${label}${result.rawStatus ? ` (${result.rawStatus})` : ""}`,
+  };
 }
 
 const withdrawalActionSchema = z.object({

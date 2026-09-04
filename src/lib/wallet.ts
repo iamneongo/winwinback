@@ -106,13 +106,27 @@ export async function settleOrderCashback(orderId: string): Promise<boolean> {
   return true;
 }
 
-/** Increment an affiliate link's click counter (best effort). */
-export async function incrementClicks(
-  linkId: string,
-): Promise<void> {
-  const { affiliateLinks } = await import("@/db/schema");
-  await db
-    .update(affiliateLinks)
-    .set({ clicks: sql`${affiliateLinks.clicks} + 1` })
-    .where(eq(affiliateLinks.id, linkId));
+/**
+ * Record a /go/<code> visit: append a click row (for order→user attribution)
+ * and bump the link's click counter. Best effort — never blocks the redirect.
+ */
+export async function recordLinkClick(link: {
+  id: string;
+  userId: string;
+  platform: "shopee" | "tiktok";
+  productId: string | null;
+}): Promise<void> {
+  const { affiliateLinks, linkClicks } = await import("@/db/schema");
+  await Promise.all([
+    db.insert(linkClicks).values({
+      linkId: link.id,
+      userId: link.userId,
+      platform: link.platform,
+      productId: link.productId,
+    }),
+    db
+      .update(affiliateLinks)
+      .set({ clicks: sql`${affiliateLinks.clicks} + 1` })
+      .where(eq(affiliateLinks.id, link.id)),
+  ]);
 }

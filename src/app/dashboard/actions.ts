@@ -91,6 +91,7 @@ export async function createLinkAction(
 
   let affiliateUrl: string;
   let title: string | undefined;
+  let productId: string | undefined;
   try {
     const result = await getAffiliateProvider(platform).convertLink(
       platform,
@@ -98,6 +99,7 @@ export async function createLinkAction(
     );
     affiliateUrl = result.affiliateUrl;
     title = result.title;
+    productId = result.productId;
   } catch (e) {
     const msg = e instanceof Error ? e.message : "";
     // Admin/config problems (provider not set up / not connected) are real
@@ -118,6 +120,7 @@ export async function createLinkAction(
         platform,
         originalUrl: parsed.data.url,
         affiliateUrl,
+        productId,
         shortCode,
         title,
       });

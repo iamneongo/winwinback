@@ -1,7 +1,11 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { reviewOrderAction, type ActionState } from "@/app/admin/actions";
+import {
+  reviewOrderAction,
+  verifyOrderAction,
+  type ActionState,
+} from "@/app/admin/actions";
 import {
   Select,
   SelectContent,
@@ -19,14 +23,70 @@ const options = [
   { value: "cancelled", label: "Từ chối" },
 ];
 
+const verifiedBadge: Record<string, { label: string; cls: string }> = {
+  settled: { label: 'TikTok: Settled ✓', cls: "bg-[#e8f8eb] text-[#168146]" },
+  pending: { label: "TikTok: Chờ settle", cls: "bg-[#fff3dc] text-[#b7791f]" },
+  cancelled: { label: "TikTok: Huỷ/hoàn", cls: "bg-red-50 text-red-600" },
+  not_found: { label: "TikTok: Không tìm thấy", cls: "bg-red-50 text-red-600" },
+};
+
+/** Verify-with-TikTok control + current verdict badge (TikTok orders only). */
+function TikTokVerify({
+  orderId,
+  verifiedStatus,
+}: {
+  orderId: string;
+  verifiedStatus: string | null;
+}) {
+  const [state, action] = useActionState<ActionState, FormData>(
+    verifyOrderAction,
+    undefined,
+  );
+  const badge = verifiedStatus ? verifiedBadge[verifiedStatus] : undefined;
+  return (
+    <div className="space-y-2 rounded-lg border border-[#e2ebf6] bg-[#f9fbff] p-3">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-xs font-semibold text-[#526b90]">
+          Xác minh hoàn tiền
+        </span>
+        {badge ? (
+          <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${badge.cls}`}>
+            {badge.label}
+          </span>
+        ) : (
+          <span className="rounded-full bg-[#eef2f8] px-2 py-0.5 text-[10px] font-bold text-[#6b83a6]">
+            Chưa kiểm tra
+          </span>
+        )}
+      </div>
+      <form action={action} className="flex items-center gap-3">
+        <input type="hidden" name="orderId" value={orderId} />
+        <SubmitButton variant="ghost">Kiểm tra với TikTok</SubmitButton>
+        {state?.error && <span className="text-xs text-red-600">{state.error}</span>}
+        {state?.success && (
+          <span className="text-xs font-medium text-[#2f7a1c]">{state.success}</span>
+        )}
+      </form>
+      <p className="text-[10px] leading-4 text-[#8298b6]">
+        Chỉ duyệt “Hoàn tất” được khi TikTok xác nhận <b>Settled</b> (creator đã
+        có hoa hồng). Tránh chi tiền cho đơn không có thật/không hoa hồng.
+      </p>
+    </div>
+  );
+}
+
 export function OrderReviewForm({
   orderId,
   status,
   adminNote,
+  platform,
+  verifiedStatus,
 }: {
   orderId: string;
   status: string;
   adminNote: string | null;
+  platform?: string;
+  verifiedStatus?: string | null;
 }) {
   const [state, action] = useActionState<ActionState, FormData>(
     reviewOrderAction,
@@ -35,8 +95,12 @@ export function OrderReviewForm({
   const [value, setValue] = useState(status);
 
   return (
-    <form action={action} className="space-y-3">
-      <input type="hidden" name="orderId" value={orderId} />
+    <div className="space-y-3">
+      {platform === "tiktok" && (
+        <TikTokVerify orderId={orderId} verifiedStatus={verifiedStatus ?? null} />
+      )}
+      <form action={action} className="space-y-3">
+        <input type="hidden" name="orderId" value={orderId} />
       <label className="block text-xs font-semibold text-[#526b90]">
         Kết quả kiểm duyệt
         <div className="mt-1.5">
@@ -75,7 +139,8 @@ export function OrderReviewForm({
         {state?.success && (
           <p className="text-xs font-medium text-[#2f7a1c]">{state.success}</p>
         )}
-      </div>
-    </form>
+        </div>
+      </form>
+    </div>
   );
 }
