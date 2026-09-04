@@ -2,18 +2,23 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { ScrollReveal } from "@/components/ScrollReveal";
 
+const seoTitle =
+  "Win-Win Back | Hoàn Tiền Mua Sắm - cashback | Shopee back | Tiktok back";
+const seoDescription =
+  "Win-Win Back | ứng dụng cashback hoàn tiền khi mua Shopee, TikTok Shop. Voucher, sale, mã giảm giá mỗi ngày | Shopee back | Tiktok back";
+
 export const metadata: Metadata = {
-  title: "Win-Win Back — Mua sắm có hoàn tiền",
-  description: "Dán link sản phẩm từ TikTok Shop hoặc Shopee. Tiền hoàn về ví khi đơn hoàn tất. Không mất phí.",
+  title: seoTitle,
+  description: seoDescription,
   openGraph: {
-    title: "Win-Win Back — Dán link sản phẩm, nhận tiền hoàn về ví",
-    description: "Dán link sản phẩm từ TikTok Shop hoặc Shopee. Tiền hoàn về ví khi đơn hoàn tất. Không mất phí.",
+    title: seoTitle,
+    description: seoDescription,
     images: [
       {
         url: "/images/og-image.png",
         width: 1512,
         height: 756,
-        alt: "Win-Win Back — Dán link sản phẩm, nhận tiền hoàn về ví",
+        alt: seoTitle,
       },
     ],
     type: "website",
@@ -21,8 +26,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Win-Win Back — Dán link sản phẩm, nhận tiền hoàn về ví",
-    description: "Dán link sản phẩm từ TikTok Shop hoặc Shopee. Tiền hoàn về ví khi đơn hoàn tất.",
+    title: seoTitle,
+    description: seoDescription,
     images: ["/images/og-image.png"],
   },
 };
