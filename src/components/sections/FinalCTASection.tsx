@@ -29,7 +29,7 @@ export function FinalCTASection() {
             variant="cta"
             nativeButton={false}
             className="h-auto gap-2 whitespace-nowrap rounded-full px-6 py-3.5 hover:scale-[1.03]"
-            render={<a href="#nhap-link" />}
+            render={<a href="/dashboard#tao-link" />}
           >
             Nhập link sản phẩm <ArrowRight className="h-4 w-4" />
           </Button>

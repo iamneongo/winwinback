@@ -98,7 +98,7 @@ export function HowItWorksSection() {
           style={{ '--animate-delay': '480ms' } as React.CSSProperties}
         >
           <a
-            href="#nhap-link"
+            href="/dashboard#tao-link"
             className="inline-flex items-center gap-1.5 text-[#102e47] font-semibold text-sm hover:underline"
           >
             Thử ngay với link của bạn <ArrowRight className="h-4 w-4" />

@@ -3,7 +3,7 @@ import { CircleCheck, ShieldCheck } from 'lucide-react';
 
 export function HeroSection() {
   return (
-    <section className="reference-hero relative isolate overflow-hidden ww-hero-bg pb-4 pt-[110px]">
+    <section className="reference-hero relative isolate overflow-hidden ww-hero-bg pb-16 pt-[110px]">
       <div className="reference-hero-surface absolute inset-0 pointer-events-none" style={{
         background: 'radial-gradient(circle at 76% 27%, rgba(163, 225, 78, 0.26), transparent 19%), radial-gradient(circle at 68% 71%, rgba(234, 191, 57, 0.12), transparent 22%)'
       }} />
