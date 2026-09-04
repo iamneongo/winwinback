@@ -167,24 +167,17 @@
    radius so it works for rounded-lg / rounded-xl / rounded-full callers. */
 .ww-btn-cta {
   position: relative;
-  isolation: isolate;
   color: #14334c;
-  background-image: linear-gradient(135deg, #d4f57a 0%, #b7e961 50%, #9fd94e 100%);
+  /* Top glass sheen layered directly on the gradient (no pseudo-element, so
+     it can't composite a dark box on dark backgrounds). */
+  background-image:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0) 55%),
+    linear-gradient(135deg, #d4f57a 0%, #b7e961 50%, #9fd94e 100%);
   box-shadow:
     0 1px 0 0 rgba(255, 255, 255, 0.55) inset,
     0 -2px 0 0 rgba(0, 0, 0, 0.12) inset,
     0 4px 10px rgba(183, 233, 97, 0.4),
     0 1px 2px rgba(0, 0, 0, 0.12);
-}
-.ww-btn-cta::before {
-  content: "";
-  position: absolute;
-  inset: 0 0 auto 0;
-  height: 50%;
-  border-radius: inherit;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0) 100%);
-  pointer-events: none;
-  z-index: -1;
 }
 .ww-btn-cta:hover {
   filter: brightness(1.05);

@@ -36,19 +36,13 @@ export function NavBar() {
         </nav>
         {/* Auth + CTA */}
         <div className="flex items-center gap-4">
-        <a
-          href="/login"
-          className="hidden sm:inline text-[11px] font-bold text-white/75 hover:text-white transition-colors tracking-wide"
-        >
-          Đăng nhập
-        </a>
         <Button
           variant="cta"
           nativeButton={false}
           className="hidden h-auto gap-1.5 rounded-full px-5 py-2.5 hover:scale-[1.03] sm:inline-flex"
-          render={<a href="/dashboard" />}
+          render={<a href="/register" />}
         >
-          Nhập link ngay <ArrowRight className="h-3.5 w-3.5" />
+          Nhận hoàn tiền ngay <ArrowRight className="h-3.5 w-3.5" />
         </Button>
         </div>
       </div>
