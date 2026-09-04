@@ -4,7 +4,7 @@ import { AuthBrandPanel } from "./AuthBrandPanel";
 
 export function AuthShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="winwin-root relative min-h-screen overflow-hidden bg-[#06192e] text-white">
+    <div className="winwin-root relative flex min-h-screen flex-col overflow-hidden bg-[#06192e] text-white">
       {/* ambient glows */}
       <div
         className="pointer-events-none absolute inset-0 -z-10"
@@ -40,12 +40,14 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
-      <div className="mx-auto grid max-w-screen-xl items-center gap-x-10 gap-y-12 px-6 pb-20 pt-6 lg:grid-cols-[1.05fr_minmax(0,26rem)] lg:pt-4">
-        <div className="hidden lg:block">
-          <AuthBrandPanel />
-        </div>
-        <div className="flex w-full justify-center lg:justify-end">
-          {children}
+      <div className="flex flex-1 items-center">
+        <div className="mx-auto grid w-full max-w-screen-xl items-center gap-x-10 gap-y-12 px-6 py-10 lg:grid-cols-[1.05fr_minmax(0,26rem)]">
+          <div className="hidden lg:block">
+            <AuthBrandPanel />
+          </div>
+          <div className="flex w-full justify-center lg:justify-end">
+            {children}
+          </div>
         </div>
       </div>
     </div>

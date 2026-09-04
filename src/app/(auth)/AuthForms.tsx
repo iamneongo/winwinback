@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { AlertCircle, CheckCircle2, Eye, EyeOff, Loader2, MailCheck } from "lucide-react";
+import { AlertCircle, CheckCircle2, Eye, EyeOff, Loader2, Lock, Mail, MailCheck } from "lucide-react";
 import { signIn, signUp, authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 
@@ -14,15 +14,29 @@ const inputBase =
   "h-11 w-full rounded-xl border border-[#dbe7f6] bg-[#f9fbff] px-3.5 text-sm text-[#173861] outline-none transition-colors focus:border-[#9ddd5d] focus:ring-2 focus:ring-[#b7e961]/25";
 const inputClass = `mt-1.5 ${inputBase}`;
 
-/** Password field with a show/hide eye toggle. */
-function PasswordInput(props: React.ComponentProps<"input">) {
+const leftIconClass =
+  "pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8298b6]";
+
+/** Email input with a leading mail icon. */
+function EmailInput(props: React.ComponentProps<"input">) {
+  return (
+    <div className="relative mt-1.5">
+      <Mail className={`${leftIconClass} h-[18px] w-[18px]`} />
+      <input {...props} className={`${inputBase} pl-11`} />
+    </div>
+  );
+}
+
+/** Password field with a leading lock icon and a show/hide eye toggle. */
+function PasswordInput({ withIcon = true, ...props }: React.ComponentProps<"input"> & { withIcon?: boolean }) {
   const [show, setShow] = useState(false);
   return (
     <div className="relative mt-1.5">
+      {withIcon && <Lock className={`${leftIconClass} h-[18px] w-[18px]`} />}
       <input
         {...props}
         type={show ? "text" : "password"}
-        className={`${inputBase} pr-11`}
+        className={`${inputBase} pr-11 ${withIcon ? "pl-11" : ""}`}
       />
       <button
         type="button"
@@ -98,7 +112,7 @@ export function LoginForm() {
       <form onSubmit={onSubmit} className="mt-5 space-y-4">
         <div>
           <label className={labelClass} htmlFor="email">Email</label>
-          <input id="email" name="email" type="email" required autoComplete="email" className={inputClass} placeholder="ban@email.com" />
+          <EmailInput id="email" name="email" type="email" required autoComplete="email" placeholder="ban@email.com" />
         </div>
         <div>
           <div className="flex items-center justify-between">
@@ -130,7 +144,12 @@ export function LoginForm() {
           {loading ? "Đang đăng nhập…" : "Đăng nhập"}
         </Button>
       </form>
-      <p className="mt-5 text-center text-sm text-[#6681a7]">
+      <div className="mt-5 flex items-center gap-3 text-xs font-medium text-[#9db0c8]">
+        <span className="h-px flex-1 bg-[#e4ecf6]" />
+        hoặc
+        <span className="h-px flex-1 bg-[#e4ecf6]" />
+      </div>
+      <p className="mt-4 text-center text-sm text-[#6681a7]">
         Chưa có tài khoản?{" "}
         <Link href="/register" className="font-bold text-[#1766e7] hover:underline">Đăng ký ngay</Link>
       </p>

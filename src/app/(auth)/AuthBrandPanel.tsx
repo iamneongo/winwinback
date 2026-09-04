@@ -1,81 +1,32 @@
-import { Package, Wallet, BadgePercent, ShieldCheck } from "lucide-react";
+import { ShieldCheck, Tag, TrendingUp } from "lucide-react";
 
-const FEATURES = [
-  {
-    icon: Package,
-    title: "Theo dõi đơn hàng dễ dàng",
-    desc: "Cập nhật trạng thái đơn hàng theo thời gian thực.",
-  },
-  {
-    icon: Wallet,
-    title: "Nhận tiền hoàn về ví",
-    desc: "Tiền hoàn tự động về ví, rút tiền về ngân hàng nhanh chóng.",
-  },
-  {
-    icon: BadgePercent,
-    title: "Mã giảm giá luôn sẵn sàng",
-    desc: "Săn mã giảm giá độc quyền từ Shopee và TikTok Shop.",
-  },
-];
+const CHIPS = [
+  { icon: TrendingUp, label: "Hoàn tiền dễ dàng" },
+  { icon: Tag, label: "Ưu đãi mỗi ngày" },
+  { icon: ShieldCheck, label: "Minh bạch & an toàn" },
+] as const;
 
 export function AuthBrandPanel() {
   return (
-    <div className="relative">
-      <h1 className="max-w-xl text-balance text-4xl font-black leading-[1.05] tracking-tight sm:text-5xl xl:text-[3.6rem]">
-        Đăng nhập để
+    <div className="relative max-w-xl">
+      <h1 className="text-5xl font-black leading-[1.05] tracking-tight xl:text-6xl">
+        Đăng nhập vào
         <br />
-        <span className="ww-lime-text-gradient">nhận hoàn tiền dễ hơn</span>
+        <span className="text-[#b7e961]">Win-Win Back</span>
       </h1>
-      <p className="mt-5 max-w-md text-base text-white/65 sm:text-lg">
-        Dán link sản phẩm, theo dõi đơn hàng và rút tiền hoàn về ví nhanh chóng,
-        an toàn.
+      <p className="mt-6 max-w-md text-lg leading-relaxed text-white/60">
+        Theo dõi hoàn tiền, khám phá ưu đãi và tối ưu mua sắm mỗi ngày.
       </p>
-
-      <div className="mt-10 grid items-center gap-8 lg:grid-cols-[minmax(0,1fr)_auto]">
-        <ul className="space-y-5">
-          {FEATURES.map(({ icon: Icon, title, desc }) => (
-            <li key={title} className="flex items-start gap-4">
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04] text-[#b7e961]">
-                <Icon className="h-5 w-5" strokeWidth={2} />
-              </span>
-              <div>
-                <p className="font-bold text-white">{title}</p>
-                <p className="mt-0.5 text-sm leading-relaxed text-white/55">
-                  {desc}
-                </p>
-              </div>
-            </li>
-          ))}
-        </ul>
-
-        {/* Mascot */}
-        <div className="relative hidden justify-center lg:flex">
-          <div
-            className="absolute inset-0 -z-10 blur-2xl"
-            style={{
-              background:
-                "radial-gradient(circle at 50% 55%, rgba(88,150,255,0.28), transparent 62%)",
-            }}
-            aria-hidden="true"
-          />
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/images/hero-mascot-v3.png"
-            alt="Win-Win Back mascot"
-            className="w-[300px] max-w-full drop-shadow-2xl xl:w-[360px]"
-          />
-        </div>
-      </div>
-
-      <div className="mt-10 flex items-start gap-3">
-        <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-[#b7e961]" />
-        <p className="text-sm text-white/60">
-          <span className="font-bold text-white">
-            An toàn · Bảo mật · Minh bạch
+      <div className="mt-9 flex flex-wrap gap-3">
+        {CHIPS.map(({ icon: Icon, label }) => (
+          <span
+            key={label}
+            className="inline-flex items-center gap-2 rounded-xl border border-white/12 bg-white/[0.04] px-4 py-3 text-sm font-semibold text-white/90"
+          >
+            <Icon className="h-[18px] w-[18px] text-[#b7e961]" strokeWidth={2.2} />
+            {label}
           </span>
-          <br />
-          Win-Win Back cam kết bảo vệ thông tin của bạn.
-        </p>
+        ))}
       </div>
     </div>
   );

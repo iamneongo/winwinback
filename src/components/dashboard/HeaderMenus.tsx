@@ -66,16 +66,16 @@ export function HeaderMenus({
           <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#b7e961] text-sm font-black text-[#0a3b60]">
             {initial}
           </span>
-          <span className="hidden max-w-[9rem] leading-4 sm:block">
+          <span className="hidden max-w-[9rem] min-w-0 text-left leading-4 sm:block">
             <span className="block text-xs text-[#6681a7]">Xin chào,</span>
-            <span className="font-bold text-[#0d315d]">{name}</span>
+            <span className="block truncate font-bold text-[#0d315d]" title={name}>{name}</span>
           </span>
           <ChevronDown className="hidden h-4 w-4 text-[#6681a7] sm:block" />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-56">
-          <div className="px-2 py-1.5 leading-4 sm:hidden">
+          <div className="min-w-0 px-2 py-1.5 text-left leading-4 sm:hidden">
             <span className="block text-xs text-[#6681a7]">Xin chào,</span>
-            <span className="font-bold text-[#0d315d]">{name}</span>
+            <span className="block truncate font-bold text-[#0d315d]" title={name}>{name}</span>
           </div>
           <DropdownMenuSeparator className="sm:hidden" />
           <DropdownMenuItem render={<Link href="/dashboard/tai-khoan" />}>
