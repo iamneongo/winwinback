@@ -19,5 +19,12 @@ export interface ConvertResult {
  */
 export interface AffiliateProvider {
   readonly name: string;
-  convertLink(platform: Platform, url: string): Promise<ConvertResult>;
+  convertLink(
+    platform: Platform,
+    url: string,
+    opts?: {
+      /** Tracking sub id embedded in the link for order→user attribution. */
+      subId?: string;
+    },
+  ): Promise<ConvertResult>;
 }

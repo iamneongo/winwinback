@@ -24,18 +24,25 @@ const options = [
 ];
 
 const verifiedBadge: Record<string, { label: string; cls: string }> = {
-  settled: { label: 'TikTok: Settled ✓', cls: "bg-[#e8f8eb] text-[#168146]" },
-  pending: { label: "TikTok: Chờ settle", cls: "bg-[#fff3dc] text-[#b7791f]" },
-  cancelled: { label: "TikTok: Huỷ/hoàn", cls: "bg-red-50 text-red-600" },
-  not_found: { label: "TikTok: Không tìm thấy", cls: "bg-red-50 text-red-600" },
+  settled: { label: "Settled ✓", cls: "bg-[#e8f8eb] text-[#168146]" },
+  pending: { label: "Chờ settle", cls: "bg-[#fff3dc] text-[#b7791f]" },
+  cancelled: { label: "Huỷ/hoàn", cls: "bg-red-50 text-red-600" },
+  not_found: { label: "Không tìm thấy", cls: "bg-red-50 text-red-600" },
 };
 
-/** Verify-with-TikTok control + current verdict badge (TikTok orders only). */
-function TikTokVerify({
+const marketName: Record<string, string> = {
+  tiktok: "TikTok",
+  shopee: "Shopee",
+};
+
+/** Verify-with-marketplace control + verdict badge (TikTok/Shopee orders). */
+function MarketVerify({
   orderId,
+  platform,
   verifiedStatus,
 }: {
   orderId: string;
+  platform: string;
   verifiedStatus: string | null;
 }) {
   const [state, action] = useActionState<ActionState, FormData>(
@@ -43,6 +50,7 @@ function TikTokVerify({
     undefined,
   );
   const badge = verifiedStatus ? verifiedBadge[verifiedStatus] : undefined;
+  const market = marketName[platform] ?? platform;
   return (
     <div className="space-y-2 rounded-lg border border-[#e2ebf6] bg-[#f9fbff] p-3">
       <div className="flex flex-wrap items-center gap-2">
@@ -61,7 +69,7 @@ function TikTokVerify({
       </div>
       <form action={action} className="flex items-center gap-3">
         <input type="hidden" name="orderId" value={orderId} />
-        <SubmitButton variant="ghost">Kiểm tra với TikTok</SubmitButton>
+        <SubmitButton variant="ghost">Kiểm tra với {market}</SubmitButton>
         {state?.error && <span className="text-xs text-red-600">{state.error}</span>}
         {state?.success && (
           <span className="text-xs font-medium text-[#2f7a1c]">{state.success}</span>
@@ -96,8 +104,12 @@ export function OrderReviewForm({
 
   return (
     <div className="space-y-3">
-      {platform === "tiktok" && (
-        <TikTokVerify orderId={orderId} verifiedStatus={verifiedStatus ?? null} />
+      {(platform === "tiktok" || platform === "shopee") && (
+        <MarketVerify
+          orderId={orderId}
+          platform={platform}
+          verifiedStatus={verifiedStatus ?? null}
+        />
       )}
       <form action={action} className="space-y-3">
         <input type="hidden" name="orderId" value={orderId} />

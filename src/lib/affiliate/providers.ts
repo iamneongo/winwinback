@@ -4,6 +4,9 @@ import { isTikTokConfigured } from "./tiktok/config";
 import { resolveTikTokProductId } from "./tiktok/product";
 import { generateSharingLinks, TikTokApiError } from "./tiktok/client";
 import { getValidTikTokAccessToken } from "./tiktok/tokens";
+import { isShopeeConfigured } from "./shopee/config";
+import { generateShortLink, ShopeeApiError } from "./shopee/client";
+import { extractShopeeItemId } from "./shopee/product";
 
 /**
  * Mock provider — works with no external credentials.
@@ -37,17 +40,40 @@ class AccessTradeProvider implements AffiliateProvider {
 }
 
 /**
- * Shopee Affiliate Open API — requires an approved affiliate account, App ID and
- * Secret, and GraphQL calls to https://open-api.affiliate.shopee.vn/graphql
- * signed with SHA256(appId+timestamp+payload+secret).
- * TODO: implement once Shopee credentials are provided.
+ * Shopee Affiliate Open API.
+ *
+ * Turns a pasted Shopee product/shop URL into a trackable affiliate short link
+ * via the `generateShortLink` GraphQL mutation. The link's short code is
+ * embedded as a sub id (utm_content) so the conversion report can attribute the
+ * order back to the user. Requires SHOPEE_APP_ID / SHOPEE_APP_SECRET.
  */
 class ShopeeProvider implements AffiliateProvider {
   readonly name = "shopee";
-  async convertLink(): Promise<ConvertResult> {
-    throw new Error(
-      "Shopee provider not configured. Set Shopee App ID/Secret and implement convertLink().",
-    );
+  async convertLink(
+    platform: Platform,
+    url: string,
+    opts?: { subId?: string },
+  ): Promise<ConvertResult> {
+    if (platform !== "shopee") {
+      throw new Error("Provider Shopee chỉ xử lý link Shopee");
+    }
+    if (!isShopeeConfigured()) {
+      throw new Error(
+        "Chưa cấu hình Shopee App ID/Secret (SHOPEE_APP_ID / SHOPEE_APP_SECRET)",
+      );
+    }
+
+    let affiliateUrl: string;
+    try {
+      affiliateUrl = await generateShortLink(url, opts?.subId ? [opts.subId] : []);
+    } catch (e) {
+      if (e instanceof ShopeeApiError) {
+        throw new Error(`Shopee từ chối tạo link: ${e.message}`);
+      }
+      throw e;
+    }
+
+    return { affiliateUrl, productId: extractShopeeItemId(url) ?? undefined };
   }
 }
 

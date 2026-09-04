@@ -9,15 +9,28 @@ import { requireAdmin } from "@/lib/auth/guards";
 import { settleOrderCashback, recordWalletTx } from "@/lib/wallet";
 import { notifyWithdrawalStatus } from "@/lib/notify";
 import { cashbackRate } from "@/lib/config";
-import { verifyTikTokOrder } from "@/lib/affiliate/tiktok/orders";
+import { verifyTikTokOrder, type VerifyResult } from "@/lib/affiliate/tiktok/orders";
+import { verifyShopeeOrder } from "@/lib/affiliate/shopee/orders";
+
+/** Verify an order against the right marketplace's affiliate API. */
+function verifyByPlatform(
+  platform: string,
+  externalOrderId: string,
+): Promise<VerifyResult> {
+  if (platform === "tiktok") return verifyTikTokOrder(externalOrderId);
+  if (platform === "shopee") return verifyShopeeOrder(externalOrderId);
+  return Promise.resolve({ connected: false, status: null });
+}
+
+const marketLabel: Record<string, string> = { tiktok: "TikTok", shopee: "Shopee" };
 
 /**
- * Anti-fraud gate: a TikTok order may only be marked completed (which credits
- * cashback) after the creator's affiliate-orders API confirms it as SETTLED —
+ * Anti-fraud gate: a TikTok/Shopee order may only be marked completed (which
+ * credits cashback) after the marketplace's affiliate API confirms it SETTLED —
  * proof the commission was actually earned. Auto re-checks live if needed and
- * persists the verdict. Non-TikTok orders are not gated here.
+ * persists the verdict. Orders on non-integrated platforms are not gated.
  */
-async function ensureTikTokSettled(orderId: string): Promise<{ error?: string }> {
+async function ensureOrderSettled(orderId: string): Promise<{ error?: string }> {
   const rows = await db
     .select({
       platform: orders.platform,
@@ -29,12 +42,12 @@ async function ensureTikTokSettled(orderId: string): Promise<{ error?: string }>
     .limit(1);
   const order = rows[0];
   if (!order) return { error: "Không tìm thấy đơn" };
-  if (order.platform !== "tiktok") return {};
+  if (order.platform !== "tiktok" && order.platform !== "shopee") return {};
 
   let verified = order.verified;
   if (verified !== "settled") {
     try {
-      const r = await verifyTikTokOrder(order.externalOrderId);
+      const r = await verifyByPlatform(order.platform, order.externalOrderId);
       verified = r.status;
       await db
         .update(orders)
@@ -45,8 +58,9 @@ async function ensureTikTokSettled(orderId: string): Promise<{ error?: string }>
     }
   }
   if (verified !== "settled") {
+    const m = marketLabel[order.platform] ?? order.platform;
     return {
-      error: `Chưa xác minh "Settled" từ TikTok (hiện: ${verified ?? "chưa kiểm tra"}). Không thể duyệt hoàn tiền cho đơn này.`,
+      error: `Chưa xác minh "Settled" từ ${m} (hiện: ${verified ?? "chưa kiểm tra"}). Không thể duyệt hoàn tiền cho đơn này.`,
     };
   }
   return {};
@@ -95,16 +109,22 @@ export async function createOrderAction(
   const cashback =
     data.cashbackAmount ?? Math.round(data.commissionAmount * cashbackRate);
 
-  // Anti-fraud gate: a completed TikTok order must be SETTLED on TikTok's side
-  // before it can be created as payable.
-  let tiktokVerified: "settled" | "pending" | "cancelled" | "not_found" | null =
+  // Anti-fraud gate: a completed TikTok/Shopee order must be SETTLED on the
+  // marketplace side before it can be created as payable.
+  let verifiedStatus: "settled" | "pending" | "cancelled" | "not_found" | null =
     null;
-  if (data.status === "completed" && data.platform === "tiktok") {
-    const r = await verifyTikTokOrder(data.externalOrderId).catch(() => null);
-    tiktokVerified = r?.status ?? null;
-    if (tiktokVerified !== "settled") {
+  if (
+    data.status === "completed" &&
+    (data.platform === "tiktok" || data.platform === "shopee")
+  ) {
+    const r = await verifyByPlatform(data.platform, data.externalOrderId).catch(
+      () => null,
+    );
+    verifiedStatus = r?.status ?? null;
+    if (verifiedStatus !== "settled") {
+      const m = marketLabel[data.platform] ?? data.platform;
       return {
-        error: `Không thể tạo đơn hoàn tất: TikTok chưa xác minh "Settled" (hiện: ${tiktokVerified ?? "không kiểm tra được"}).`,
+        error: `Không thể tạo đơn hoàn tất: ${m} chưa xác minh "Settled" (hiện: ${verifiedStatus ?? "không kiểm tra được"}).`,
       };
     }
   }
@@ -122,8 +142,8 @@ export async function createOrderAction(
         commissionAmount: data.commissionAmount,
         cashbackAmount: cashback,
         status: data.status,
-        tiktokVerifiedStatus: tiktokVerified ?? undefined,
-        tiktokVerifiedAt: tiktokVerified ? new Date() : undefined,
+        tiktokVerifiedStatus: verifiedStatus ?? undefined,
+        tiktokVerifiedAt: verifiedStatus ? new Date() : undefined,
       })
       .returning({ id: orders.id });
     orderId = inserted[0].id;
@@ -159,9 +179,9 @@ async function applyOrderStatus(
   status: OrderStatus,
   fields?: { adminNote?: string | null },
 ): Promise<{ error?: string }> {
-  // Gate before crediting: TikTok orders must be verified SETTLED.
+  // Gate before crediting: TikTok/Shopee orders must be verified SETTLED.
   if (status === "completed") {
-    const gate = await ensureTikTokSettled(orderId);
+    const gate = await ensureOrderSettled(orderId);
     if (gate.error) return gate;
   }
 
@@ -258,18 +278,19 @@ export async function verifyOrderAction(
     .limit(1);
   const order = rows[0];
   if (!order) return { error: "Không tìm thấy đơn" };
-  if (order.platform !== "tiktok") {
-    return { error: "Chỉ kiểm tra được đơn TikTok" };
+  if (order.platform !== "tiktok" && order.platform !== "shopee") {
+    return { error: "Chỉ kiểm tra được đơn TikTok / Shopee" };
   }
 
   let result;
   try {
-    result = await verifyTikTokOrder(order.externalOrderId);
+    result = await verifyByPlatform(order.platform, order.externalOrderId);
   } catch {
-    return { error: "Không gọi được TikTok API để kiểm tra" };
+    return { error: "Không gọi được API sàn để kiểm tra" };
   }
   if (!result.connected) {
-    return { error: "Chưa kết nối tài khoản Creator TikTok — không thể kiểm tra" };
+    const m = marketLabel[order.platform] ?? order.platform;
+    return { error: `Chưa kết nối / cấu hình ${m} — không thể kiểm tra` };
   }
 
   await db
@@ -282,8 +303,9 @@ export async function verifyOrderAction(
   revalidatePath(`/admin/yeu-cau-hoan-tien/${parsed.data.orderId}`);
 
   const label = verifyLabel[result.status ?? "not_found"] ?? result.status;
+  const m = marketLabel[order.platform] ?? order.platform;
   return {
-    success: `TikTok: ${label}${result.rawStatus ? ` (${result.rawStatus})` : ""}`,
+    success: `${m}: ${label}${result.rawStatus ? ` (${result.rawStatus})` : ""}`,
   };
 }
 

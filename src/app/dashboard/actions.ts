@@ -89,6 +89,10 @@ export async function createLinkAction(
 
   const platformName = platformLabel[platform] ?? "sàn này";
 
+  // Generate the short code up front so it can be embedded in the affiliate
+  // link as a tracking sub id (used for order→user attribution).
+  const shortCode = generateShortCode();
+
   let affiliateUrl: string;
   let title: string | undefined;
   let productId: string | undefined;
@@ -96,6 +100,7 @@ export async function createLinkAction(
     const result = await getAffiliateProvider(platform).convertLink(
       platform,
       parsed.data.url,
+      { subId: shortCode },
     );
     affiliateUrl = result.affiliateUrl;
     title = result.title;
@@ -111,9 +116,11 @@ export async function createLinkAction(
     return { ineligible: { platformName } };
   }
 
-  // Generate a unique short code (retry on the rare collision).
+  // Insert with the pre-generated code; retry with a fresh code on the rare
+  // collision (the embedded sub id then only matters for Shopee attribution,
+  // which also falls back to item-id matching).
+  let code = shortCode;
   for (let attempt = 0; attempt < 5; attempt++) {
-    const shortCode = generateShortCode();
     try {
       await db.insert(affiliateLinks).values({
         userId: user.id,
@@ -121,14 +128,14 @@ export async function createLinkAction(
         originalUrl: parsed.data.url,
         affiliateUrl,
         productId,
-        shortCode,
+        shortCode: code,
         title,
       });
       revalidatePath("/dashboard");
       return {
         success: "Đã tạo link affiliate",
         link: {
-          goPath: `/go/${shortCode}`,
+          goPath: `/go/${code}`,
           platformName: platformLabel[platform] ?? "cửa hàng",
         },
       };
@@ -137,6 +144,7 @@ export async function createLinkAction(
       if (!msg.includes("short_code")) {
         return { error: "Không lưu được link, thử lại sau" };
       }
+      code = generateShortCode();
     }
   }
   return { error: "Không tạo được mã link, thử lại" };
