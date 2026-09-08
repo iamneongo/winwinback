@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { requireAdmin } from "@/lib/auth/guards";
+import { getBellData } from "@/lib/notifications";
 import { Dock } from "@/components/dashboard/Dock";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { HeaderMenus } from "@/components/dashboard/HeaderMenus";
@@ -18,6 +19,7 @@ export default async function AdminLayout({
   children: React.ReactNode;
 }) {
   const admin = await requireAdmin();
+  const bell = await getBellData(admin.id);
 
   return (
     <TooltipProvider>
@@ -46,7 +48,13 @@ export default async function AdminLayout({
                 placeholder="Tìm kiếm đơn hàng, người dùng, mã đơn..."
               />
               <HeaderDateRange />
-              <HeaderMenus name={admin.name} role={admin.role} variant="admin" />
+              <HeaderMenus
+                name={admin.name}
+                role={admin.role}
+                variant="admin"
+                notifications={bell.items}
+                unreadCount={bell.unreadCount}
+              />
             </div>
           </header>
           <Dock variant="admin" />

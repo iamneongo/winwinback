@@ -1,5 +1,6 @@
 import { Search, Wallet } from "lucide-react";
 import { requireUser } from "@/lib/auth/guards";
+import { getBellData } from "@/lib/notifications";
 import { formatVnd } from "@/lib/config";
 import { Dock } from "@/components/dashboard/Dock";
 import { Sidebar } from "@/components/dashboard/Sidebar";
@@ -18,6 +19,7 @@ export default async function DashboardLayout({
 }) {
   const user = await requireUser();
   const isAdmin = user.role === "admin";
+  const bell = await getBellData(user.id);
 
   return (
     <TooltipProvider>
@@ -57,7 +59,12 @@ export default async function DashboardLayout({
                   {formatVnd(user.balance)}
                 </span>
               </div>
-              <HeaderMenus name={user.name} role={user.role} />
+              <HeaderMenus
+                name={user.name}
+                role={user.role}
+                notifications={bell.items}
+                unreadCount={bell.unreadCount}
+              />
             </div>
           </header>
           <Dock showAdminLink={isAdmin} />

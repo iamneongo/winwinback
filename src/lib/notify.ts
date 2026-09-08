@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { users } from "@/db/schema";
 import { sendEmail, emailLayout } from "@/lib/email";
 import { formatVnd, baseUrl } from "@/lib/config";
+import { createNotification, notifyAdmins } from "@/lib/notifications";
 
 async function recipient(userId: string): Promise<
   | {
@@ -33,6 +34,15 @@ export async function notifyCashbackCredited(input: {
   externalOrderId: string;
   amount: number;
 }): Promise<void> {
+  // In-app notification fires regardless of the email preference.
+  await createNotification({
+    userId: input.userId,
+    type: "cashback",
+    title: "Đã cộng hoàn tiền vào ví 🎉",
+    body: `Đơn #${input.externalOrderId} hoàn tất — +${formatVnd(input.amount)} vào ví của bạn.`,
+    href: "/dashboard/vi",
+  }).catch(() => {});
+
   const to = await recipient(input.userId);
   if (!to || !to.notifyCashback) return;
   await sendEmail({
@@ -62,16 +72,32 @@ const withdrawalCopy: Record<string, { subject: string; body: string }> = {
   },
 };
 
+const withdrawalInApp: Record<string, string> = {
+  approved: "đã được duyệt, đang chờ chuyển khoản.",
+  rejected: "đã bị từ chối — tiền đã hoàn lại vào ví.",
+  paid: "đã được chi trả. Kiểm tra tài khoản ngân hàng của bạn.",
+};
+
 /** Notify a user that their withdrawal request changed status. */
 export async function notifyWithdrawalStatus(input: {
   userId: string;
   status: "approved" | "rejected" | "paid";
   amount: number;
 }): Promise<void> {
-  const to = await recipient(input.userId);
-  if (!to || !to.notifyOrders) return;
   const copy = withdrawalCopy[input.status];
   if (!copy) return;
+
+  // In-app notification fires regardless of the email preference.
+  await createNotification({
+    userId: input.userId,
+    type: "withdrawal",
+    title: "Cập nhật yêu cầu rút tiền",
+    body: `Yêu cầu rút ${formatVnd(input.amount)} ${withdrawalInApp[input.status] ?? ""}`,
+    href: "/dashboard/vi",
+  }).catch(() => {});
+
+  const to = await recipient(input.userId);
+  if (!to || !to.notifyOrders) return;
   await sendEmail({
     to: to.email,
     subject: copy.subject,
@@ -79,5 +105,18 @@ export async function notifyWithdrawalStatus(input: {
       "Cập nhật yêu cầu rút tiền",
       `Chào ${to.name || "bạn"}, yêu cầu rút <b>${formatVnd(input.amount)}</b> ${copy.body}`,
     ),
+  });
+}
+
+/** Notify all admins that a user submitted a new withdrawal request. */
+export async function notifyNewWithdrawalRequest(input: {
+  userName: string;
+  amount: number;
+}): Promise<void> {
+  await notifyAdmins({
+    type: "withdrawal_request",
+    title: "Yêu cầu rút tiền mới",
+    body: `${input.userName || "Một người dùng"} yêu cầu rút ${formatVnd(input.amount)}.`,
+    href: "/admin/rut-tien",
   });
 }

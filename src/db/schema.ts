@@ -297,6 +297,36 @@ export const linkClicks = pgTable(
 );
 
 // ---------------------------------------------------------------------------
+// Notifications (in-app bell feed)
+// ---------------------------------------------------------------------------
+//
+// One row per recipient. User events (cashback, withdrawal status) target the
+// owning user; admin events (a new withdrawal request) are fanned out to one
+// row per admin so read-state is tracked per admin. `type` drives the icon.
+
+export const notifications = pgTable(
+  "notifications",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    // cashback | withdrawal | withdrawal_request | order | system
+    type: text("type").notNull(),
+    title: text("title").notNull(),
+    body: text("body").notNull(),
+    // Optional in-app destination the item links to.
+    href: text("href"),
+    // Null until the recipient has seen it.
+    readAt: timestamp("read_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [index("notifications_user_idx").on(t.userId, t.createdAt)],
+);
+
+// ---------------------------------------------------------------------------
 // Integration tokens (OAuth credentials for affiliate providers)
 // ---------------------------------------------------------------------------
 //
@@ -332,3 +362,4 @@ export type Order = typeof orders.$inferSelect;
 export type WalletTransaction = typeof walletTransactions.$inferSelect;
 export type Withdrawal = typeof withdrawals.$inferSelect;
 export type LinkClick = typeof linkClicks.$inferSelect;
+export type Notification = typeof notifications.$inferSelect;

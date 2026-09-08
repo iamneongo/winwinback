@@ -10,6 +10,7 @@ import { detectPlatform } from "@/lib/affiliate/platform";
 import { getAffiliateProvider } from "@/lib/affiliate/providers";
 import { generateShortCode } from "@/lib/shortcode";
 import { recordWalletTx } from "@/lib/wallet";
+import { notifyNewWithdrawalRequest } from "@/lib/notify";
 import { minWithdrawal } from "@/lib/config";
 import { platformLabel } from "@/lib/labels";
 
@@ -200,6 +201,12 @@ export async function requestWithdrawalAction(
     }
     return { error: "Không gửi được yêu cầu, thử lại sau" };
   }
+
+  // Best-effort admin notification; never block the user's request.
+  void notifyNewWithdrawalRequest({
+    userName: user.name,
+    amount,
+  }).catch(() => {});
 
   revalidatePath("/dashboard");
   return { success: "Đã gửi yêu cầu rút tiền" };
