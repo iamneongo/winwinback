@@ -3,28 +3,28 @@ import { PolicyShell } from "@/components/policy/PolicyShell";
 
 export const metadata = { title: "Liên hệ hỗ trợ — Win-Win Back" };
 
-// TODO: thay bằng link thật khi có (Zalo OA / Fanpage / Group cộng đồng).
+// Real channels sourced from the landing CommunitySection.
 const channels = [
   {
     icon: MessageCircle,
     tone: "bg-[#e6f0ff] text-[#0068ff]",
-    label: "Zalo OA",
-    desc: "Nhắn tin trực tiếp cho tổng đài Win-Win Back",
-    href: "",
+    label: "Zalo cộng đồng",
+    desc: "Nhận thông báo deal mới và hỗ trợ trực tiếp qua Zalo",
+    href: "https://zalo.me/g/slradppiin66t4sbfzwg",
   },
   {
     icon: Megaphone,
     tone: "bg-[#e8f0fe] text-[#1877f2]",
     label: "Fanpage",
-    desc: "Theo dõi cập nhật & nhắn tin qua Messenger",
-    href: "",
+    desc: "Theo dõi cập nhật mới nhất về tính năng & khuyến mãi",
+    href: "https://www.facebook.com/winwinbackvn/",
   },
   {
     icon: Users,
     tone: "bg-[#eafbe0] text-[#3f8a2e]",
     label: "Group cộng đồng",
-    desc: "Tham gia nhóm để trao đổi & săn ưu đãi",
-    href: "",
+    desc: "Chia sẻ deal hot, hỏi đáp về hoàn tiền cùng cộng đồng",
+    href: "https://www.facebook.com/groups/vinhlongnhom/",
   },
 ];
 
