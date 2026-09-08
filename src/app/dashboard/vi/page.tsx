@@ -1,6 +1,6 @@
 import { and, desc, eq, gte, lte, sql } from "drizzle-orm";
 import Link from "next/link";
-import { ArrowUpRight, Banknote, Check, ChevronLeft, ChevronRight, CircleDollarSign, Clock3, Landmark, Lightbulb, ShoppingBag, Wallet } from "lucide-react";
+import { ArrowUpRight, Banknote, Check, ChevronLeft, ChevronRight, CircleDollarSign, Clock3, Gift, Landmark, Lightbulb, ShoppingBag, Wallet } from "lucide-react";
 import Image from "next/image";
 import { db } from "@/db";
 import { walletTransactions, withdrawals } from "@/db/schema";
@@ -20,6 +20,7 @@ const typeMeta = {
   withdrawal: { label: "Yêu cầu rút tiền về ngân hàng", tone: "bg-[#eaf2ff] text-[#287be5]", icon: Banknote },
   refund: { label: "Hoàn lại giao dịch", tone: "bg-[#f6e9ff] text-[#aa34de]", icon: CircleDollarSign },
   adjustment: { label: "Điều chỉnh số dư", tone: "bg-[#fff3d8] text-[#dd9100]", icon: CircleDollarSign },
+  reward: { label: "Thưởng nhiệm vụ", tone: "bg-[#eafbe0] text-[#3f8a2e]", icon: Gift },
 } as const;
 
 const TYPE_TABS: { label: string; value?: "cashback" | "withdrawal" | "refund" | "adjustment" }[] = [

@@ -33,6 +33,7 @@ export const walletTxType = pgEnum("wallet_tx_type", [
   "withdrawal", // debit when a withdrawal is approved
   "refund", // credit back when a withdrawal is rejected
   "adjustment", // manual admin correction (+/-)
+  "reward", // credit from completing a mission / quest
 ]);
 
 export const withdrawalStatus = pgEnum("withdrawal_status", [
@@ -63,6 +64,10 @@ export const users = pgTable("users", {
   notifyOrders: boolean("notify_orders").notNull().default(true),
   notifyCashback: boolean("notify_cashback").notNull().default(true),
   notifySystemEmail: boolean("notify_system_email").notNull().default(true),
+  // Referral: this user's own invite code + who invited them (app-level
+  // attribution for the "mời bạn" missions; no FK to keep deletes simple).
+  referralCode: text("referral_code").unique(),
+  referredBy: uuid("referred_by"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
@@ -327,6 +332,41 @@ export const notifications = pgTable(
 );
 
 // ---------------------------------------------------------------------------
+// Mission claims (gamified rewards: "nhiệm vụ nhận quà")
+// ---------------------------------------------------------------------------
+//
+// Missions themselves are defined in code (src/lib/missions/catalog.ts). One
+// row here per (user, mission) once the user acts. Auto + referral missions go
+// straight to "approved" (credited); manual/social missions start "submitted"
+// (proof attached) and an admin moves them to "approved" or "rejected".
+
+export const missionClaims = pgTable(
+  "mission_claims",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    // Mission catalog key, e.g. "first_link" | "invite_5" | "share_social".
+    missionKey: text("mission_key").notNull(),
+    // submitted | approved | rejected
+    status: text("status").notNull(),
+    // VND credited on approval (snapshot of the catalog reward at claim time).
+    reward: bigint("reward", { mode: "number" }).notNull().default(0),
+    // Proof link/screenshot URL for manual (social) missions.
+    proof: text("proof"),
+    adminNote: text("admin_note"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    processedAt: timestamp("processed_at", { withTimezone: true }),
+  },
+  (t) => [
+    uniqueIndex("mission_claims_user_mission_idx").on(t.userId, t.missionKey),
+  ],
+);
+
+// ---------------------------------------------------------------------------
 // Integration tokens (OAuth credentials for affiliate providers)
 // ---------------------------------------------------------------------------
 //
@@ -363,3 +403,4 @@ export type WalletTransaction = typeof walletTransactions.$inferSelect;
 export type Withdrawal = typeof withdrawals.$inferSelect;
 export type LinkClick = typeof linkClicks.$inferSelect;
 export type Notification = typeof notifications.$inferSelect;
+export type MissionClaim = typeof missionClaims.$inferSelect;

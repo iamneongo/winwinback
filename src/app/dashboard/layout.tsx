@@ -1,6 +1,8 @@
 import { Search, Wallet } from "lucide-react";
+import { cookies } from "next/headers";
 import { requireUser } from "@/lib/auth/guards";
 import { getBellData } from "@/lib/notifications";
+import { attachReferral } from "@/lib/missions/service";
 import { formatVnd } from "@/lib/config";
 import { Dock } from "@/components/dashboard/Dock";
 import { Sidebar } from "@/components/dashboard/Sidebar";
@@ -19,6 +21,13 @@ export default async function DashboardLayout({
 }) {
   const user = await requireUser();
   const isAdmin = user.role === "admin";
+
+  // Attach the referrer once, from the invite cookie set by /r/<code>.
+  if (!user.referredBy) {
+    const ref = (await cookies()).get("ww_ref")?.value;
+    if (ref) await attachReferral(user, ref);
+  }
+
   const bell = await getBellData(user.id);
 
   return (

@@ -15,6 +15,7 @@ import {
   Banknote,
   Package,
   Info,
+  Gift,
 } from "lucide-react";
 import {
   Popover,
@@ -45,6 +46,7 @@ const typeIcon: Record<string, React.ComponentType<{ className?: string }>> = {
   withdrawal: Banknote,
   withdrawal_request: Banknote,
   order: Package,
+  reward: Gift,
   system: Info,
 };
 
@@ -53,6 +55,7 @@ const typeTone: Record<string, string> = {
   withdrawal: "bg-[#eef4ff] text-[#1766e7]",
   withdrawal_request: "bg-[#fff3dc] text-[#b7791f]",
   order: "bg-[#f0ecff] text-[#6b4de0]",
+  reward: "bg-[#eafbe0] text-[#3f8a2e]",
   system: "bg-[#eef2f8] text-[#526b90]",
 };
 

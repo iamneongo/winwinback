@@ -31,6 +31,7 @@ export const txTypeLabel: Record<string, string> = {
   withdrawal: "Rút tiền",
   refund: "Hoàn lại",
   adjustment: "Điều chỉnh",
+  reward: "Thưởng nhiệm vụ",
 };
 
 export const platformLabel: Record<string, string> = {

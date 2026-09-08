@@ -9,6 +9,7 @@ export type NotificationType =
   | "withdrawal"
   | "withdrawal_request"
   | "order"
+  | "reward"
   | "system";
 
 type NewNotification = {

@@ -5,7 +5,7 @@ import { users, orders, walletTransactions } from "@/db/schema";
 import { notifyCashbackCredited } from "@/lib/notify";
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
-type WalletTxType = "cashback" | "withdrawal" | "refund" | "adjustment";
+type WalletTxType = "cashback" | "withdrawal" | "refund" | "adjustment" | "reward";
 
 /**
  * Record a wallet movement atomically: lock the user row, compute the new
