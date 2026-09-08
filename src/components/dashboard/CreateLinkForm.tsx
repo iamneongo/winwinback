@@ -10,6 +10,8 @@ import {
   AlertCircle,
   ShoppingBag,
   PackageX,
+  Share2,
+  Check,
 } from "lucide-react";
 import { createLinkAction, type ActionState } from "@/app/dashboard/actions";
 import { Button } from "@/components/ui/button";
@@ -43,6 +45,8 @@ export function CreateLinkForm({ defaultUrl }: { defaultUrl?: string }) {
   const ineligible = state?.ineligible ?? null;
   const showSuccess = created !== null && state !== dismissed;
   const showIneligible = ineligible !== null && state !== dismissed;
+  // Transient "Đã sao chép" feedback on the share button.
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (state?.success) formRef.current?.reset();
@@ -50,6 +54,35 @@ export function CreateLinkForm({ defaultUrl }: { defaultUrl?: string }) {
 
   function close() {
     setDismissed(state);
+  }
+
+  /**
+   * Share the affiliate link so a purchase by anyone through it earns the user.
+   * Copies the absolute URL to the clipboard first (always works), then opens
+   * the native share sheet when the browser supports it.
+   */
+  async function shareLink() {
+    if (!created) return;
+    const url = `${window.location.origin}${created.goPath}`;
+    try {
+      await navigator.clipboard?.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Clipboard may be blocked (insecure context / permissions) — the share
+      // sheet below still gives the user a way to send the link.
+    }
+    if (typeof navigator.share === "function") {
+      try {
+        await navigator.share({
+          title: `Ưu đãi hoàn tiền trên ${created.platformName}`,
+          text: "Mua qua link này để được hoàn tiền cùng Win-Win Back:",
+          url,
+        });
+      } catch {
+        // User dismissed the share sheet — nothing to do.
+      }
+    }
   }
 
   return (
@@ -95,8 +128,8 @@ export function CreateLinkForm({ defaultUrl }: { defaultUrl?: string }) {
               Đã tạo link hoàn tiền!
             </Dialog.Title>
             <Dialog.Description className="mt-1.5 text-sm leading-6 text-[#6681a7]">
-              Chuyển đến {created?.platformName} để mua ngay. Đơn mua qua link
-              này sẽ được hoàn tiền vào ví của bạn.
+              Mua để tự nhận hoàn tiền, hoặc chia sẻ link cho bạn bè — có đơn
+              phát sinh qua link là bạn nhận tiền.
             </Dialog.Description>
             <div className="mt-5 flex flex-col gap-2">
               <Button
@@ -114,6 +147,23 @@ export function CreateLinkForm({ defaultUrl }: { defaultUrl?: string }) {
               >
                 <ShoppingBag className="h-4 w-4" />
                 Mua ngay trên {created?.platformName}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={shareLink}
+                className="h-auto w-full gap-1.5 rounded-xl px-4 py-2.5 font-bold text-[#0d315d]"
+              >
+                {copied ? (
+                  <>
+                    <Check className="h-4 w-4 text-[#3f8a2e]" />
+                    Đã sao chép link!
+                  </>
+                ) : (
+                  <>
+                    <Share2 className="h-4 w-4" />
+                    Chia sẻ link kiếm tiền
+                  </>
+                )}
               </Button>
               <Dialog.Close
                 render={

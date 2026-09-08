@@ -1,6 +1,5 @@
 import Image from 'next/image';
-import { ArrowRight, CircleCheck, ShieldCheck } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { HeroLinkForm } from './HeroLinkForm';
 
 export function HeroSection() {
   return (
@@ -28,37 +27,10 @@ export function HeroSection() {
           </p>
 
           <div
-            className="ww-hero-enter mt-8 flex flex-wrap items-center gap-4"
+            className="ww-hero-enter mt-8 max-w-[520px]"
             style={{ '--delay': '260ms' } as React.CSSProperties}
           >
-            <Button
-              variant="cta"
-              nativeButton={false}
-              className="h-auto gap-2 whitespace-nowrap rounded-full px-6 py-3.5 text-[15px] hover:scale-[1.03]"
-              render={<a href="/register" />}
-            >
-              Nhận hoàn tiền ngay <ArrowRight className="h-4 w-4" />
-            </Button>
-            <a
-              href="#cach-hoat-dong"
-              className="text-sm font-semibold text-white/80 underline-offset-4 transition-colors hover:text-white hover:underline"
-            >
-              Xem cách hoạt động
-            </a>
-          </div>
-
-          <div
-            className="ww-hero-enter mt-7 flex flex-wrap items-center gap-5"
-            style={{ '--delay': '340ms' } as React.CSSProperties}
-          >
-            <div className="flex items-center gap-2 text-sm text-white/80">
-              <CircleCheck className="h-4 w-4 flex-shrink-0 text-[#b7e961]" />
-              Không mất phí
-            </div>
-            <div className="flex items-center gap-2 text-sm text-white/80">
-              <ShieldCheck className="h-4 w-4 flex-shrink-0 text-[#b7e961]" />
-              Điều kiện công khai
-            </div>
+            <HeroLinkForm />
           </div>
         </div>
 
