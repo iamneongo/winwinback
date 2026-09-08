@@ -12,11 +12,11 @@ export const dynamic = "force-dynamic";
 function Overview({ icon: Icon, tone, title, note, state }: { icon: typeof User; tone: string; title: string; note: string; state: string }) { return <article className="flex min-h-[6.4rem] items-center gap-3 rounded-xl border border-[#e0eaf6] bg-white p-4 shadow-[0_5px_14px_rgba(26,73,124,0.04)]"><span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${tone}`}><Icon className="h-6 w-6" /></span><div className="min-w-0 flex-1"><b className="block text-sm text-[#173861]">{title}</b><p className="mt-1 truncate text-xs text-[#6882a5]">{note}</p><span className="mt-2 inline-block rounded-full bg-[#e8f8eb] px-2 py-0.5 text-[10px] font-bold text-[#168146]">{state}</span></div><ChevronRight className="h-4 w-4 text-[#315a90]" /></article>; }
 
 const supportLinks: { href: string; icon: LucideIcon; tone: string; title: string; desc: string }[] = [
-  { href: "/chinh-sach-hoat-dong", icon: FileText, tone: "bg-[#e8f1ff] text-[#287be5]", title: "Chính sách hoạt động", desc: "Tỷ lệ hoa hồng, mốc T+, rút tiền, referral" },
-  { href: "/dieu-khoan", icon: ScrollText, tone: "bg-[#fff2df] text-[#ed9a0b]", title: "Điều khoản sử dụng", desc: "Quy định khi sử dụng dịch vụ" },
-  { href: "/chinh-sach-bao-mat", icon: Lock, tone: "bg-[#eafbe0] text-[#3f8a2e]", title: "Chính sách bảo mật", desc: "Cách chúng tôi bảo vệ dữ liệu của bạn" },
-  { href: "/faq", icon: HelpCircle, tone: "bg-[#fdeaea] text-[#e5484d]", title: "Câu hỏi thường gặp (FAQ)", desc: "Giải đáp nhanh trước khi bắt đầu" },
-  { href: "/lien-he", icon: MessageCircle, tone: "bg-[#f5e9ff] text-[#a32cdb]", title: "Liên hệ hỗ trợ", desc: "Zalo OA · Fanpage · Group cộng đồng" },
+  { href: "/dashboard/chinh-sach-hoat-dong", icon: FileText, tone: "bg-[#e8f1ff] text-[#287be5]", title: "Chính sách hoạt động", desc: "Tỷ lệ hoa hồng, mốc T+, rút tiền, referral" },
+  { href: "/dashboard/dieu-khoan", icon: ScrollText, tone: "bg-[#fff2df] text-[#ed9a0b]", title: "Điều khoản sử dụng", desc: "Quy định khi sử dụng dịch vụ" },
+  { href: "/dashboard/chinh-sach-bao-mat", icon: Lock, tone: "bg-[#eafbe0] text-[#3f8a2e]", title: "Chính sách bảo mật", desc: "Cách chúng tôi bảo vệ dữ liệu của bạn" },
+  { href: "/dashboard/faq", icon: HelpCircle, tone: "bg-[#fdeaea] text-[#e5484d]", title: "Câu hỏi thường gặp (FAQ)", desc: "Giải đáp nhanh trước khi bắt đầu" },
+  { href: "/dashboard/lien-he", icon: MessageCircle, tone: "bg-[#f5e9ff] text-[#a32cdb]", title: "Liên hệ hỗ trợ", desc: "Zalo OA · Fanpage · Group cộng đồng" },
 ];
 
 function SupportCard() {
