@@ -33,6 +33,10 @@ export const TIKTOK_GENERATE_LINK_PATH =
 export const TIKTOK_ORDERS_SEARCH_PATH =
   "/affiliate_creator/202410/orders/search";
 
+/** Endpoint to search open-collaboration products (affiliate marketplace). */
+export const TIKTOK_OPEN_COLLAB_SEARCH_PATH =
+  "/affiliate_creator/202405/open_collaborations/products/search";
+
 export function getTikTokAppKey(): string {
   return process.env.TIKTOK_APP_KEY ?? "";
 }

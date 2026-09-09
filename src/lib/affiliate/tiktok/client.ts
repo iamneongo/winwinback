@@ -4,6 +4,7 @@ import {
   TIKTOK_AUTH_BASE,
   TIKTOK_GENERATE_LINK_PATH,
   TIKTOK_ORDERS_SEARCH_PATH,
+  TIKTOK_OPEN_COLLAB_SEARCH_PATH,
   getTikTokAppKey,
   getTikTokAppSecret,
 } from "./config";
@@ -239,5 +240,77 @@ export async function searchAffiliateOrders(
   return {
     orders: data.orders ?? [],
     nextPageToken: data.next_page_token,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Open collaboration products (affiliate product marketplace)
+// ---------------------------------------------------------------------------
+
+/** A product on the affiliate marketplace open for collaboration. Fields are
+ * kept loose because the exact response shape is confirmed against live data. */
+export interface OpenCollabProduct {
+  product_id?: string;
+  title?: string;
+  [key: string]: unknown;
+}
+
+interface OpenCollabSearchData {
+  products?: OpenCollabProduct[];
+  next_page_token?: string;
+  total_count?: number;
+}
+
+export type CollabSortField =
+  | "commission_rate"
+  | "product_sales_price"
+  | "commission"
+  | "units_sold";
+
+/**
+ * Search open-collaboration products on the TikTok Shop Affiliate marketplace.
+ * Returns the raw `data` too so the exact product field names can be confirmed
+ * before we build a polished UI on top.
+ */
+export async function searchOpenCollaborationProducts(
+  accessToken: string,
+  params: {
+    pageSize?: number;
+    pageToken?: string;
+    sortField?: CollabSortField;
+    sortOrder?: "ASC" | "DESC";
+    titleKeywords?: string[];
+    commissionRateRange?: { ge?: number; le?: number };
+  } = {},
+): Promise<{
+  products: OpenCollabProduct[];
+  nextPageToken?: string;
+  total?: number;
+  raw: unknown;
+}> {
+  const extraQuery: Record<string, string> = {
+    page_size: String(params.pageSize ?? 20),
+  };
+  if (params.sortField) extraQuery.sort_field = params.sortField;
+  if (params.sortOrder) extraQuery.sort_order = params.sortOrder;
+  if (params.pageToken) extraQuery.page_token = params.pageToken;
+
+  const body: Record<string, unknown> = {};
+  if (params.titleKeywords?.length) body.title_keywords = params.titleKeywords;
+  if (params.commissionRateRange) {
+    body.commission_rate_range = params.commissionRateRange;
+  }
+
+  const data = await signedPost<OpenCollabSearchData>(
+    TIKTOK_OPEN_COLLAB_SEARCH_PATH,
+    accessToken,
+    body,
+    extraQuery,
+  );
+  return {
+    products: data.products ?? [],
+    nextPageToken: data.next_page_token,
+    total: data.total_count,
+    raw: data,
   };
 }

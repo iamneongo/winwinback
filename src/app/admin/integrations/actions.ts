@@ -13,11 +13,16 @@ import {
   fetchConnectedCreatorOrders,
   type TikTokOrderRow,
 } from "@/lib/affiliate/tiktok/orders";
+import { fetchOpenCollaborationProducts } from "@/lib/affiliate/tiktok/collaborations";
 
 export type ActionState = { error?: string; success?: string } | undefined;
 
 export type OrdersState =
   | { error?: string; rows?: TikTokOrderRow[]; fetchedAt?: string }
+  | undefined;
+
+export type CollabState =
+  | { error?: string; raw?: string; total?: number; count?: number; fetchedAt?: string }
   | undefined;
 
 const codeSchema = z.object({
@@ -86,6 +91,22 @@ export async function fetchTikTokOrdersAction(): Promise<OrdersState> {
     }
     return {
       error: e instanceof Error ? e.message : "Không tải được đơn hàng TikTok",
+    };
+  }
+}
+
+/** Fetch open-collaboration products (raw) to confirm the response schema. */
+export async function fetchCollabProductsAction(): Promise<CollabState> {
+  await requireAdmin();
+  try {
+    const { total, count, raw } = await fetchOpenCollaborationProducts();
+    return { total, count, raw, fetchedAt: new Date().toLocaleString("vi-VN") };
+  } catch (e) {
+    if (e instanceof TikTokApiError) {
+      return { error: `TikTok trả về lỗi (mã ${e.code}): ${e.message}` };
+    }
+    return {
+      error: e instanceof Error ? e.message : "Không tải được sản phẩm",
     };
   }
 }

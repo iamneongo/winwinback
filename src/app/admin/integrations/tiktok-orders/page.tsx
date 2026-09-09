@@ -4,6 +4,7 @@ import { requireAdmin } from "@/lib/auth/guards";
 import { isTikTokConfigured } from "@/lib/affiliate/tiktok/config";
 import { getStoredTikTokToken } from "@/lib/affiliate/tiktok/tokens";
 import { TikTokOrdersPanel } from "@/components/admin/TikTokOrdersPanel";
+import { TikTokCollabPanel } from "@/components/admin/TikTokCollabPanel";
 
 export const metadata = { title: "Dữ liệu đơn hàng TikTok — Win-Win Back" };
 export const dynamic = "force-dynamic";
@@ -63,6 +64,7 @@ export default async function TikTokOrdersPage() {
             </p>
           )}
           <TikTokOrdersPanel />
+          <TikTokCollabPanel />
         </div>
       )}
     </main>
