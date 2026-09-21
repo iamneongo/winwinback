@@ -1,15 +1,15 @@
-import { PolicyShell } from "@/components/policy/PolicyShell";
+import { PublicPolicyShell } from "@/components/policy/PublicPolicyShell";
 import { TermsBody } from "@/components/policy/content";
 
 export const metadata = { title: "Điều khoản sử dụng — Win-Win Back" };
 
-export default function TermsPage() {
+export default function PublicTermsPage() {
   return (
-    <PolicyShell
+    <PublicPolicyShell
       title="Điều khoản sử dụng"
       subtitle="Vui lòng đọc kỹ trước khi sử dụng dịch vụ Win-Win Back."
     >
       <TermsBody />
-    </PolicyShell>
+    </PublicPolicyShell>
   );
 }
