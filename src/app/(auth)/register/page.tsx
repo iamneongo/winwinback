@@ -10,9 +10,12 @@ export default async function RegisterPage() {
   const user = await getCurrentUser();
   if (user) redirect(user.role === "admin" ? "/admin" : "/dashboard");
 
+  const googleEnabled = Boolean(
+    process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET,
+  );
   return (
     <AuthShell>
-      <RegisterForm />
+      <RegisterForm googleEnabled={googleEnabled} />
     </AuthShell>
   );
 }

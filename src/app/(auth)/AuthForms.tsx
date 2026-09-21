@@ -60,7 +60,52 @@ function FieldError({ message }: { message: string }) {
   );
 }
 
-export function LoginForm() {
+function GoogleIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" aria-hidden>
+      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.76h3.56c2.08-1.92 3.28-4.74 3.28-8.09z" />
+      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.56-2.76c-.98.66-2.23 1.06-3.72 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0 0 12 23z" />
+      <path fill="#FBBC05" d="M5.84 14.09a6.6 6.6 0 0 1 0-4.18V7.07H2.18a11 11 0 0 0 0 9.86l3.66-2.84z" />
+      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84C6.71 7.31 9.14 5.38 12 5.38z" />
+    </svg>
+  );
+}
+
+/** "Đăng nhập với Google" — starts the Better Auth Google OAuth flow. */
+function GoogleButton({ label = "Đăng nhập với Google" }: { label?: string }) {
+  const [loading, setLoading] = useState(false);
+  async function go() {
+    setLoading(true);
+    // On success the browser navigates to Google; control usually leaves the
+    // page. Reset loading if the call returns without redirecting (e.g. error).
+    await authClient.signIn.social({ provider: "google", callbackURL: "/dashboard" });
+    setLoading(false);
+  }
+  return (
+    <button
+      type="button"
+      onClick={go}
+      disabled={loading}
+      className="flex h-11 w-full items-center justify-center gap-2.5 rounded-xl border border-[#dbe7f6] bg-white text-sm font-bold text-[#0d315d] transition-colors hover:bg-[#f7faff] disabled:opacity-60"
+    >
+      {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <GoogleIcon />}
+      {label}
+    </button>
+  );
+}
+
+/** A labelled "hoặc" divider. */
+function OrDivider() {
+  return (
+    <div className="mt-5 flex items-center gap-3 text-xs font-medium text-[#9db0c8]">
+      <span className="h-px flex-1 bg-[#e4ecf6]" />
+      hoặc
+      <span className="h-px flex-1 bg-[#e4ecf6]" />
+    </div>
+  );
+}
+
+export function LoginForm({ googleEnabled = false }: { googleEnabled?: boolean }) {
   const router = useRouter();
   const [error, setError] = useState<string>();
   const [loading, setLoading] = useState(false);
@@ -144,12 +189,15 @@ export function LoginForm() {
           {loading ? "Đang đăng nhập…" : "Đăng nhập"}
         </Button>
       </form>
-      <div className="mt-5 flex items-center gap-3 text-xs font-medium text-[#9db0c8]">
-        <span className="h-px flex-1 bg-[#e4ecf6]" />
-        hoặc
-        <span className="h-px flex-1 bg-[#e4ecf6]" />
-      </div>
-      <p className="mt-4 text-center text-sm text-[#6681a7]">
+      {googleEnabled && (
+        <>
+          <OrDivider />
+          <div className="mt-4">
+            <GoogleButton />
+          </div>
+        </>
+      )}
+      <p className="mt-5 text-center text-sm text-[#6681a7]">
         Chưa có tài khoản?{" "}
         <Link href="/register" className="font-bold text-[#1766e7] hover:underline">Đăng ký ngay</Link>
       </p>
@@ -157,7 +205,7 @@ export function LoginForm() {
   );
 }
 
-export function RegisterForm() {
+export function RegisterForm({ googleEnabled = false }: { googleEnabled?: boolean }) {
   const [error, setError] = useState<string>();
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
@@ -220,6 +268,14 @@ export function RegisterForm() {
           {loading ? "Đang tạo…" : "Đăng ký"}
         </Button>
       </form>
+      {googleEnabled && (
+        <>
+          <OrDivider />
+          <div className="mt-4">
+            <GoogleButton label="Đăng ký với Google" />
+          </div>
+        </>
+      )}
       <p className="mt-5 text-center text-sm text-[#6681a7]">
         Đã có tài khoản?{" "}
         <Link href="/login" className="font-bold text-[#1766e7] hover:underline">Đăng nhập</Link>
