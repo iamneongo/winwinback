@@ -11,7 +11,7 @@ export interface ConvertResult {
 
 /**
  * An affiliate provider turns a raw product URL into a trackable affiliate
- * link. Implementations: mock (default), AccessTrade, Shopee, TikTok.
+ * link. Implementations: mock (default), AccessTrade, Shopee, local, TikTok.
  *
  * Order & commission data does NOT come from here — it arrives asynchronously
  * via the webhook (POST /api/webhooks/affiliate) or admin entry, because
