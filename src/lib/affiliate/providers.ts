@@ -8,10 +8,6 @@ import { isShopeeConfigured } from "./shopee/config";
 import { generateShortLink, ShopeeApiError } from "./shopee/client";
 import { extractShopeeItemId } from "./shopee/product";
 import { getAffiliateProductLink, ShopeeDataApiError } from "./shopee/data-client";
-import {
-  buildLocalShopeeAffiliateLink,
-  ShopeeLocalLinkError,
-} from "./shopee/local-link";
 
 /**
  * Mock provider — works with no external credentials.
@@ -110,34 +106,6 @@ class AddliveTagShopeeProvider implements AffiliateProvider {
 }
 
 /**
- * Educational local builder for Shopee's `an_redir` URL shape.
- *
- * It only constructs a deeplink; it does not verify attribution, retrieve
- * product data, or report conversions. Use a full Shopee VN product URL.
- */
-class LocalShopeeLinkProvider implements AffiliateProvider {
-  readonly name = "local";
-
-  async convertLink(
-    platform: Platform,
-    url: string,
-    opts?: { subId?: string },
-  ): Promise<ConvertResult> {
-    if (platform !== "shopee") {
-      throw new Error("Provider local chỉ xử lý link Shopee");
-    }
-    try {
-      return buildLocalShopeeAffiliateLink(url, opts?.subId);
-    } catch (error) {
-      if (error instanceof ShopeeLocalLinkError) {
-        throw new Error(`Không tạo được deeplink Shopee: ${error.message}`);
-      }
-      throw error;
-    }
-  }
-}
-
-/**
  * TikTok Shop Affiliate Creator API.
  *
  * Turns a pasted TikTok Shop product URL into an affiliate sharing link via
@@ -208,8 +176,6 @@ function providerByName(name: string | undefined): AffiliateProvider {
       return new ShopeeProvider();
     case "addlivetag":
       return new AddliveTagShopeeProvider();
-    case "local":
-      return new LocalShopeeLinkProvider();
     case "tiktok":
       return new TikTokProvider();
     case "mock":

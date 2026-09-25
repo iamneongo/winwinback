@@ -46,11 +46,6 @@ export function getShopeeAffiliateId(): string {
   return process.env.SHOPEE_AFFILIATE_ID ?? "";
 }
 
-/** An affiliate id is all the local `an_redir` builder needs. */
-export function isShopeeLocalLinkConfigured(): boolean {
-  return /^\d{6,20}$/.test(getShopeeAffiliateId().trim());
-}
-
 export function isShopeeDataConfigured(): boolean {
   return Boolean(getAddliveTagApiKey() && getShopeeAffiliateId());
 }
