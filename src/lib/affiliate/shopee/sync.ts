@@ -26,11 +26,63 @@ function verifiedFrom(mapped: OrderStatus | null): string {
   return "pending";
 }
 
-/** Best-effort parse of a money string to an integer (VND has no decimals). */
+/** Best-effort parse of a monetary value to VND. */
 function parseAmount(raw?: string): number {
   if (!raw) return 0;
-  const digits = raw.replace(/[^\d]/g, "");
-  return digits ? parseInt(digits, 10) : 0;
+  const value = Number(raw.replace(/,/g, ""));
+  return Number.isFinite(value) ? Math.round(value) : 0;
+}
+
+interface FetchedShopeeOrder {
+  id: string;
+  status?: string;
+  purchaseTime?: number;
+  utmContent?: string;
+  productId?: string;
+  productName?: string;
+  orderAmount: number;
+  commission: number;
+}
+
+/**
+ * Shopee reports a conversion (checkout) containing one or more orders. Split
+ * it into our one-row-per-order model and allocate net commission by each
+ * order's item-level gross commission. This preserves the conversion total
+ * while avoiding a payout based on pre-MCN-fee commission.
+ */
+function flattenConversion(c: ShopeeConversion): FetchedShopeeOrder[] {
+  const rawOrders = c.orders ?? [];
+  const grossByOrder = rawOrders.map((order) =>
+    (order.items ?? []).reduce(
+      (sum, item) => sum + parseAmount(item.itemTotalCommission),
+      0,
+    ),
+  );
+  const grossTotal = grossByOrder.reduce((sum, amount) => sum + amount, 0);
+  const conversionCommission = parseAmount(c.netCommission ?? c.totalCommission);
+
+  return rawOrders.map((order, index) => {
+    const items = order.items ?? [];
+    const first = items[0];
+    const orderAmount = items.reduce(
+      (sum, item) => sum + parseAmount(item.actualAmount ?? item.itemPrice),
+      0,
+    );
+    const commission =
+      grossTotal > 0 && conversionCommission > 0
+        ? Math.round((conversionCommission * grossByOrder[index]) / grossTotal)
+        : grossByOrder[index];
+    return {
+      id: order.orderId,
+      status: order.orderStatus,
+      purchaseTime: c.purchaseTime,
+      utmContent: c.utmContent,
+      productId: first?.itemId,
+      productName: first?.itemName,
+      orderAmount,
+      commission,
+    };
+  });
 }
 
 export interface ShopeeSyncResult {
@@ -69,7 +121,7 @@ export async function syncShopeeOrders(
   const now = Math.floor(Date.now() / 1000);
   const purchaseTimeStart = now - sinceDays * 86400;
 
-  const fetched: ShopeeConversion[] = [];
+  const conversions: ShopeeConversion[] = [];
   let scrollId: string | undefined;
   for (let page = 0; page < maxPages; page++) {
     const { nodes, scrollId: next, hasNextPage } = await getConversionReport({
@@ -78,17 +130,18 @@ export async function syncShopeeOrders(
       scrollId,
       limit: 100,
     });
-    fetched.push(...nodes);
+    conversions.push(...nodes);
     if (!hasNextPage || !next) break;
     scrollId = next;
   }
 
+  const fetched = conversions.flatMap(flattenConversion);
   const scanned = fetched.length;
   if (scanned === 0) {
     return { connected: true, scanned, updated: 0, credited: 0, attributed: 0, unmatched: 0 };
   }
 
-  const ids = [...new Set(fetched.map((c) => c.orderId))];
+  const ids = [...new Set(fetched.map((order) => order.id))];
   const existing = await db
     .select()
     .from(orders)
@@ -100,9 +153,9 @@ export async function syncShopeeOrders(
   let unmatched = 0;
   const toSettle = new Set<string>();
 
-  for (const c of fetched) {
-    const row = byExt.get(c.orderId);
-    const mapped = mapShopeeStatus(c.orderStatus);
+  for (const order of fetched) {
+    const row = byExt.get(order.id);
+    const mapped = mapShopeeStatus(order.status);
 
     if (row) {
       if (mapped && mapped !== row.status) {
@@ -122,7 +175,7 @@ export async function syncShopeeOrders(
       continue;
     }
 
-    const created = await attributeShopeeOrder(c, mapped);
+    const created = await attributeShopeeOrder(order, mapped);
     if (created) {
       attributed++;
       if (mapped === "completed") toSettle.add(created);
@@ -141,15 +194,15 @@ export async function syncShopeeOrders(
 
 /** Resolve the owning user for a conversion, then create the order locally. */
 async function attributeShopeeOrder(
-  c: ShopeeConversion,
+  order: FetchedShopeeOrder,
   mapped: OrderStatus | null,
 ): Promise<string | null> {
   let userId: string | undefined;
   let linkId: string | undefined;
 
   // 1) Preferred: the short code we embedded as a sub id (utm_content).
-  if (c.utmContent) {
-    const code = c.utmContent.split(/[_-]/)[0]?.trim();
+  if (order.utmContent) {
+    const code = order.utmContent.split(/[_-]/)[0]?.trim();
     if (code) {
       const link = await db
         .select({ id: affiliateLinks.id, userId: affiliateLinks.userId })
@@ -166,9 +219,9 @@ async function attributeShopeeOrder(
   // 2) Fallback: match the purchased item id to a recent unattributed click.
   let clickId: string | undefined;
   if (!userId) {
-    const itemId = c.items?.find((i) => i.itemId)?.itemId;
+    const itemId = order.productId;
     if (!itemId) return null;
-    const orderTime = c.purchaseTime ? new Date(c.purchaseTime * 1000) : new Date();
+    const orderTime = order.purchaseTime ? new Date(order.purchaseTime * 1000) : new Date();
     const clicks = await db
       .select()
       .from(linkClicks)
@@ -191,8 +244,7 @@ async function attributeShopeeOrder(
   if (!userId) return null;
 
   const status: OrderStatus = mapped ?? "pending";
-  const commission = parseAmount(c.netCommission ?? c.totalCommission);
-  const cashback = Math.round(commission * cashbackRate);
+  const cashback = Math.round(order.commission * cashbackRate);
 
   try {
     return await db.transaction(async (tx) => {
@@ -202,14 +254,17 @@ async function attributeShopeeOrder(
           userId,
           linkId,
           platform: "shopee",
-          externalOrderId: c.orderId,
-          productName: c.items?.[0]?.itemName ?? "Đơn Shopee",
-          orderAmount: 0,
-          commissionAmount: commission,
+          externalOrderId: order.id,
+          productName: order.productName ?? "Đơn Shopee",
+          orderAmount: order.orderAmount,
+          commissionAmount: order.commission,
           cashbackAmount: cashback,
           status,
           tiktokVerifiedStatus: verifiedFrom(mapped),
           tiktokVerifiedAt: new Date(),
+          orderedAt: order.purchaseTime
+            ? new Date(order.purchaseTime * 1000)
+            : undefined,
         })
         .returning({ id: orders.id });
       const orderId = inserted[0].id;

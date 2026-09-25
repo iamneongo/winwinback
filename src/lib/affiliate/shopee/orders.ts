@@ -29,7 +29,9 @@ export async function verifyShopeeOrder(
       scrollId,
       limit: 100,
     });
-    const hit = nodes.find((c) => c.orderId === externalOrderId);
+    const hit = nodes.flatMap((conversion) => conversion.orders ?? []).find(
+      (order) => order.orderId === externalOrderId,
+    );
     if (hit) {
       const mapped = mapShopeeStatus(hit.orderStatus);
       const status =

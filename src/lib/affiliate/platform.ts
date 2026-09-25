@@ -1,6 +1,12 @@
 import type { Platform } from "./types";
 
-const SHOPEE_HOSTS = ["shopee.vn", "shopee.com", "s.shopee.vn"];
+const SHOPEE_HOSTS = [
+  "shopee.vn",
+  "shopee.com",
+  "s.shopee.vn",
+  "shp.ee",
+  "vn.shp.ee",
+];
 const TIKTOK_HOSTS = [
   "tiktok.com",
   "shop.tiktok.com",

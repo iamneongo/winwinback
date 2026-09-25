@@ -82,17 +82,35 @@ export async function generateShortLink(
   return link;
 }
 
-/** One conversion (affiliate order) line from the Shopee report. */
-export interface ShopeeConversion {
-  conversionId?: number;
+/** One item within an order in Shopee's conversion report. */
+export interface ShopeeConversionItem {
+  itemId?: string;
+  itemName?: string;
+  actualAmount?: string;
+  itemPrice?: string;
+  itemTotalCommission?: string;
+}
+
+/** An order nested under one Shopee conversion (formerly a checkout). */
+export interface ShopeeConversionOrder {
   orderId: string;
   orderStatus?: string; // UNPAID | PENDING | COMPLETED | CANCELLED
+  items?: ShopeeConversionItem[];
+}
+
+/**
+ * One conversion from Shopee's report. A conversion can contain several
+ * marketplace orders, so `orders` must be flattened before reconciling it
+ * with our order table.
+ */
+export interface ShopeeConversion {
+  conversionId?: number;
   purchaseTime?: number; // unix seconds
   totalCommission?: string;
   netCommission?: string;
   /** Sub ids echoed back from the short link (attribution key). */
   utmContent?: string;
-  items?: { itemId?: string; itemName?: string }[];
+  orders?: ShopeeConversionOrder[];
 }
 
 /**
@@ -113,7 +131,7 @@ export async function getConversionReport(params: {
   if (params.purchaseTimeEnd) args.push(`purchaseTimeEnd:${params.purchaseTimeEnd}`);
   if (params.scrollId) args.push(`scrollId:${gqlStr(params.scrollId)}`);
 
-  const query = `query{conversionReport(${args.join(",")}){nodes{conversionId orderId orderStatus purchaseTime totalCommission netCommission utmContent items{itemId itemName}} pageInfo{hasNextPage scrollId}}}`;
+  const query = `query{conversionReport(${args.join(",")}){nodes{conversionId purchaseTime totalCommission netCommission utmContent orders{orderId orderStatus items{itemId itemName actualAmount itemPrice itemTotalCommission}} pageInfo{hasNextPage scrollId}}}`;
   const data = await graphql<{
     conversionReport?: {
       nodes?: ShopeeConversion[];

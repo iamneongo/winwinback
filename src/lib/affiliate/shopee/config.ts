@@ -28,3 +28,24 @@ export function getShopeeSecret(): string {
 export function isShopeeConfigured(): boolean {
   return Boolean(getShopeeAppId() && getShopeeSecret());
 }
+
+/**
+ * AddliveTag's product-data service is a separate, non-official integration.
+ * It accepts an API key and our Shopee Affiliate ID, then returns an `an_redir`
+ * affiliate URL without requiring a Shopee Open API App Secret.
+ */
+export const ADDLIVETAG_PRODUCT_DATA_URL =
+  process.env.ADDLIVETAG_PRODUCT_DATA_URL ||
+  "https://data.addlivetag.com/product-data/product-data.php";
+
+export function getAddliveTagApiKey(): string {
+  return process.env.ADDLIVETAG_API_KEY ?? "";
+}
+
+export function getShopeeAffiliateId(): string {
+  return process.env.SHOPEE_AFFILIATE_ID ?? "";
+}
+
+export function isShopeeDataConfigured(): boolean {
+  return Boolean(getAddliveTagApiKey() && getShopeeAffiliateId());
+}

@@ -7,6 +7,7 @@ import { getValidTikTokAccessToken } from "./tiktok/tokens";
 import { isShopeeConfigured } from "./shopee/config";
 import { generateShortLink, ShopeeApiError } from "./shopee/client";
 import { extractShopeeItemId } from "./shopee/product";
+import { getAffiliateProductLink, ShopeeDataApiError } from "./shopee/data-client";
 
 /**
  * Mock provider — works with no external credentials.
@@ -74,6 +75,33 @@ class ShopeeProvider implements AffiliateProvider {
     }
 
     return { affiliateUrl, productId: extractShopeeItemId(url) ?? undefined };
+  }
+}
+
+/**
+ * AddliveTag product-data API. This is an external, non-official data source
+ * documented by bcat95/shopee-aff. It uses an API key plus the business's
+ * Shopee Affiliate ID; no Shopee Open API App Secret is required.
+ */
+class AddliveTagShopeeProvider implements AffiliateProvider {
+  readonly name = "addlivetag";
+
+  async convertLink(
+    platform: Platform,
+    url: string,
+    opts?: { subId?: string },
+  ): Promise<ConvertResult> {
+    if (platform !== "shopee") {
+      throw new Error("Provider AddliveTag chỉ xử lý link Shopee");
+    }
+    try {
+      return await getAffiliateProductLink(url, opts?.subId);
+    } catch (error) {
+      if (error instanceof ShopeeDataApiError) {
+        throw new Error(`Không tạo được link Shopee: ${error.message}`);
+      }
+      throw error;
+    }
   }
 }
 
@@ -146,6 +174,8 @@ function providerByName(name: string | undefined): AffiliateProvider {
       return new AccessTradeProvider();
     case "shopee":
       return new ShopeeProvider();
+    case "addlivetag":
+      return new AddliveTagShopeeProvider();
     case "tiktok":
       return new TikTokProvider();
     case "mock":
