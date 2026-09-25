@@ -18,6 +18,21 @@ import type {
 } from "@/lib/affiliate/shopee/discover-types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ShopeeIcon, TikTokIcon } from "@/components/sections/BrandIcons";
+
+function PlatformBadge({ platform }: { platform: "shopee" | "tiktok" }) {
+  const isShopee = platform === "shopee";
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-[11px] font-bold ${isShopee ? "bg-[#fff0ec] text-[#d94125]" : "bg-[#10151d] text-white"}`}
+    >
+      <span className={`flex h-4 w-4 items-center justify-center rounded ${isShopee ? "bg-[#ee4d2d]" : "bg-black"}`}>
+        {isShopee ? <ShopeeIcon white className="h-2.5 w-2.5" /> : <TikTokIcon className="h-2.5 w-2.5" />}
+      </span>
+      {isShopee ? "Shopee" : "TikTok Shop"}
+    </span>
+  );
+}
 
 function formatVnd(value: number | null): string {
   if (value === null) return "Đang cập nhật giá";
@@ -72,6 +87,7 @@ function CampaignCard({ campaign }: { campaign: ShopeeCampaign }) {
         )}
       </div>
       <div className="flex min-w-0 flex-1 flex-col p-3.5">
+        <PlatformBadge platform="shopee" />
         <p className="line-clamp-2 text-sm font-bold leading-5 text-[#173861]">
           {campaign.name}
         </p>
@@ -112,6 +128,7 @@ function ProductCard({ product }: { product: ShopeeOfferProduct }) {
         )}
       </div>
       <div className="flex flex-1 flex-col p-3.5">
+        <PlatformBadge platform="shopee" />
         <p className="line-clamp-2 min-h-10 text-sm font-bold leading-5 text-[#173861]">
           {product.name}
         </p>
@@ -171,10 +188,13 @@ export function ShopeeDiscover() {
     <main className="mx-auto w-full max-w-[1440px] px-4 py-5 sm:px-7 sm:py-7 lg:px-6 lg:pb-8">
       <section className="overflow-hidden rounded-xl bg-[#062f54] px-5 py-6 text-white sm:px-7">
         <div className="max-w-3xl">
-          <p className="text-sm font-bold text-[#d9fb89]">Shopee Affiliate</p>
-          <h1 className="mt-1 text-2xl font-black tracking-tight text-balance sm:text-3xl">Khám phá ưu đãi đang có hoa hồng</h1>
+          <div className="flex flex-wrap items-center gap-2">
+            <PlatformBadge platform="shopee" />
+            <PlatformBadge platform="tiktok" />
+          </div>
+          <h1 className="mt-3 text-2xl font-black tracking-tight text-balance sm:text-3xl">Sàn sale: ưu đãi và sản phẩm giảm giá</h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-white/78">
-            Chọn sản phẩm, tạo link hoàn tiền của riêng bạn rồi mua qua link đó để được ghi nhận.
+            Nhận biết rõ ưu đãi theo từng sàn, chọn sản phẩm rồi tạo link hoàn tiền của riêng bạn.
           </p>
           <form onSubmit={onSearch} className="mt-5 flex max-w-xl gap-2">
             <Input
@@ -204,8 +224,11 @@ export function ShopeeDiscover() {
           <section className="mt-6">
             <div className="flex items-end justify-between gap-4">
               <div>
-                <h2 className="text-lg font-black text-[#173861]">Chiến dịch đang diễn ra</h2>
-                <p className="mt-1 text-sm text-[#6681a7]">Ưu đãi và campaign được cập nhật từ nguồn affiliate.</p>
+                <div className="flex items-center gap-2">
+                  <PlatformBadge platform="shopee" />
+                  <h2 className="text-lg font-black text-[#173861]">Voucher & ưu đãi Shopee</h2>
+                </div>
+                <p className="mt-1 text-sm text-[#6681a7]">Chiến dịch và deal đang chạy từ nguồn affiliate Shopee.</p>
               </div>
               {data?.dataSource && data.dataSource !== "unknown" && (
                 <span className="hidden text-xs font-semibold text-[#6681a7] sm:block">
@@ -223,10 +246,31 @@ export function ShopeeDiscover() {
             )}
           </section>
 
+          <section className="mt-6 rounded-xl bg-[#10151d] p-5 text-white sm:flex sm:items-center sm:justify-between sm:gap-6">
+            <div>
+              <div className="flex items-center gap-2">
+                <PlatformBadge platform="tiktok" />
+                <h2 className="text-base font-black">Sản phẩm & ưu đãi TikTok Shop</h2>
+              </div>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-white/72">
+                Dán link TikTok Shop để kiểm tra sản phẩm có hoa hồng và tạo link hoàn tiền. Nguồn hiện chưa cung cấp feed voucher TikTok tổng hợp để hiển thị an toàn.
+              </p>
+            </div>
+            <Link
+              href="/dashboard#tao-link"
+              className="mt-4 inline-flex h-10 shrink-0 items-center justify-center gap-1 rounded-lg bg-white px-4 text-sm font-bold text-[#10151d] transition-colors hover:bg-[#e9f6cf] sm:mt-0"
+            >
+              Kiểm tra link TikTok <ChevronRight className="h-4 w-4" />
+            </Link>
+          </section>
+
           <section className="mt-8">
             <div className="flex items-end justify-between gap-4">
               <div>
-                <h2 className="text-lg font-black text-[#173861]">{query.trim() ? `Kết quả cho “${query.trim()}”` : "Sản phẩm có hoa hồng"}</h2>
+                <div className="flex items-center gap-2">
+                  <PlatformBadge platform="shopee" />
+                  <h2 className="text-lg font-black text-[#173861]">{query.trim() ? `Sản phẩm Shopee cho “${query.trim()}”` : "Sản phẩm Shopee đang khuyến mãi"}</h2>
+                </div>
                 <p className="mt-1 text-sm text-[#6681a7]">Nhấn tạo link để gắn mã theo dõi hoàn tiền cho tài khoản của bạn.</p>
               </div>
             </div>
