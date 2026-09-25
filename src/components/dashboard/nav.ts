@@ -11,6 +11,7 @@ import {
   ShieldCheck,
   Banknote,
   Gift,
+  Compass,
   ClipboardCheck,
   type LucideIcon,
 } from "lucide-react";
@@ -30,6 +31,7 @@ export const customerNav: NavItem[] = [
   { href: "/dashboard/don-hang", icon: ShoppingBag, label: "Đơn hàng của tôi", short: "Đơn hàng" },
   { href: "/dashboard/vi", icon: Wallet, label: "Ví hoàn tiền", short: "Ví" },
   { href: "/dashboard/nhiem-vu", icon: Gift, label: "Nhiệm vụ nhận quà", short: "Nhiệm vụ" },
+  { href: "/dashboard/kham-pha", icon: Compass, label: "Khám phá ưu đãi", short: "Khám phá" },
   { href: "/dashboard/tai-khoan", icon: Settings, label: "Cài đặt" },
 ];
 
