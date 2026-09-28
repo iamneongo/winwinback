@@ -9,6 +9,7 @@ import { generateShortLink, ShopeeApiError } from "./shopee/client";
 import { extractShopeeItemId } from "./shopee/product";
 import { getAffiliateProductLink, ShopeeDataApiError } from "./shopee/data-client";
 import { createShopeeAffLink, ShopeeAffApiError } from "./shopee/automation-client";
+import { toShopeeSubId1 } from "./shopee/sub-id";
 
 /**
  * Mock provider — works with no external credentials.
@@ -106,7 +107,7 @@ class AddliveTagShopeeProvider implements AffiliateProvider {
   }
 }
 
-/** ShopeeAff uses an authenticated real-Chrome worker and records userId in SubId1. */
+/** ShopeeAff uses an authenticated real-Chrome worker and records a safe user ID in SubId1. */
 class ShopeeAffProvider implements AffiliateProvider {
   readonly name = "shopee-aff";
 
@@ -124,7 +125,8 @@ class ShopeeAffProvider implements AffiliateProvider {
     try {
       const result = await createShopeeAffLink({
         originalLink: url,
-        userId: opts.userId,
+        // Shopee rejects UUID punctuation in SubId1 (only [a-zA-Z0-9]).
+        userId: toShopeeSubId1(opts.userId),
       });
       return {
         affiliateUrl: result.affiliateUrl,

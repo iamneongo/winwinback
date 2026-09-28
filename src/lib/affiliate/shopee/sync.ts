@@ -6,6 +6,7 @@ import { cashbackRate } from "@/lib/config";
 import { settleOrderCashback } from "@/lib/wallet";
 import { getShopeeAffReport, type ShopeeAffReportItem } from "./automation-client";
 import { isShopeeAffConfigured } from "./config";
+import { fromShopeeSubId1 } from "./sub-id";
 
 type OrderStatus = "pending" | "confirmed" | "completed" | "cancelled";
 
@@ -84,9 +85,7 @@ export interface ShopeeSyncResult {
   unmatched: number;
 }
 
-const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-
-/** Reconcile ShopeeAff reports. SubId1 is the stable Win-Win user UUID. */
+/** Reconcile ShopeeAff reports. SubId1 is the compact, Shopee-safe user UUID. */
 export async function syncShopeeOrders(
   opts: { sinceDays?: number; maxPages?: number } = {},
 ): Promise<ShopeeSyncResult> {
@@ -156,8 +155,8 @@ export async function syncShopeeOrders(
 }
 
 async function createAttributedShopeeOrder(reportOrder: FetchedShopeeOrder, mappedStatus: OrderStatus | null): Promise<string | null> {
-  const userId = reportOrder.subIds[0];
-  if (!userId || !UUID_PATTERN.test(userId)) return null;
+  const userId = reportOrder.subIds[0] ? fromShopeeSubId1(reportOrder.subIds[0]) : null;
+  if (!userId) return null;
   const user = await db.select({ id: users.id }).from(users).where(eq(users.id, userId)).limit(1);
   if (!user[0]) return null;
 
