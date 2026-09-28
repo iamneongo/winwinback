@@ -37,6 +37,10 @@ export const auth = betterAuth({
     accountLinking: {
       enabled: true,
       trustedProviders: ["google"],
+      // A verified Google identity with the same email is sufficient proof of
+      // ownership. This also lets users who registered before opening their
+      // verification email sign in with Google and link the two accounts.
+      requireLocalEmailVerified: false,
     },
   },
   database: drizzleAdapter(db, {
