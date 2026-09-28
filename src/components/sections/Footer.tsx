@@ -30,7 +30,6 @@ export function Footer() {
               { label: 'Cách hoạt động', href: '#cach-hoat-dong' },
               { label: 'Đối tác', href: '#doi-tac' },
               { label: 'Giải đáp', href: '#giai-dap' },
-              { label: 'Tài liệu hệ thống', href: '/docs' },
             ].map(({ label, href }) => (
               <Link key={href} href={href} className="text-sm text-white/60 hover:text-white transition-colors">
                 {label}
