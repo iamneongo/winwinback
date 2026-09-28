@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export function Footer() {
   return (
     <footer className="bg-[#082b4b] py-10">
@@ -28,10 +30,11 @@ export function Footer() {
               { label: 'Cách hoạt động', href: '#cach-hoat-dong' },
               { label: 'Đối tác', href: '#doi-tac' },
               { label: 'Giải đáp', href: '#giai-dap' },
+              { label: 'Tài liệu hệ thống', href: '/docs' },
             ].map(({ label, href }) => (
-              <a key={href} href={href} className="text-sm text-white/60 hover:text-white transition-colors">
+              <Link key={href} href={href} className="text-sm text-white/60 hover:text-white transition-colors">
                 {label}
-              </a>
+              </Link>
             ))}
           </nav>
         </div>
