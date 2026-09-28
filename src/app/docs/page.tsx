@@ -1,228 +1,43 @@
 import Link from "next/link";
 import {
-  ArrowRight,
-  BadgeCheck,
-  ChevronLeft,
-  CircleCheck,
-  ClipboardPaste,
-  Database,
-  ExternalLink,
-  Link2,
-  MousePointerClick,
-  PackageCheck,
-  ServerCog,
-  ShieldCheck,
-  ShoppingBag,
-  WalletCards,
+  ArrowRight, BadgeCheck, BookOpen, Boxes, CheckCircle2, ChevronLeft, ChevronRight,
+  CircleAlert, Code2, Database, FileKey2, GitBranch, KeyRound, Link2, LockKeyhole,
+  Network, RefreshCw, ServerCog, ShieldCheck, ShoppingBag, TerminalSquare, UsersRound, WalletCards,
 } from "lucide-react";
 import { BrandLogo } from "@/components/BrandLogo";
 
-const steps = [
-  {
-    icon: ClipboardPaste,
-    title: "Dán link sản phẩm",
-    text: "Người dùng dán link Shopee hoặc TikTok Shop vào Win-Win Back.",
-  },
-  {
-    icon: Link2,
-    title: "Tạo link có tracking",
-    text: "Hệ thống tạo link affiliate và gắn định danh để quy đơn về đúng tài khoản.",
-  },
-  {
-    icon: ShoppingBag,
-    title: "Mua hàng trên sàn",
-    text: "Link mở ứng dụng hoặc website của sàn; người dùng thanh toán như bình thường.",
-  },
-  {
-    icon: PackageCheck,
-    title: "Đối soát đơn",
-    text: "Báo cáo affiliate được đồng bộ định kỳ để cập nhật trạng thái và hoa hồng.",
-  },
-  {
-    icon: WalletCards,
-    title: "Cộng hoàn tiền",
-    text: "Khi đơn được sàn chốt hợp lệ, cashback được cộng vào ví của người dùng.",
-  },
-];
-
-const safeguards = [
-  "Link gốc, link affiliate và người sở hữu được lưu cùng nhau.",
-  "Mỗi đơn chỉ được cộng tiền một lần nhờ cơ chế idempotent.",
-  "Đơn hủy, hoàn trả hoặc chưa được xác nhận sẽ không được chi trả.",
-  "SubId1 của Shopee được chuẩn hóa thành chữ và số, rồi khôi phục khi đối soát.",
-];
-
-function FlowNode({
-  icon: Icon,
-  label,
-  note,
-  tone,
-}: {
-  icon: typeof ClipboardPaste;
-  label: string;
-  note: string;
-  tone: "navy" | "lime" | "orange" | "blue";
-}) {
-  const tones = {
-    navy: "bg-[#0a345b] text-white",
-    lime: "bg-[#b7e961] text-[#173b5e]",
-    orange: "bg-[#f45d3e] text-white",
-    blue: "bg-[#e8f1ff] text-[#24578e]",
-  };
-
-  return (
-    <div className="min-w-[10rem] flex-1 rounded-xl border border-[#dce7f4] bg-white p-4">
-      <span className={`mb-4 flex size-9 items-center justify-center rounded-lg ${tones[tone]}`}>
-        <Icon className="size-[18px]" strokeWidth={2.25} />
-      </span>
-      <p className="text-sm font-bold text-[#12355f]">{label}</p>
-      <p className="mt-1 text-xs leading-5 text-[#587298]">{note}</p>
-    </div>
-  );
-}
+const nav = [["Tổng quan","overview"],["Kiến trúc","architecture"],["Luồng nghiệp vụ","flows"],["API & endpoints","api"],["Dữ liệu","data"],["Xác thực & quyền","auth"],["Cấu hình môi trường","environment"],["Vận hành","operations"],["Bàn giao","handover"]] as const;
+const tone = { blue:"bg-[#e8f1ff] text-[#285b92]", green:"bg-[#e9f7e3] text-[#36721f]", orange:"bg-[#fff1ea] text-[#b64a2e]", slate:"bg-[#eef3f8] text-[#526d8d]" };
+function Tag({children,kind="blue"}:{children:React.ReactNode;kind?:keyof typeof tone}) { return <span className={`inline-flex rounded-md px-2 py-0.5 text-[11px] font-bold ${tone[kind]}`}>{children}</span>; }
+function Code({children,title}:{children:string;title?:string}) { return <div className="overflow-hidden rounded-lg bg-[#071d33] text-[#d9e8f5]">{title&&<div className="flex items-center gap-2 border-b border-white/10 px-4 py-2.5 text-xs font-semibold text-[#9bb8d1]"><TerminalSquare className="size-3.5"/>{title}</div>}<pre className="overflow-x-auto p-4 text-[12px] leading-6 sm:text-[13px]"><code>{children}</code></pre></div>; }
+function Heading({icon:Icon,title,children}:{icon:typeof BookOpen;title:string;children:string}) { return <div className="scroll-mt-24 border-b border-[#dce7f2] pb-6"><span className="flex size-10 items-center justify-center rounded-lg bg-[#e7f0fc] text-[#245b93]"><Icon className="size-5"/></span><h2 className="mt-4 text-2xl font-black tracking-[-0.025em] text-[#12355f] sm:text-3xl">{title}</h2><p className="mt-3 max-w-3xl text-sm leading-7 text-[#587496] sm:text-base">{children}</p></div>; }
+function Flow({icon:Icon,title,detail,kind}:{icon:typeof Link2;title:string;detail:string;kind:"navy"|"lime"|"orange"|"blue"}) { const colors={navy:"bg-[#0b355d] text-white",lime:"bg-[#b7e961] text-[#153b5e]",orange:"bg-[#f36443] text-white",blue:"bg-[#e8f1ff] text-[#285b92]"}; return <div className="min-w-[10.5rem] flex-1 rounded-lg border border-[#dbe7f3] bg-white p-4"><span className={`flex size-9 items-center justify-center rounded-lg ${colors[kind]}`}><Icon className="size-4.5"/></span><p className="mt-4 text-sm font-bold">{title}</p><p className="mt-1 text-xs leading-5 text-[#64809f]">{detail}</p></div>; }
+function Endpoint({method,path,auth,children}:{method:"GET"|"POST";path:string;auth:string;children:React.ReactNode}) { return <article className="border-b border-[#dce7f2] py-7 first:pt-0 last:border-0 last:pb-0"><div className="flex flex-wrap items-center gap-2"><Tag kind={method==="POST"?"orange":"green"}>{method}</Tag><code className="break-all text-sm font-bold text-[#163b61]">{path}</code><span className="text-xs text-[#6b85a3]">{auth}</span></div><div className="mt-4 space-y-4 text-sm leading-6 text-[#587496]">{children}</div></article>; }
 
 export default function DocsPage() {
-  return (
-    <div className="min-h-svh bg-[#f5f8fc] text-[#12355f]">
-      <header className="border-b border-[#dfe9f5] bg-white">
-        <div className="mx-auto flex h-18 max-w-6xl items-center justify-between px-5 sm:px-8">
-          <Link href="/" aria-label="Về trang chủ Win-Win Back">
-            <BrandLogo />
-          </Link>
-          <div className="flex items-center gap-3">
-            <Link
-              href="/dashboard"
-              className="hidden text-sm font-semibold text-[#47698f] transition-colors hover:text-[#12355f] sm:inline"
-            >
-              Vào dashboard
-            </Link>
-            <Link
-              href="/dashboard"
-              className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-[#b7e961] px-3 text-sm font-bold text-[#173b5e] transition-colors hover:bg-[#c7f178] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#397b1d]"
-            >
-              Bắt đầu tạo link <ArrowRight className="size-4" />
-            </Link>
-          </div>
+  return <div className="min-h-svh bg-[#f5f8fc] text-[#12355f]">
+    <header className="sticky top-0 z-30 border-b border-[#dce7f2] bg-white/95 backdrop-blur"><div className="mx-auto flex h-16 max-w-[88rem] items-center justify-between gap-4 px-5 sm:px-8"><Link href="/" aria-label="Về trang chủ Win-Win Back"><BrandLogo/></Link><div className="hidden items-center gap-3 text-sm font-semibold text-[#5c7595] md:flex"><BookOpen className="size-4"/>Tài liệu bàn giao <span className="h-4 w-px bg-[#d8e3ef]"/> Phiên bản vận hành</div><Link href="/dashboard" className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-[#b7e961] px-3 text-sm font-bold text-[#173b5e] hover:bg-[#c7f178]">Vào dashboard <ArrowRight className="size-4"/></Link></div></header>
+    <main>
+      <section className="border-b border-[#17466f] bg-[#082f54]"><div className="mx-auto grid max-w-[88rem] gap-10 px-5 py-12 sm:px-8 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-end lg:py-16"><div className="max-w-4xl"><Link href="/" className="inline-flex items-center gap-1 text-sm font-semibold text-[#cde995] hover:text-white"><ChevronLeft className="size-4"/>Trang chủ</Link><div className="mt-8 flex gap-2"><Tag kind="green">TÀI LIỆU BÀN GIAO</Tag><Tag kind="slate">Chủ dự án & đội kỹ thuật</Tag></div><h1 className="mt-5 text-balance text-4xl font-black tracking-[-0.035em] text-white sm:text-5xl">Tài liệu kỹ thuật Win-Win Back</h1><p className="mt-5 max-w-3xl text-pretty text-base leading-7 text-[#c7d9ea] sm:text-lg">Tài liệu tham chiếu để vận hành, bảo trì và phát triển hệ thống cashback: từ tạo affiliate link, quy đơn, đối soát hoa hồng đến chi trả vào ví.</p></div><aside className="rounded-lg bg-[#123f68] p-5 text-sm text-[#d8e7f4]"><p className="flex items-center gap-2 font-bold text-white"><BadgeCheck className="size-5 text-[#c8f179]"/>Phạm vi tài liệu</p><ul className="mt-4 space-y-2.5 leading-6"><li>• Hệ thống và nghiệp vụ hiện có</li><li>• Endpoint, dữ liệu, biến môi trường</li><li>• Quy trình vận hành & bàn giao</li></ul></aside></div></section>
+      <nav aria-label="Mục lục trên di động" className="border-b border-[#dce7f2] bg-white px-5 py-3 lg:hidden">
+        <div className="flex gap-2 overflow-x-auto pb-1">
+          {nav.map(([label,id]) => <a key={id} href={`#${id}`} className="shrink-0 rounded-md bg-[#eef4fa] px-3 py-1.5 text-xs font-bold text-[#4f6f91]">{label}</a>)}
         </div>
-      </header>
-
-      <main>
-        <section className="border-b border-[#dfe9f5] bg-[#082f54]">
-          <div className="mx-auto grid max-w-6xl gap-8 px-5 py-14 sm:px-8 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-end lg:py-20">
-            <div className="max-w-3xl">
-              <Link href="/" className="inline-flex items-center gap-1 text-sm font-semibold text-[#cde995] hover:text-white">
-                <ChevronLeft className="size-4" /> Trang chủ
-              </Link>
-              <p className="mt-8 text-sm font-bold text-[#cde995]">Tài liệu hệ thống</p>
-              <h1 className="mt-3 text-balance text-4xl font-black tracking-[-0.03em] text-white sm:text-5xl">
-                Hoàn tiền minh bạch, từ link đến ví.
-              </h1>
-              <p className="mt-5 max-w-2xl text-pretty text-base leading-7 text-[#c8d9eb] sm:text-lg">
-                Win-Win Back tạo link mua sắm có tracking, quy đơn hàng về đúng người dùng và chỉ chi trả khi sàn xác nhận hoa hồng.
-              </p>
-            </div>
-            <aside className="rounded-xl bg-[#123f68] p-5 text-sm text-[#d9e6f3]">
-              <div className="flex items-center gap-2 font-bold text-white"><BadgeCheck className="size-5 text-[#c8f179]" /> Nguyên tắc chi trả</div>
-              <p className="mt-3 leading-6">Không dựa trên click. Cashback chỉ được cộng khi báo cáo affiliate cho thấy đơn hợp lệ đã được sàn chốt.</p>
-            </aside>
-          </div>
-        </section>
-
-        <section className="mx-auto max-w-6xl px-5 py-14 sm:px-8 lg:py-18">
-          <div className="max-w-2xl">
-            <h2 className="text-2xl font-black tracking-[-0.02em] text-[#12355f]">Luồng hoạt động</h2>
-            <p className="mt-3 leading-7 text-[#577292]">Mỗi bước đều để lại dấu vết có thể kiểm tra: link đã tạo, lượt truy cập, đơn hàng và giao dịch ví.</p>
-          </div>
-
-          <div className="mt-8 overflow-x-auto pb-2">
-            <div className="flex min-w-[54rem] items-stretch gap-2">
-              <FlowNode icon={ClipboardPaste} label="Người dùng" note="Dán link sản phẩm" tone="navy" />
-              <ArrowRight className="my-auto size-5 shrink-0 text-[#8aa4c1]" />
-              <FlowNode icon={ServerCog} label="Win-Win Back" note="Tạo link & lưu attribution" tone="lime" />
-              <ArrowRight className="my-auto size-5 shrink-0 text-[#8aa4c1]" />
-              <FlowNode icon={ShoppingBag} label="Shopee / TikTok" note="Mở app hoặc web để mua" tone="orange" />
-              <ArrowRight className="my-auto size-5 shrink-0 text-[#8aa4c1]" />
-              <FlowNode icon={Database} label="Affiliate report" note="Trả đơn, trạng thái, hoa hồng" tone="blue" />
-              <ArrowRight className="my-auto size-5 shrink-0 text-[#8aa4c1]" />
-              <FlowNode icon={WalletCards} label="Ví người dùng" note="Cộng hoàn tiền khi đã chốt" tone="lime" />
-            </div>
-          </div>
-          <p className="mt-3 text-xs leading-5 text-[#6681a7]">Sơ đồ tham khảo: việc ghi nhận từ sàn có thể mất thời gian tùy trạng thái giao hàng, hoàn trả và chu kỳ duyệt hoa hồng.</p>
-        </section>
-
-        <section className="border-y border-[#dfe9f5] bg-white">
-          <div className="mx-auto max-w-6xl px-5 py-14 sm:px-8 lg:py-18">
-            <div className="flex max-w-2xl flex-col gap-3">
-              <h2 className="text-2xl font-black tracking-[-0.02em] text-[#12355f]">Từ sản phẩm đến cashback</h2>
-              <p className="leading-7 text-[#577292]">Đây là những gì hệ thống thực hiện sau khi người dùng dán một link hợp lệ.</p>
-            </div>
-            <ol className="mt-10 grid gap-x-8 gap-y-8 sm:grid-cols-2 lg:grid-cols-5">
-              {steps.map(({ icon: Icon, title, text }, index) => (
-                <li key={title} className="relative">
-                  <div className="flex items-center gap-3 lg:block">
-                    <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-[#eaf4ff] text-[#2869aa]">
-                      <Icon className="size-5" />
-                    </span>
-                    <span className="ml-auto text-sm font-black text-[#a2b6ce] lg:absolute lg:right-0 lg:top-3">{index + 1}</span>
-                  </div>
-                  <h3 className="mt-4 text-base font-bold text-[#173b5e]">{title}</h3>
-                  <p className="mt-2 text-sm leading-6 text-[#5c7697]">{text}</p>
-                </li>
-              ))}
-            </ol>
-          </div>
-        </section>
-
-        <section className="mx-auto grid max-w-6xl gap-10 px-5 py-14 sm:px-8 lg:grid-cols-[minmax(0,1.2fr)_minmax(18rem,0.8fr)] lg:py-18">
-          <div>
-            <h2 className="text-2xl font-black tracking-[-0.02em] text-[#12355f]">Logic theo từng sàn</h2>
-            <div className="mt-7 space-y-5">
-              <article className="rounded-xl border border-[#dce7f4] bg-white p-5 sm:p-6">
-                <div className="flex items-start gap-3">
-                  <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-[#fff0ec] text-[#e3482d]"><ShoppingBag className="size-5" /></span>
-                  <div>
-                    <h3 className="font-black text-[#173b5e]">Shopee</h3>
-                    <p className="mt-2 text-sm leading-6 text-[#587298]">ShopeeAff tạo link qua một phiên Chrome đã đăng nhập. ID người dùng được đưa vào <code className="rounded bg-[#eef4fb] px-1.5 py-0.5 text-[12px] font-semibold text-[#355b85]">SubId1</code> bằng chuỗi chữ–số để Shopee chấp nhận. Khi cron đọc report, hệ thống đổi SubId đó về UUID để quy đơn.</p>
-                  </div>
-                </div>
-              </article>
-              <article className="rounded-xl border border-[#dce7f4] bg-white p-5 sm:p-6">
-                <div className="flex items-start gap-3">
-                  <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-[#eef0ff] text-[#111827]"><MousePointerClick className="size-5" /></span>
-                  <div>
-                    <h3 className="font-black text-[#173b5e]">TikTok Shop</h3>
-                    <p className="mt-2 text-sm leading-6 text-[#587298]">Hệ thống dùng token Affiliate Creator để tạo sharing link / deeplink. Conversion được đồng bộ từ báo cáo affiliate và ghép với link đã lưu trong hệ thống.</p>
-                  </div>
-                </div>
-              </article>
-            </div>
-          </div>
-
-          <aside className="rounded-xl bg-[#eaf7e3] p-6">
-            <div className="flex items-center gap-2 text-[#2e701a]"><ShieldCheck className="size-5" /><h2 className="font-black">Lớp kiểm soát</h2></div>
-            <ul className="mt-5 space-y-4">
-              {safeguards.map((item) => (
-                <li key={item} className="flex gap-3 text-sm leading-6 text-[#355b3e]">
-                  <CircleCheck className="mt-0.5 size-4 shrink-0 text-[#4e9b27]" />
-                  <span>{item}</span>
-                </li>
-              ))}
-            </ul>
-          </aside>
-        </section>
-
-        <section className="border-t border-[#dfe9f5] bg-white">
-          <div className="mx-auto flex max-w-6xl flex-col gap-5 px-5 py-10 sm:flex-row sm:items-center sm:justify-between sm:px-8">
-            <div>
-              <h2 className="font-black text-[#173b5e]">Sẵn sàng tạo link hoàn tiền?</h2>
-              <p className="mt-1 text-sm text-[#6681a7]">Dán link sản phẩm và để hệ thống xử lý phần tracking.</p>
-            </div>
-            <Link href="/dashboard" className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-[#0a345b] px-4 text-sm font-bold text-white transition-colors hover:bg-[#124a78] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#397b1d]">
-              Mở dashboard <ExternalLink className="size-4" />
-            </Link>
-          </div>
-        </section>
-      </main>
-    </div>
-  );
+      </nav>
+      <div className="mx-auto grid max-w-[88rem] lg:grid-cols-[15.5rem_minmax(0,1fr)]">
+        <aside className="hidden border-r border-[#dce7f2] px-5 py-9 lg:block"><div className="sticky top-24"><p className="mb-3 text-xs font-bold uppercase tracking-[0.12em] text-[#7891ad]">Mục lục</p><nav className="space-y-1">{nav.map(([label,id])=><a key={id} href={`#${id}`} className="block rounded-md px-3 py-2 text-sm font-semibold text-[#557191] hover:bg-white hover:text-[#12355f]">{label}</a>)}</nav><p className="mt-8 border-t border-[#dce7f2] pt-5 text-xs leading-5 text-[#718aa5]">Không ghi khóa API, token, mật khẩu hoặc số tài khoản trong tài liệu.</p></div></aside>
+        <article className="min-w-0 px-5 py-10 sm:px-8 lg:px-12 lg:py-14">
+          <section id="overview" className="scroll-mt-24"><Heading icon={BookOpen} title="1. Tổng quan dành cho chủ dự án">Win-Win Back là nền tảng hoàn tiền. Người dùng tạo link Shopee/TikTok Shop; hệ thống theo dõi nguồn link, nhận trạng thái đơn từ affiliate và cộng ví chỉ khi đơn hợp lệ.</Heading><div className="mt-7 grid gap-4 md:grid-cols-3"><div className="rounded-lg bg-white p-5"><UsersRound className="size-5 text-[#2869aa]"/><h3 className="mt-4 font-bold">Người dùng</h3><p className="mt-2 text-sm leading-6 text-[#5c7697]">Đăng ký, tạo/chia sẻ link, xem đơn và rút tiền.</p></div><div className="rounded-lg bg-white p-5"><ShoppingBag className="size-5 text-[#e45b3a]"/><h3 className="mt-4 font-bold">Sàn & affiliate</h3><p className="mt-2 text-sm leading-6 text-[#5c7697]">Cung cấp link, báo cáo đơn, trạng thái và hoa hồng.</p></div><div className="rounded-lg bg-white p-5"><WalletCards className="size-5 text-[#4d932a]"/><h3 className="mt-4 font-bold">Quản trị viên</h3><p className="mt-2 text-sm leading-6 text-[#5c7697]">Theo dõi tích hợp, duyệt rút tiền, xử lý điều chỉnh.</p></div></div><div className="mt-6 rounded-lg bg-[#eaf7e4] p-5 text-sm leading-6 text-[#315a39]"><strong>Nguyên tắc tiền tệ:</strong> click không tạo cashback. Hệ thống chỉ ghi có khi đơn <code className="rounded bg-white px-1.5 py-0.5 font-semibold">completed</code> và một đơn không thể được cộng tiền hai lần.</div></section>
+          <section id="architecture" className="mt-16 scroll-mt-24"><Heading icon={Boxes} title="2. Kiến trúc hệ thống">Next.js App Router chạy Docker. Better Auth quản lý danh tính, Neon PostgreSQL lưu nghiệp vụ, còn tích hợp affiliate chạy phía server để không lộ khóa dịch vụ.</Heading><div className="mt-8 overflow-x-auto pb-2"><div className="flex min-w-[56rem] items-stretch gap-2"><Flow icon={UsersRound} title="Browser" detail="Landing, dashboard, admin" kind="navy"/><ChevronRight className="my-auto size-5 shrink-0 text-[#8ba2ba]"/><Flow icon={ServerCog} title="Next.js 16" detail="UI, Server Actions, routes" kind="lime"/><ChevronRight className="my-auto size-5 shrink-0 text-[#8ba2ba]"/><Flow icon={Database} title="Neon PostgreSQL" detail="Users, links, clicks, orders, wallet" kind="blue"/><ChevronRight className="my-auto size-5 shrink-0 text-[#8ba2ba]"/><Flow icon={Network} title="Affiliate services" detail="ShopeeAff worker, TikTok Creator API" kind="orange"/></div></div><div className="mt-8 grid gap-4 md:grid-cols-2"><div className="rounded-lg border border-[#dce7f2] bg-white p-5"><h3 className="font-bold">Lớp ứng dụng</h3><ul className="mt-3 space-y-2 text-sm leading-6 text-[#5a7696]"><li><code>src/app</code>: page, API route, Server Action</li><li><code>src/components</code>: UI/dashboard</li><li><code>src/lib</code>: auth, wallet, affiliate</li><li><code>src/db/schema.ts</code>: Drizzle/Postgres</li></ul></div><div className="rounded-lg border border-[#dce7f2] bg-white p-5"><h3 className="font-bold">Ranh giới bảo mật</h3><ul className="mt-3 space-y-2 text-sm leading-6 text-[#5a7696]"><li>Secrets chỉ ở runtime server.</li><li>Cron/webhook xác thực secret trước khi ghi.</li><li>Dashboard cần session; admin cần role <code>admin</code>.</li></ul></div></div></section>
+          <section id="flows" className="mt-16 scroll-mt-24"><Heading icon={GitBranch} title="3. Luồng nghiệp vụ & quy đơn">Chủ link là người được quy doanh thu; người mua qua link không tự có cashback trên tài khoản riêng nếu không tạo link của chính họ.</Heading><div className="mt-8 space-y-5"><div className="rounded-lg border border-[#dce7f2] bg-white p-6"><h3 className="font-bold">A. Tạo và chia sẻ link</h3><ol className="mt-4 space-y-3 text-sm leading-6 text-[#587496]"><li><strong>1.</strong> Dán product URL tại dashboard.</li><li><strong>2.</strong> Provider tạo affiliate URL, lưu <code>affiliate_links</code> cùng chủ sở hữu.</li><li><strong>3.</strong> Ứng dụng trả <code>/go/&lt;shortCode&gt;</code>; nút chia sẻ sao chép/mở native share sheet.</li><li><strong>4.</strong> <code>/go</code> ghi <code>link_clicks</code>, tăng click rồi chuyển tiếp app/web.</li></ol></div><div className="rounded-lg border border-[#dce7f2] bg-white p-6"><h3 className="font-bold">B. Quy đơn Shopee</h3><p className="mt-3 text-sm leading-6 text-[#587496]">ShopeeAff tạo link với <code>SubId1</code> là UUID người tạo link đã chuẩn hóa chỉ còn chữ/số. Sync report đổi lại UUID, tìm user, tạo/cập nhật đơn và tính cashback theo <code>commission × CASHBACK_RATE</code>.</p></div><div className="rounded-lg border border-[#dce7f2] bg-white p-6"><h3 className="font-bold">C. Quy đơn TikTok Shop</h3><p className="mt-3 text-sm leading-6 text-[#587496]">TikTok Creator API trả đơn creator. Đơn mới dùng last-click: click chưa dùng, cùng product ID, trước thời điểm đơn và mới nhất sẽ được gán. Click được đánh dấu <code>attributedOrderId</code> để không dùng cho nhiều đơn.</p></div><div className="rounded-lg bg-[#fff6e8] p-5 text-sm leading-6 text-[#875722]"><CircleAlert className="mr-2 inline size-4"/><strong>Giới hạn:</strong> TikTok dùng last-click nội bộ nên cần kiểm tra đơn tranh chấp. Shopee có SubId1 trong report nên quy đơn trực tiếp hơn. Đơn hủy/hoàn/trả không chi trả.</div></div></section>
+          <section id="api" className="mt-16 scroll-mt-24"><Heading icon={Code2} title="4. API & endpoint vận hành">Bề mặt tích hợp server. Không gọi cron, webhook hoặc OAuth callback từ frontend. Ví dụ dùng dữ liệu minh họa.</Heading><div className="mt-8 rounded-lg border border-[#dce7f2] bg-white p-6 sm:p-7"><Endpoint method="GET" path="/go/:shortCode" auth="Công khai"><p>Tracking redirect: ghi click theo link/user/sàn/product rồi redirect 302 tới affiliate URL. Custom app scheme nhận interstitial để mở app và fallback web.</p><p><strong>Kết quả:</strong> redirect/HTML; code không tồn tại về trang chủ.</p></Endpoint><Endpoint method="GET" path="/api/cron/sync-orders" auth="Header x-cron-secret"><p>Đồng bộ đơn TikTok/Shopee trong 7 ngày; scheduler gọi mỗi 1–6 giờ. Một provider lỗi không chặn provider còn lại.</p><Code title="Ví dụ gọi cron">{`curl -H \"x-cron-secret: $CRON_SECRET\" \\\\\n  https://your-domain.com/api/cron/sync-orders`}</Code></Endpoint><Endpoint method="POST" path="/api/webhooks/affiliate" auth="Header x-webhook-secret"><p>Nhận postback, quy chủ theo <code>shortCode</code> hoặc <code>userEmail</code>, upsert theo <code>externalOrderId</code>. <code>completed</code> kích hoạt settlement idempotent.</p><Code title="Payload mẫu">{`{\n  \"shortCode\": \"abc123\", \"platform\": \"shopee\",\n  \"externalOrderId\": \"ORDER-EXAMPLE-001\", \"productName\": \"Tên sản phẩm\",\n  \"orderAmount\": 250000, \"commissionAmount\": 20000, \"status\": \"completed\"\n}`}</Code><p><strong>Phản hồi:</strong> <code>{`{ ok, orderId, credited }`}</code>; credited chỉ true khi ví vừa được cộng.</p></Endpoint><Endpoint method="GET" path="/api/shopee/discover?q=:keyword" auth="Phiên người dùng"><p>Trả dữ liệu khám phá Shopee; từ khóa tối đa 100 ký tự. Provider lỗi trả 502 cho UI.</p></Endpoint><Endpoint method="GET" path="/api/auth/[...all]" auth="Better Auth"><p>Handler chuẩn cho email/password, Google, session, verify email, reset password. Không tạo auth endpoint song song.</p></Endpoint></div></section>
+          <section id="data" className="mt-16 scroll-mt-24"><Heading icon={Database} title="5. Mô hình dữ liệu quan trọng">Postgres là nguồn sự thật. users.balance là cache tiện đọc; mọi biến động tiền phải có bản ghi đối ứng trong wallet_transactions.</Heading><div className="mt-8 overflow-x-auto rounded-lg border border-[#dce7f2] bg-white"><table className="min-w-[44rem] w-full text-left text-sm"><thead className="bg-[#eef4fa] text-xs uppercase tracking-[0.08em] text-[#5e7897]"><tr><th className="px-5 py-3">Bảng</th><th className="px-5 py-3">Vai trò</th><th className="px-5 py-3">Quy tắc</th></tr></thead><tbody className="divide-y divide-[#e3ebf4] text-[#577292]"><tr><td className="px-5 py-4 font-mono font-bold">users</td><td className="px-5 py-4">Hồ sơ, role, số dư, referral</td><td className="px-5 py-4">email unique; role user/admin</td></tr><tr><td className="px-5 py-4 font-mono font-bold">accounts / sessions</td><td className="px-5 py-4">Danh tính Better Auth</td><td className="px-5 py-4">Password ở accounts</td></tr><tr><td className="px-5 py-4 font-mono font-bold">affiliate_links</td><td className="px-5 py-4">Link gốc, affiliate URL, shortCode</td><td className="px-5 py-4">shortCode unique; FK userId</td></tr><tr><td className="px-5 py-4 font-mono font-bold">link_clicks</td><td className="px-5 py-4">Dấu vết mở /go</td><td className="px-5 py-4">Một click chỉ gán một order</td></tr><tr><td className="px-5 py-4 font-mono font-bold">orders</td><td className="px-5 py-4">Đơn, commission, cashback</td><td className="px-5 py-4">externalOrderId unique; creditedAt idempotent</td></tr><tr><td className="px-5 py-4 font-mono font-bold">wallet_transactions</td><td className="px-5 py-4">Sổ cái ví</td><td className="px-5 py-4">amount có dấu; balanceAfter</td></tr></tbody></table></div><div className="mt-6 grid gap-4 md:grid-cols-2"><Code title="Vòng đời order">{`pending → confirmed → completed\n                 ↘ cancelled\ncompleted + cashbackCreditedAt = null\n  → wallet_transactions → users.balance`}</Code><Code title="Loại giao dịch ví">{`cashback   đơn hoàn tất\nwithdrawal yêu cầu rút\nrefund     yêu cầu rút bị từ chối\nadjustment quản trị\nreward     nhiệm vụ`}</Code></div></section>
+          <section id="auth" className="mt-16 scroll-mt-24"><Heading icon={KeyRound} title="6. Xác thực, quyền & bảo mật">Better Auth là lớp xác thực duy nhất. Module ứng dụng dùng getCurrentUser(), requireUser() và requireAdmin(), không tự đọc cookie/session.</Heading><div className="mt-8 grid gap-5 md:grid-cols-2"><div className="rounded-lg border border-[#dce7f2] bg-white p-6"><LockKeyhole className="size-5 text-[#2869aa]"/><h3 className="mt-4 font-bold">Tài khoản</h3><ul className="mt-3 space-y-2 text-sm leading-6 text-[#5a7696]"><li>Email/password cần verify email.</li><li>Google bật khi có client ID/secret.</li><li>Google verified cùng email có thể link local account.</li><li>Resend gửi verify/reset password.</li></ul></div><div className="rounded-lg border border-[#dce7f2] bg-white p-6"><ShieldCheck className="size-5 text-[#4c922b]"/><h3 className="mt-4 font-bold">Vai trò</h3><ul className="mt-3 space-y-2 text-sm leading-6 text-[#5a7696]"><li><strong>user:</strong> dashboard, link, ví, rút tiền.</li><li><strong>admin:</strong> users, orders, integrations, rút tiền.</li><li>ADMIN_EMAILS bootstrap admin khi sign-up.</li><li>Không đặt secret trong NEXT_PUBLIC_*.</li></ul></div></div></section>
+          <section id="environment" className="mt-16 scroll-mt-24"><Heading icon={FileKey2} title="7. Cấu hình môi trường">Dùng .env.example làm danh mục. Giá trị thật chỉ ở Dokploy/secret manager; không commit .env.local, không gửi secret qua chat/ticket.</Heading><div className="mt-8 space-y-5"><div className="rounded-lg border border-[#dce7f2] bg-white p-6"><h3 className="font-bold">Bắt buộc production</h3><div className="mt-4 flex flex-wrap gap-2"><Tag>DATABASE_URL</Tag><Tag>BETTER_AUTH_SECRET</Tag><Tag>BETTER_AUTH_URL</Tag><Tag>CRON_SECRET</Tag><Tag>WEBHOOK_SECRET</Tag><Tag>ADMIN_EMAILS</Tag><Tag>NEXT_PUBLIC_BASE_URL</Tag></div><p className="mt-4 text-sm leading-6 text-[#5b7696]">URL production phải là domain HTTPS, không phải localhost.</p></div><div className="rounded-lg border border-[#dce7f2] bg-white p-6"><h3 className="font-bold">TikTok Creator</h3><p className="mt-3 text-sm leading-6 text-[#5b7696]"><code>TIKTOK_APP_KEY</code>, <code>TIKTOK_APP_SECRET</code>; token OAuth ở integration_tokens. Redirect: <code>/api/integrations/tiktok/callback</code>.</p></div><div className="rounded-lg border border-[#dce7f2] bg-white p-6"><h3 className="font-bold">ShopeeAff worker</h3><p className="mt-3 text-sm leading-6 text-[#5b7696]"><code>AFFILIATE_PROVIDER_SHOPEE=shopee-aff</code>, <code>SHOPEE_AFF_API_URL</code>, <code>SHOPEE_AFF_API_KEY</code>. Worker cần Chrome Shopee Affiliate login để tạo link/đọc report; app không cần Shopee App Secret trong mô hình này.</p></div><div className="rounded-lg border border-[#dce7f2] bg-white p-6"><h3 className="font-bold">Email & Google</h3><p className="mt-3 text-sm leading-6 text-[#5b7696]"><code>RESEND_API_KEY</code> + <code>EMAIL_FROM</code> gửi mail. Google callback: <code>https://&lt;domain&gt;/api/auth/callback/google</code>.</p></div></div></section>
+          <section id="operations" className="mt-16 scroll-mt-24"><Heading icon={RefreshCw} title="8. Vận hành & xử lý sự cố">Checklist cho người nhận bàn giao. Luôn kiểm tra trạng thái/log trước khi thay đổi dữ liệu hoặc redeploy.</Heading><div className="mt-8 grid gap-5 lg:grid-cols-2"><div className="rounded-lg border border-[#dce7f2] bg-white p-6"><h3 className="font-bold">Nhịp định kỳ</h3><ol className="mt-4 space-y-3 text-sm leading-6 text-[#5a7696]"><li><strong>1.</strong> Scheduler gọi cron mỗi 1–6 giờ.</li><li><strong>2.</strong> Xem admin → Đơn hàng theo trạng thái.</li><li><strong>3.</strong> Kiểm tra worker ShopeeAff còn login.</li><li><strong>4.</strong> Kiểm tra TikTok creator token.</li><li><strong>5.</strong> Duyệt rút sau đối chiếu ví.</li></ol></div><div className="rounded-lg border border-[#dce7f2] bg-white p-6"><h3 className="font-bold">Sự cố thường gặp</h3><dl className="mt-4 space-y-3 text-sm leading-6 text-[#5a7696]"><div><dt className="font-bold">Không tạo link Shopee</dt><dd>Kiểm tra provider, worker URL/key, Chrome session.</dd></div><div><dt className="font-bold">Có click nhưng không tiền</dt><dd>Đơn chưa có/chưa duyệt/report chưa sync.</dd></div><div><dt className="font-bold">Đơn không quy user</dt><dd>Shopee: SubId1. TikTok: product ID + click log.</dd></div><div><dt className="font-bold">Google login lỗi</dt><dd>Callback URL, credentials, consent screen.</dd></div></dl></div></div><div className="mt-5 rounded-lg bg-[#eef4fb] p-5 text-sm leading-6 text-[#47698e]"><strong className="text-[#173b5e]">Triển khai:</strong> chạy <code>npm run check</code>, push source, chờ image registry theo commit SHA, cập nhật Docker image tag tại Dokploy rồi Deploy. Sau deploy kiểm tra <code>/login</code>, <code>/docs</code> và log. Bấm Start có thể chỉ chạy image cũ.</div></section>
+          <section id="handover" className="mt-16 scroll-mt-24"><Heading icon={CheckCircle2} title="9. Checklist bàn giao">Hoàn tất các mục này trước khi đổi người vận hành hoặc bàn giao cho đội phát triển mới.</Heading><div className="mt-8 rounded-lg border border-[#dce7f2] bg-white p-6 sm:p-7"><ul className="grid gap-4 text-sm leading-6 text-[#54708f] md:grid-cols-2"><li>✓ Quyền repo, registry image, Dokploy</li><li>✓ Quyền Neon/Postgres và backup</li><li>✓ Scheduler cron đang chạy, biết nơi quản lý</li><li>✓ Quyền TikTok Partner Center, Google Cloud, Resend</li><li>✓ Worker ShopeeAff có chủ sở hữu/quy trình login lại</li><li>✓ Secret chuyển bằng password manager, không trong source</li></ul></div><div className="mt-8 flex flex-col justify-between gap-4 rounded-lg bg-[#082f54] p-6 sm:flex-row sm:items-center"><div><p className="font-bold text-white">Cần thao tác trực tiếp?</p><p className="mt-1 text-sm text-[#c8d9ea]">Tạo link, xem đơn và thử luồng người dùng từ dashboard.</p></div><Link href="/dashboard" className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-[#b7e961] px-4 text-sm font-bold text-[#153b5e] hover:bg-[#c8f178]">Mở dashboard <ArrowRight className="size-4"/></Link></div></section>
+        </article>
+      </div>
+    </main>
+  </div>;
 }
