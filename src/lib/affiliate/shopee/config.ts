@@ -30,6 +30,20 @@ export function isShopeeConfigured(): boolean {
 }
 
 /**
+ * ShopeeAff is our browser-worker integration. It creates links from a real,
+ * logged-in Chrome session and exposes the affiliate conversion report.
+ */
+export const SHOPEE_AFF_API_URL = trimSlash(process.env.SHOPEE_AFF_API_URL ?? "");
+
+export function getShopeeAffApiKey(): string {
+  return process.env.SHOPEE_AFF_API_KEY ?? "";
+}
+
+export function isShopeeAffConfigured(): boolean {
+  return Boolean(SHOPEE_AFF_API_URL && getShopeeAffApiKey());
+}
+
+/**
  * AddliveTag's product-data service is a separate, non-official integration.
  * It accepts an API key and our Shopee Affiliate ID, then returns an `an_redir`
  * affiliate URL without requiring a Shopee Open API App Secret.

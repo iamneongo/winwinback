@@ -8,6 +8,7 @@ import { isShopeeConfigured } from "./shopee/config";
 import { generateShortLink, ShopeeApiError } from "./shopee/client";
 import { extractShopeeItemId } from "./shopee/product";
 import { getAffiliateProductLink, ShopeeDataApiError } from "./shopee/data-client";
+import { createShopeeAffLink, ShopeeAffApiError } from "./shopee/automation-client";
 
 /**
  * Mock provider — works with no external credentials.
@@ -105,6 +106,39 @@ class AddliveTagShopeeProvider implements AffiliateProvider {
   }
 }
 
+/** ShopeeAff uses an authenticated real-Chrome worker and records userId in SubId1. */
+class ShopeeAffProvider implements AffiliateProvider {
+  readonly name = "shopee-aff";
+
+  async convertLink(
+    platform: Platform,
+    url: string,
+    opts?: { subId?: string; userId?: string },
+  ): Promise<ConvertResult> {
+    if (platform !== "shopee") {
+      throw new Error("ShopeeAff chỉ hỗ trợ link Shopee");
+    }
+    if (!opts?.userId) {
+      throw new Error("Thiếu người dùng để gắn SubId1 cho link Shopee");
+    }
+    try {
+      const result = await createShopeeAffLink({
+        originalLink: url,
+        userId: opts.userId,
+      });
+      return {
+        affiliateUrl: result.affiliateUrl,
+        productId: extractShopeeItemId(url) ?? undefined,
+      };
+    } catch (error) {
+      if (error instanceof ShopeeAffApiError) {
+        throw new Error(`ShopeeAff không tạo được link: ${error.message}`);
+      }
+      throw error;
+    }
+  }
+}
+
 /**
  * TikTok Shop Affiliate Creator API.
  *
@@ -176,6 +210,8 @@ function providerByName(name: string | undefined): AffiliateProvider {
       return new ShopeeProvider();
     case "addlivetag":
       return new AddliveTagShopeeProvider();
+    case "shopee-aff":
+      return new ShopeeAffProvider();
     case "tiktok":
       return new TikTokProvider();
     case "mock":

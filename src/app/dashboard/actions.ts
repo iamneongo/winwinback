@@ -101,7 +101,7 @@ export async function createLinkAction(
     const result = await getAffiliateProvider(platform).convertLink(
       platform,
       parsed.data.url,
-      { subId: shortCode },
+      { subId: shortCode, userId: user.id },
     );
     affiliateUrl = result.affiliateUrl;
     title = result.title;

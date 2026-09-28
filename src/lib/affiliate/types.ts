@@ -25,6 +25,8 @@ export interface AffiliateProvider {
     opts?: {
       /** Tracking sub id embedded in the link for order→user attribution. */
       subId?: string;
+      /** Stable internal user id for providers that support server-side attribution. */
+      userId?: string;
     },
   ): Promise<ConvertResult>;
 }
