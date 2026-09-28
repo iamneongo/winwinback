@@ -110,6 +110,7 @@ USER node
 # Expose port 3000 to allow HTTP traffic
 EXPOSE 3000
 
-# Runtime env (DATABASE_URL, SESSION_SECRET, WEBHOOK_SECRET, …) must be provided
-# by the container platform. server.js is emitted by the standalone build.
-CMD ["node", "server.js"]
+# Dokploy's Docker-image deployments can provide runtime configuration as a
+# mounted .env file instead of process environment variables. Prefer that file
+# when it exists, while preserving ordinary platform-injected environments.
+CMD ["sh", "-c", "if [ -f /app/.env ]; then exec node --env-file=/app/.env server.js; else exec node server.js; fi"]
