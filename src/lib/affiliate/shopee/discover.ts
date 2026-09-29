@@ -7,6 +7,7 @@ import type {
 } from "./discover-types";
 
 const API_BASE = "https://data.addlivetag.com/offers";
+const PRODUCTS_PER_PAGE = 12;
 
 type ApiResponse<T> = {
   status?: "success" | "error";
@@ -120,32 +121,38 @@ function toProduct(value: ProductPayload): ShopeeOfferProduct | null {
 /** Fetches current Shopee campaigns and affiliate products from AddliveTag. */
 export async function getShopeeDiscoverData(
   keyword = "",
+  page = 1,
 ): Promise<ShopeeDiscoverResponse> {
   if (!isShopeeDataConfigured()) {
     throw new ShopeeDiscoverError("Shopee AddliveTag chưa được cấu hình");
   }
 
+  const productPage = Math.max(1, Math.floor(page));
   const [campaignsResult, productsResult] = await Promise.all([
     requestOffers<CampaignPayload>("shopee-offer.php", { page: "1", limit: "8" }),
     requestOffers<ProductPayload>("product-offer.php", {
       keyword,
-      page: "1",
-      limit: "12",
+      page: String(productPage),
+      limit: String(PRODUCTS_PER_PAGE),
     }),
   ]);
+
+  const products = (productsResult.products ?? [])
+    .map(toProduct)
+    .filter((item): item is ShopeeOfferProduct => item !== null);
 
   return {
     campaigns: (campaignsResult.offers ?? [])
       .map(toCampaign)
       .filter((item): item is ShopeeCampaign => item !== null),
-    products: (productsResult.products ?? [])
-      .map(toProduct)
-      .filter((item): item is ShopeeOfferProduct => item !== null),
+    products,
     dataSource:
       campaignsResult.dataSource === "api" || productsResult.dataSource === "api"
         ? "api"
         : campaignsResult.dataSource === "db" || productsResult.dataSource === "db"
           ? "db"
           : "unknown",
+    productPage,
+    hasNextProducts: products.length === PRODUCTS_PER_PAGE,
   };
 }

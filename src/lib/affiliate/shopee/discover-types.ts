@@ -28,4 +28,6 @@ export type ShopeeDiscoverResponse = {
   campaigns: ShopeeCampaign[];
   products: ShopeeOfferProduct[];
   dataSource: "api" | "db" | "unknown";
+  productPage: number;
+  hasNextProducts: boolean;
 };

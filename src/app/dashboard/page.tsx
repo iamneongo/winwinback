@@ -1,8 +1,10 @@
-import { desc, eq } from "drizzle-orm";
+import { count, desc, eq, sql } from "drizzle-orm";
 import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowRight,
+  ChevronLeft,
+  ChevronRight,
   List,
 } from "lucide-react";
 import { db } from "@/db";
@@ -20,6 +22,8 @@ import { ShopeeIcon, TikTokIcon } from "@/components/sections/BrandIcons";
 
 export const metadata = { title: "Tổng quan — Win-Win Back" };
 export const dynamic = "force-dynamic";
+
+const LINKS_PER_PAGE = 8;
 
 type MetricProps = {
   label: string;
@@ -72,16 +76,17 @@ function PlatformMark({ platform }: { platform: "shopee" | "tiktok" }) {
   );
 }
 
-export default async function OverviewPage({ searchParams }: { searchParams: Promise<{ url?: string }> }) {
+export default async function OverviewPage({ searchParams }: { searchParams: Promise<{ url?: string; linkPage?: string }> }) {
   const user = await requireUser();
-  const { url: prefillUrl } = await searchParams;
-  const [links, orderRows] = await Promise.all([
+  const { url: prefillUrl, linkPage: requestedLinkPage } = await searchParams;
+  const [linkSummary, orderRows] = await Promise.all([
     db
-      .select()
+      .select({
+        total: count(),
+        clicks: sql<number>`coalesce(sum(${affiliateLinks.clicks}), 0)::int`,
+      })
       .from(affiliateLinks)
-      .where(eq(affiliateLinks.userId, user.id))
-      .orderBy(desc(affiliateLinks.createdAt))
-      .limit(20),
+      .where(eq(affiliateLinks.userId, user.id)),
     db
       .select()
       .from(orders)
@@ -89,17 +94,37 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
       .orderBy(desc(orders.orderedAt))
       .limit(20),
   ]);
+  const totalLinks = linkSummary[0]?.total ?? 0;
+  const linkPages = Math.max(1, Math.ceil(totalLinks / LINKS_PER_PAGE));
+  const linkPage = Math.min(
+    Math.max(1, Number(requestedLinkPage) || 1),
+    linkPages,
+  );
+  const links = await db
+    .select()
+    .from(affiliateLinks)
+    .where(eq(affiliateLinks.userId, user.id))
+    .orderBy(desc(affiliateLinks.createdAt))
+    .limit(LINKS_PER_PAGE)
+    .offset((linkPage - 1) * LINKS_PER_PAGE);
   const pending = orderRows
     .filter(
       (order) => order.status === "pending" || order.status === "confirmed",
     )
     .reduce((sum, order) => sum + order.cashbackAmount, 0);
-  const clicks = links.reduce((sum, link) => sum + link.clicks, 0);
+  const clicks = linkSummary[0]?.clicks ?? 0;
   const recentOrders = orderRows.slice(0, 5);
   const baseUrl = await getRequestBaseUrl();
+  const linkPageHref = (page: number) => {
+    const params = new URLSearchParams();
+    if (prefillUrl) params.set("url", prefillUrl);
+    if (page > 1) params.set("linkPage", String(page));
+    const query = params.toString();
+    return `/dashboard${query ? `?${query}` : ""}#link-cua-ban`;
+  };
 
   return (
-    <main className="mx-auto w-full max-w-[1440px] px-4 py-5 sm:px-7 sm:py-7 lg:px-6 lg:pb-8 lg:pt-0">
+    <main className="mx-auto w-full max-w-[1440px] px-4 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-7">
       <section className="ww-dashboard-link-banner relative isolate overflow-hidden rounded-xl px-5 py-6 text-white shadow-[0_8px_24px_rgba(9,54,95,0.14)] sm:h-[13.5rem] sm:px-7">
         <Image
           src="/images/dashboard-overview-banner-v9.png"
@@ -271,12 +296,12 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
 
       <section id="link-cua-ban" className="mt-5 scroll-mt-6">
         <div className={`${cardClass} overflow-hidden p-0`}>
-          <div className="flex items-center justify-between border-b border-[#e8eef6] px-4 py-4 sm:px-5">
+          <div className="flex items-center justify-between gap-3 border-b border-[#e8eef6] px-4 py-4 sm:px-5">
             <h2 className={`${sectionTitleClass} flex items-center gap-2`}>
               <List className="h-4 w-4 text-[#1766e7]" /> Link của bạn
             </h2>
             <span className="text-xs font-semibold text-[#6681a7]">
-              {links.length} link
+              {totalLinks} link
             </span>
           </div>
           {links.length === 0 ? (
@@ -284,7 +309,7 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
               <Empty text="Chưa có link nào. Dán link sản phẩm ở trên để tạo link hoàn tiền." />
             </div>
           ) : (
-            <ul className="divide-y divide-[#edf1f7]">
+            <ul className="max-h-[34rem] divide-y divide-[#edf1f7] overflow-y-auto overscroll-contain [scrollbar-gutter:stable]">
               {links.map((link) => (
                 <li
                   key={link.id}
@@ -313,6 +338,32 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
                 </li>
               ))}
             </ul>
+          )}
+          {totalLinks > LINKS_PER_PAGE && (
+            <footer className="flex flex-col gap-3 border-t border-[#e8eef6] px-4 py-3.5 text-xs text-[#6681a7] sm:flex-row sm:items-center sm:justify-between sm:px-5">
+              <p>
+                Hiển thị {(linkPage - 1) * LINKS_PER_PAGE + 1} – {Math.min(linkPage * LINKS_PER_PAGE, totalLinks)} trong {totalLinks} link
+              </p>
+              <div className="flex items-center gap-2 self-end sm:self-auto">
+                {linkPage > 1 ? (
+                  <Link href={linkPageHref(linkPage - 1)} aria-label="Trang link trước" className="rounded-lg border border-[#dce6f3] p-1.5 transition-colors hover:bg-[#f6f9fd]">
+                    <ChevronLeft className="h-4 w-4" />
+                  </Link>
+                ) : (
+                  <span aria-hidden className="rounded-lg border border-[#eef3f9] p-1.5 text-[#c3d0e0]"><ChevronLeft className="h-4 w-4" /></span>
+                )}
+                <span className="flex h-7 min-w-7 items-center justify-center rounded-md bg-[#eaf9df] px-2 font-bold text-[#28711a] ring-1 ring-inset ring-[#b1eb78]">
+                  {linkPage}/{linkPages}
+                </span>
+                {linkPage < linkPages ? (
+                  <Link href={linkPageHref(linkPage + 1)} aria-label="Trang link sau" className="rounded-lg border border-[#dce6f3] p-1.5 transition-colors hover:bg-[#f6f9fd]">
+                    <ChevronRight className="h-4 w-4" />
+                  </Link>
+                ) : (
+                  <span aria-hidden className="rounded-lg border border-[#eef3f9] p-1.5 text-[#c3d0e0]"><ChevronRight className="h-4 w-4" /></span>
+                )}
+              </div>
+            </footer>
           )}
         </div>
       </section>

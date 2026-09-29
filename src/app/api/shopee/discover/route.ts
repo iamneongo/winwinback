@@ -9,9 +9,11 @@ export const runtime = "nodejs";
 export async function GET(request: Request) {
   await requireUser();
   const keyword = new URL(request.url).searchParams.get("q")?.trim().slice(0, 100) ?? "";
+  const pageValue = Number(new URL(request.url).searchParams.get("page"));
+  const page = Number.isSafeInteger(pageValue) && pageValue > 0 ? pageValue : 1;
 
   try {
-    return Response.json(await getShopeeDiscoverData(keyword));
+    return Response.json(await getShopeeDiscoverData(keyword, page));
   } catch (error) {
     const message =
       error instanceof ShopeeDiscoverError

@@ -171,11 +171,12 @@ export function ShopeeDiscover() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  async function load(keyword = "") {
+  async function load(keyword = "", page = 1) {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`/api/shopee/discover?q=${encodeURIComponent(keyword)}`);
+      const params = new URLSearchParams({ q: keyword, page: String(page) });
+      const response = await fetch(`/api/shopee/discover?${params.toString()}`);
       const body = (await response.json()) as ShopeeDiscoverResponse & { message?: string };
       if (!response.ok) throw new Error(body.message || "Không tải được ưu đãi Shopee");
       setData(body);
@@ -192,11 +193,11 @@ export function ShopeeDiscover() {
 
   function onSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    void load(query.trim());
+    void load(query.trim(), 1);
   }
 
   return (
-    <main className="mx-auto w-full max-w-[1440px] px-4 py-5 sm:px-7 sm:py-7 lg:px-6 lg:pb-8">
+    <main className="mx-auto w-full max-w-[1440px] px-4 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-7">
       <section className="overflow-hidden rounded-xl bg-[#062f54] px-4 py-5 text-white sm:px-7 sm:py-6">
         <div className="max-w-3xl">
           <div className="flex flex-wrap items-center gap-2">
@@ -213,7 +214,7 @@ export function ShopeeDiscover() {
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Tìm sản phẩm, ví dụ: kem chống nắng"
               aria-label="Tìm sản phẩm Shopee có hoa hồng"
-              className="h-10 bg-white text-[#173861] placeholder:text-[#6681a7]"
+              className="h-10 min-w-0 flex-1 bg-white text-[#173861] placeholder:text-[#6681a7]"
             />
             <Button type="submit" variant="cta" disabled={loading} className="h-10 px-4">
               <Search className="h-4 w-4" /> <span className="hidden sm:inline">Tìm</span>
@@ -226,7 +227,7 @@ export function ShopeeDiscover() {
         <section className="mt-5 rounded-xl border border-[#f1c7c3] bg-[#fff6f5] p-5 text-sm text-[#9b3026]">
           <p className="font-bold">Chưa tải được ưu đãi</p>
           <p className="mt-1">{error}</p>
-          <Button variant="outline" size="sm" className="mt-3" onClick={() => void load(query.trim())}>
+          <Button variant="outline" size="sm" className="mt-3" onClick={() => void load(query.trim(), data?.productPage ?? 1)}>
             Thử lại
           </Button>
         </section>
@@ -292,6 +293,29 @@ export function ShopeeDiscover() {
             </div>
             {!loading && data?.products.length === 0 && (
               <p className="mt-3 rounded-xl border border-dashed border-[#d7e3f1] bg-white px-4 py-5 text-sm text-[#6681a7]">Không tìm thấy sản phẩm có hoa hồng. Hãy thử một từ khóa khác.</p>
+            )}
+            {!loading && data && (data.productPage > 1 || data.hasNextProducts) && (
+              <nav aria-label="Phân trang sản phẩm ưu đãi" className="mt-5 flex items-center justify-between gap-3 border-t border-[#e4ebf5] pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={data.productPage <= 1}
+                  onClick={() => void load(query.trim(), data.productPage - 1)}
+                >
+                  Trang trước
+                </Button>
+                <span className="text-xs font-semibold text-[#6681a7]">Trang {data.productPage}</span>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={!data.hasNextProducts}
+                  onClick={() => void load(query.trim(), data.productPage + 1)}
+                >
+                  Trang sau
+                </Button>
+              </nav>
             )}
           </section>
         </>
