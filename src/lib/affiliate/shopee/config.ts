@@ -33,7 +33,9 @@ export function isShopeeConfigured(): boolean {
  * ShopeeAff is our browser-worker integration. It creates links from a real,
  * logged-in Chrome session and exposes the affiliate conversion report.
  */
-export const SHOPEE_AFF_API_URL = trimSlash(process.env.SHOPEE_AFF_API_URL ?? "");
+export const SHOPEE_AFF_API_URL = trimSlash(
+  process.env.SHOPEE_AFF_API_URL || "https://shopee-api.apps.neooi.com",
+);
 
 export function getShopeeAffApiKey(): string {
   return process.env.SHOPEE_AFF_API_KEY ?? "";

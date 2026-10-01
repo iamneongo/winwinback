@@ -8,8 +8,7 @@ import { isShopeeConfigured } from "./shopee/config";
 import { generateShortLink, ShopeeApiError } from "./shopee/client";
 import { extractShopeeItemId } from "./shopee/product";
 import { getAffiliateProductLink, ShopeeDataApiError } from "./shopee/data-client";
-import { createShopeeAffLink, ShopeeAffApiError } from "./shopee/automation-client";
-import { toShopeeSubId1 } from "./shopee/sub-id";
+import { getCashbackLink, ShopeeAffApiError } from "./shopee/automation-client";
 
 /**
  * Mock provider — works with no external credentials.
@@ -123,13 +122,11 @@ class ShopeeAffProvider implements AffiliateProvider {
       throw new Error("Thiếu người dùng để gắn SubId1 cho link Shopee");
     }
     try {
-      const result = await createShopeeAffLink({
-        originalLink: url,
-        // Shopee rejects UUID punctuation in SubId1 (only [a-zA-Z0-9]).
-        userId: toShopeeSubId1(opts.userId),
-      });
+      // getCashbackLink compacts the UUID into a Shopee-safe subId1 and caches
+      // the result, so repeated pastes of the same URL don't re-hit the worker.
+      const affiliateUrl = await getCashbackLink(opts.userId, url);
       return {
-        affiliateUrl: result.affiliateUrl,
+        affiliateUrl,
         productId: extractShopeeItemId(url) ?? undefined,
       };
     } catch (error) {

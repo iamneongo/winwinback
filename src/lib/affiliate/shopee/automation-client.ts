@@ -4,6 +4,7 @@ import {
   isShopeeAffConfigured,
   SHOPEE_AFF_API_URL,
 } from "./config";
+import { toShopeeSubId1 } from "./sub-id";
 
 export class ShopeeAffApiError extends Error {
   constructor(
@@ -16,25 +17,34 @@ export class ShopeeAffApiError extends Error {
   }
 }
 
-export interface ShopeeAffReportItem {
-  order_sn?: string;
-  orderId?: string;
-  sub_ids?: string[] | string;
-  subIds?: string[] | string;
-  commission?: number | string;
-  estimated_commission?: number | string;
-  order_status?: string;
-  display_order_status?: string;
-  purchase_time?: number | string;
-  purchaseTime?: number | string;
-  shop_name?: string;
-  shopName?: string;
-  item_name?: string;
-  itemName?: string;
-  item_id?: string | number;
-  itemId?: string | number;
-  order_amount?: number | string;
-  orderAmount?: number | string;
+/**
+ * One marketplace order inside a checkout, as returned by GET /api/report.
+ * `order_sn` is the stable, per-order idempotency key used for cashback payout.
+ */
+export interface ShopeeReportOrder {
+  order_sn: string;
+  order_id?: string;
+  order_status?: string; // UNPAID | PENDING | COMPLETED | CANCELLED ...
+  display_order_status?: number;
+  complete_time?: number; // unix seconds
+}
+
+/**
+ * One checkout (conversion) from GET /api/report. A checkout can contain several
+ * marketplace orders; commission is reported at the checkout level, so it must
+ * be split across `orders` when crediting cashback per order_sn.
+ */
+export interface ShopeeReportCheckout {
+  checkout_id?: string;
+  purchase_time?: number; // unix seconds
+  /** SubIds echoed back as `subId1-subId2-...`; user = split("-")[0]. */
+  utm_content?: string;
+  affiliate_id?: number;
+  conversion_status?: number;
+  gross_commission?: number; // confirmed commission
+  estimated_total_commission?: number; // estimate (fallback)
+  device?: string;
+  orders?: ShopeeReportOrder[];
 }
 
 interface JsonEnvelope {
@@ -42,9 +52,13 @@ interface JsonEnvelope {
   error?: string;
   message?: string;
   code?: string | number;
+  // POST /api/link
   shortLink?: string;
   longLink?: string;
-  list?: ShopeeAffReportItem[];
+  userId?: string;
+  subIds?: Record<string, string>;
+  // GET /api/report
+  list?: ShopeeReportCheckout[];
 }
 
 async function request<T extends JsonEnvelope>(
@@ -62,6 +76,7 @@ async function request<T extends JsonEnvelope>(
     response = await fetch(`${SHOPEE_AFF_API_URL}${path}`, {
       ...init,
       cache: "no-store",
+      signal: AbortSignal.timeout(20000),
       headers: {
         "x-api-key": getShopeeAffApiKey(),
         ...init?.headers,
@@ -82,6 +97,7 @@ async function request<T extends JsonEnvelope>(
   return body;
 }
 
+/** Raw POST /api/link. `userId` becomes subId1 (must already be Shopee-safe). */
 export async function createShopeeAffLink(input: {
   originalLink: string;
   userId: string;
@@ -98,11 +114,55 @@ export async function createShopeeAffLink(input: {
   return { affiliateUrl };
 }
 
+// ---------------------------------------------------------------------------
+// getCashbackLink — cached wrapper over POST /api/link
+// ---------------------------------------------------------------------------
+
+/**
+ * Cashback links are deterministic for a given (user, product URL): subId1 is
+ * derived from the user id, so the worker returns the same link every time.
+ * Cache them in-process to avoid hammering the worker on repeated pastes.
+ */
+const LINK_TTL_MS = 6 * 60 * 60 * 1000; // 6h
+const LINK_CACHE_MAX = 2000;
+const linkCache = new Map<string, { url: string; expires: number }>();
+
+/**
+ * Turn a pasted Shopee URL into the user's trackable cashback link.
+ * `userId` is the internal UUID; it is compacted into a Shopee-safe subId1 so
+ * the conversion report can attribute the order back via `utm_content`.
+ */
+export async function getCashbackLink(
+  userId: string,
+  originalLink: string,
+): Promise<string> {
+  const subId1 = toShopeeSubId1(userId);
+  const cacheKey = `${subId1}::${originalLink}`;
+
+  const hit = linkCache.get(cacheKey);
+  if (hit && hit.expires > Date.now()) return hit.url;
+  if (hit) linkCache.delete(cacheKey); // expired
+
+  const { affiliateUrl } = await createShopeeAffLink({
+    originalLink,
+    userId: subId1,
+  });
+
+  if (linkCache.size >= LINK_CACHE_MAX) {
+    // Cheap eviction: drop the oldest insertion.
+    const oldest = linkCache.keys().next().value;
+    if (oldest !== undefined) linkCache.delete(oldest);
+  }
+  linkCache.set(cacheKey, { url: affiliateUrl, expires: Date.now() + LINK_TTL_MS });
+  return affiliateUrl;
+}
+
+/** Fetch one page of the affiliate conversion report (GET /api/report). */
 export async function getShopeeAffReport(input: {
   days: number;
   page: number;
   size: number;
-}): Promise<{ list: ShopeeAffReportItem[] }> {
+}): Promise<{ list: ShopeeReportCheckout[] }> {
   const query = new URLSearchParams({
     days: String(input.days),
     page: String(input.page),

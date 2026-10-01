@@ -4,21 +4,27 @@ import { db } from "@/db";
 import { affiliateLinks, orders, users } from "@/db/schema";
 import { cashbackRate } from "@/lib/config";
 import { settleOrderCashback } from "@/lib/wallet";
-import { getShopeeAffReport, type ShopeeAffReportItem } from "./automation-client";
+import {
+  getShopeeAffReport,
+  type ShopeeReportCheckout,
+} from "./automation-client";
 import { isShopeeAffConfigured } from "./config";
 import { fromShopeeSubId1 } from "./sub-id";
 
 type OrderStatus = "pending" | "confirmed" | "completed" | "cancelled";
 
-export interface FetchedShopeeOrder {
-  id: string;
-  subIds: string[];
-  status?: string;
-  purchaseTime?: Date;
-  productId?: string;
-  productName?: string;
-  orderAmount: number;
+/** A single marketplace order, attributed to a user and ready to reconcile. */
+export interface AttributedShopeeOrder {
+  /** order_sn — the idempotency key for cashback payout. */
+  orderSn: string;
+  /** Resolved internal user UUID (from utm_content.split("-")[0]). */
+  userId: string;
+  status: OrderStatus | null;
+  rawStatus?: string;
+  /** This order's share of the checkout commission (VND). */
   commission: number;
+  purchaseTime?: Date;
+  completeTime?: Date;
 }
 
 /** Convert Shopee's report states to the lifecycle used by the wallet. */
@@ -45,11 +51,6 @@ function amount(raw: number | string | undefined): number {
   return Number.isFinite(parsed) ? Math.round(parsed) : 0;
 }
 
-function strings(raw: string[] | string | undefined): string[] {
-  if (Array.isArray(raw)) return raw.map(String).map((value) => value.trim()).filter(Boolean);
-  return raw ? raw.split(",").map((value) => value.trim()).filter(Boolean) : [];
-}
-
 function dateFrom(raw: number | string | undefined): Date | undefined {
   if (typeof raw === "number" || (typeof raw === "string" && /^\d+$/.test(raw))) {
     const value = Number(raw);
@@ -60,23 +61,54 @@ function dateFrom(raw: number | string | undefined): Date | undefined {
   return Number.isNaN(date.valueOf()) ? undefined : date;
 }
 
-export function normalizeShopeeAffReportItem(item: ShopeeAffReportItem): FetchedShopeeOrder | null {
-  const id = item.order_sn ?? item.orderId;
-  if (!id) return null;
-  const rawProductId = item.item_id ?? item.itemId;
-  return {
-    id: String(id),
-    subIds: strings(item.sub_ids ?? item.subIds),
-    status: item.order_status ?? item.display_order_status,
-    purchaseTime: dateFrom(item.purchase_time ?? item.purchaseTime),
-    productId: rawProductId === undefined ? undefined : String(rawProductId),
-    productName: item.item_name ?? item.itemName ?? item.shop_name ?? item.shopName,
-    orderAmount: amount(item.order_amount ?? item.orderAmount),
-    commission: amount(item.commission ?? item.estimated_commission),
-  };
+/** First subId in utm_content (`subId1-subId2-...`) maps back to our user UUID. */
+export function userIdFromUtmContent(utmContent: string | undefined): string | null {
+  if (!utmContent) return null;
+  const subId1 = utmContent.split("-")[0]?.trim();
+  return subId1 ? fromShopeeSubId1(subId1) : null;
 }
 
-export interface ShopeeSyncResult {
+/**
+ * Flatten one report checkout into per-order records attributed to a user.
+ *
+ * Commission is reported once per checkout, but cashback is credited per
+ * order_sn, so the checkout commission is split evenly across its orders (the
+ * rounding remainder goes to the first order). Most checkouts hold a single
+ * order, where this is just the full amount.
+ */
+export function flattenCheckout(checkout: ShopeeReportCheckout): AttributedShopeeOrder[] {
+  const userId = userIdFromUtmContent(checkout.utm_content);
+  if (!userId) return [];
+
+  const list = (checkout.orders ?? []).filter((o) => o.order_sn);
+  if (!list.length) return [];
+
+  // Prefer confirmed (gross) commission; fall back to the estimate.
+  const total = amount(checkout.gross_commission) || amount(checkout.estimated_total_commission);
+  const base = Math.floor(total / list.length);
+  const remainder = total - base * list.length;
+  const purchaseTime = dateFrom(checkout.purchase_time);
+
+  return list.map((order, index) => ({
+    orderSn: String(order.order_sn),
+    userId,
+    status: mapShopeeStatus(order.order_status),
+    rawStatus: order.order_status,
+    commission: base + (index === 0 ? remainder : 0),
+    purchaseTime,
+    completeTime: dateFrom(order.complete_time),
+  }));
+}
+
+/** When the same order_sn appears twice, keep the most advanced status. */
+const STATUS_RANK: Record<OrderStatus, number> = {
+  pending: 0,
+  confirmed: 1,
+  cancelled: 2,
+  completed: 3,
+};
+
+export interface ShopeeReconcileResult {
   connected: boolean;
   scanned: number;
   updated: number;
@@ -85,65 +117,82 @@ export interface ShopeeSyncResult {
   unmatched: number;
 }
 
-/** Reconcile ShopeeAff reports. SubId1 is the compact, Shopee-safe user UUID. */
-export async function syncShopeeOrders(
+/**
+ * Reconcile the ShopeeAff conversion report against our orders. Attributes each
+ * order to a user via utm_content, upserts it, and credits cashback (once, when
+ * COMPLETED). Idempotent: keyed on order_sn via orders.externalOrderId and
+ * guarded by orders.cashbackCreditedAt in settleOrderCashback().
+ */
+export async function reconcile(
   opts: { sinceDays?: number; maxPages?: number } = {},
-): Promise<ShopeeSyncResult> {
+): Promise<ShopeeReconcileResult> {
   const empty = { connected: false, scanned: 0, updated: 0, credited: 0, attributed: 0, unmatched: 0 };
   if (!isShopeeAffConfigured()) return empty;
 
-  const sinceDays = opts.sinceDays ?? 7;
+  const sinceDays = opts.sinceDays ?? 30;
   const maxPages = opts.maxPages ?? 10;
   const pageSize = 100;
-  const fetched: FetchedShopeeOrder[] = [];
-  const seen = new Set<string>();
+  const byOrderSn = new Map<string, AttributedShopeeOrder>();
 
   for (let page = 1; page <= maxPages; page++) {
-    const response = await getShopeeAffReport({ days: sinceDays, page, size: pageSize });
-    for (const item of response.list) {
-      const normalized = normalizeShopeeAffReportItem(item);
-      if (normalized && !seen.has(normalized.id)) {
-        seen.add(normalized.id);
-        fetched.push(normalized);
+    const { list } = await getShopeeAffReport({ days: sinceDays, page, size: pageSize });
+    for (const checkout of list) {
+      for (const order of flattenCheckout(checkout)) {
+        const prev = byOrderSn.get(order.orderSn);
+        if (!prev || rank(order.status) >= rank(prev.status)) {
+          byOrderSn.set(order.orderSn, order);
+        }
       }
     }
-    if (response.list.length < pageSize) break;
+    if (list.length < pageSize) break;
   }
 
+  const fetched = [...byOrderSn.values()];
   if (!fetched.length) return { ...empty, connected: true };
 
-  const existing = await db.select().from(orders).where(inArray(orders.externalOrderId, fetched.map((order) => order.id)));
-  const existingById = new Map(existing.map((order) => [order.externalOrderId, order]));
+  const existing = await db
+    .select()
+    .from(orders)
+    .where(
+      and(
+        eq(orders.platform, "shopee"),
+        inArray(orders.externalOrderId, fetched.map((o) => o.orderSn)),
+      ),
+    );
+  const existingBySn = new Map(existing.map((o) => [o.externalOrderId, o]));
+
   let updated = 0;
   let attributed = 0;
   let unmatched = 0;
   const toSettle = new Set<string>();
 
-  for (const reportOrder of fetched) {
-    const current = existingById.get(reportOrder.id);
-    const mappedStatus = mapShopeeStatus(reportOrder.status);
+  for (const order of fetched) {
+    const current = existingBySn.get(order.orderSn);
     if (current) {
-      const nextStatus = mappedStatus ?? current.status;
+      const nextStatus = order.status ?? (current.status as OrderStatus);
       const pendingPayout = !current.cashbackCreditedAt;
-      await db.update(orders).set({
-        status: nextStatus,
-        productName: reportOrder.productName ?? current.productName,
-        orderAmount: reportOrder.orderAmount || current.orderAmount,
-        commissionAmount: reportOrder.commission || current.commissionAmount,
-        cashbackAmount: pendingPayout ? Math.round(reportOrder.commission * cashbackRate) : current.cashbackAmount,
-        tiktokVerifiedStatus: verifiedFrom(mappedStatus),
-        tiktokVerifiedAt: new Date(),
-        orderedAt: reportOrder.purchaseTime ?? current.orderedAt,
-      }).where(eq(orders.id, current.id));
+      await db
+        .update(orders)
+        .set({
+          status: nextStatus,
+          commissionAmount: order.commission || current.commissionAmount,
+          cashbackAmount: pendingPayout
+            ? Math.round((order.commission || current.commissionAmount) * cashbackRate)
+            : current.cashbackAmount,
+          tiktokVerifiedStatus: verifiedFrom(order.status),
+          tiktokVerifiedAt: new Date(),
+          orderedAt: order.purchaseTime ?? current.orderedAt,
+        })
+        .where(eq(orders.id, current.id));
       updated++;
       if (nextStatus === "completed" && pendingPayout) toSettle.add(current.id);
       continue;
     }
 
-    const created = await createAttributedShopeeOrder(reportOrder, mappedStatus);
+    const created = await createAttributedShopeeOrder(order);
     if (created) {
       attributed++;
-      if (mappedStatus === "completed") toSettle.add(created);
+      if (order.status === "completed") toSettle.add(created);
     } else {
       unmatched++;
     }
@@ -154,33 +203,46 @@ export async function syncShopeeOrders(
   return { connected: true, scanned: fetched.length, updated, credited, attributed, unmatched };
 }
 
-async function createAttributedShopeeOrder(reportOrder: FetchedShopeeOrder, mappedStatus: OrderStatus | null): Promise<string | null> {
-  const userId = reportOrder.subIds[0] ? fromShopeeSubId1(reportOrder.subIds[0]) : null;
-  if (!userId) return null;
-  const user = await db.select({ id: users.id }).from(users).where(eq(users.id, userId)).limit(1);
+function rank(status: OrderStatus | null): number {
+  return status ? STATUS_RANK[status] : -1;
+}
+
+async function createAttributedShopeeOrder(order: AttributedShopeeOrder): Promise<string | null> {
+  const user = await db
+    .select({ id: users.id })
+    .from(users)
+    .where(eq(users.id, order.userId))
+    .limit(1);
   if (!user[0]) return null;
 
-  const matchingLink = await db.select({ id: affiliateLinks.id }).from(affiliateLinks).where(
-    reportOrder.productId
-      ? and(eq(affiliateLinks.userId, userId), eq(affiliateLinks.productId, reportOrder.productId))
-      : eq(affiliateLinks.userId, userId),
-  ).limit(1);
-  const status = mappedStatus ?? "pending";
+  // The report carries no product id, so attribute to the user's Shopee link if
+  // they have exactly one; otherwise leave linkId null (still credits the user).
+  const links = await db
+    .select({ id: affiliateLinks.id })
+    .from(affiliateLinks)
+    .where(and(eq(affiliateLinks.userId, order.userId), eq(affiliateLinks.platform, "shopee")))
+    .limit(2);
+  const linkId = links.length === 1 ? links[0].id : undefined;
+
+  const status = order.status ?? "pending";
   try {
-    const inserted = await db.insert(orders).values({
-      userId,
-      linkId: matchingLink[0]?.id,
-      platform: "shopee",
-      externalOrderId: reportOrder.id,
-      productName: reportOrder.productName ?? "Đơn Shopee",
-      orderAmount: reportOrder.orderAmount,
-      commissionAmount: reportOrder.commission,
-      cashbackAmount: Math.round(reportOrder.commission * cashbackRate),
-      status,
-      tiktokVerifiedStatus: verifiedFrom(mappedStatus),
-      tiktokVerifiedAt: new Date(),
-      orderedAt: reportOrder.purchaseTime,
-    }).returning({ id: orders.id });
+    const inserted = await db
+      .insert(orders)
+      .values({
+        userId: order.userId,
+        linkId,
+        platform: "shopee",
+        externalOrderId: order.orderSn,
+        productName: "Đơn Shopee",
+        orderAmount: 0,
+        commissionAmount: order.commission,
+        cashbackAmount: Math.round(order.commission * cashbackRate),
+        status,
+        tiktokVerifiedStatus: verifiedFrom(order.status),
+        tiktokVerifiedAt: new Date(),
+        orderedAt: order.purchaseTime,
+      })
+      .returning({ id: orders.id });
     return inserted[0]?.id ?? null;
   } catch {
     return null;

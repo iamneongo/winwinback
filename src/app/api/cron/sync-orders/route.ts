@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { syncTikTokOrders } from "@/lib/affiliate/tiktok/sync";
-import { syncShopeeOrders } from "@/lib/affiliate/shopee/sync";
+import { reconcile as reconcileShopeeOrders } from "@/lib/affiliate/shopee/sync";
 
 export const dynamic = "force-dynamic";
 
@@ -20,7 +20,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     // Reconcile both marketplaces; one failing must not hide the other.
     const [tiktok, shopee] = await Promise.allSettled([
       syncTikTokOrders({ sinceDays: 7 }),
-      syncShopeeOrders({ sinceDays: 7 }),
+      reconcileShopeeOrders({ sinceDays: 30 }),
     ]);
     return NextResponse.json({
       ok: true,
