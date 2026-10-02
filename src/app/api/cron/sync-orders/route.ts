@@ -19,7 +19,9 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   try {
     // Reconcile both marketplaces; one failing must not hide the other.
     const [tiktok, shopee] = await Promise.allSettled([
-      syncTikTokOrders({ sinceDays: 7 }),
+      // 30-day windows so a late-settling or delayed order is never missed
+      // between runs (Shopee's report alone can lag ~1.5 days).
+      syncTikTokOrders({ sinceDays: 30 }),
       reconcileShopeeOrders({ sinceDays: 30 }),
     ]);
     return NextResponse.json({

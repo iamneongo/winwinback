@@ -1,9 +1,9 @@
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq, isNull, sql } from "drizzle-orm";
 import Link from "next/link";
-import { BadgeCheck, Check, ChevronDown, ChevronLeft, ChevronRight, CircleDollarSign, Clock3, Filter, PackageCheck, RotateCcw, Search, ShoppingBag, Sparkles, WalletCards, XCircle } from "lucide-react";
+import { BadgeCheck, Check, ChevronDown, ChevronLeft, ChevronRight, CircleDollarSign, Clock3, Filter, Hourglass, PackageCheck, RotateCcw, Search, ShoppingBag, Sparkles, WalletCards, XCircle } from "lucide-react";
 import Image from "next/image";
 import { db } from "@/db";
-import { orders } from "@/db/schema";
+import { affiliateLinks, linkClicks, orders } from "@/db/schema";
 import { requireUser } from "@/lib/auth/guards";
 import { formatVnd } from "@/lib/config";
 import { platformLabel } from "@/lib/labels";
@@ -46,6 +46,18 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
   const user = await requireUser();
   const query = await searchParams;
   const rows = await db.select().from(orders).where(eq(orders.userId, user.id)).orderBy(desc(orders.orderedAt)).limit(100);
+  // Clicks the user made recently that no order has matched yet. Shown as a
+  // "waiting to be recorded" hint so a fresh purchase gives immediate feedback
+  // (the marketplace report can lag from minutes up to ~1.5 days).
+  const pendingClicksRaw = await db
+    .select({ platform: linkClicks.platform, clickedAt: linkClicks.clickedAt, title: affiliateLinks.title, originalUrl: affiliateLinks.originalUrl })
+    .from(linkClicks)
+    .leftJoin(affiliateLinks, eq(linkClicks.linkId, affiliateLinks.id))
+    .where(and(eq(linkClicks.userId, user.id), isNull(linkClicks.attributedOrderId), sql`${linkClicks.clickedAt} > now() - interval '3 days'`))
+    .orderBy(desc(linkClicks.clickedAt))
+    .limit(20);
+  // One entry per product link so repeated taps don't stack up.
+  const pendingClicks = Array.from(new Map(pendingClicksRaw.map((c) => [c.originalUrl ?? c.clickedAt.toISOString(), c])).values()).slice(0, 5);
   const waiting = rows.filter((row) => row.status === "pending");
   const processing = rows.filter((row) => row.status === "confirmed");
   const complete = rows.filter((row) => row.status === "completed");
@@ -78,6 +90,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
       <div className="flex items-end"><Button type="submit" variant="cta" className="h-11 gap-2 rounded-lg px-5 text-sm font-bold"><Filter className="h-4 w-4" /> Lọc kết quả</Button></div>
     </form>
     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4"><SummaryCard icon={ShoppingBag} iconClass="bg-[#e7f1ff] text-[#287be5]" label="Tổng đơn hàng" value={String(rows.length)} detail="Trong khoảng thời gian đã chọn" /><SummaryCard icon={Clock3} iconClass="bg-[#fff1d9] text-[#e99a10]" label="Đang chờ hoàn tiền" value={String(waiting.length)} detail={<>Tổng tiền: <b className="text-[#f06b2e]">{formatVnd(waitingCashback)}</b></>} /><SummaryCard icon={PackageCheck} iconClass="bg-[#e8f9df] text-[#3ba818]" label="Đã hoàn tất" value={String(complete.length)} detail={<>Tổng tiền: <b className="text-[#168146]">{formatVnd(completeCashback)}</b></>} /><SummaryCard icon={WalletCards} iconClass="bg-[#f6e9ff] text-[#aa34de]" label="Tổng tiền hoàn" value={formatVnd(totalCashback)} detail="Tất cả đơn hàng" /></div>
+    {pendingClicks.length > 0 && <section className="mt-5 rounded-xl border border-[#f2dca6] bg-[#fffaef] p-5 shadow-[0_5px_14px_rgba(26,73,124,0.04)]"><div className="flex items-start gap-3"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#fff1d2] text-[#d9900a]"><Hourglass className="h-5 w-5" /></span><div className="min-w-0 flex-1"><h2 className="text-sm font-bold text-[#8a5a04]">Đơn đang chờ sàn ghi nhận</h2><p className="mt-1 text-xs leading-5 text-[#9a7320]">Bạn vừa bấm mua các sản phẩm dưới đây. Nếu đã đặt hàng thành công, đơn sẽ tự xuất hiện ở bảng bên dưới sau khi sàn xác nhận (thường vài giờ, Shopee có thể tới ~1,5 ngày).</p><ul className="mt-3 space-y-2">{pendingClicks.map((c, i) => <li key={i} className="flex items-center gap-2 text-xs text-[#6b5415]"><PlatformMark platform={c.platform} /><span className="min-w-0 flex-1 truncate font-semibold text-[#5f4a12]">{c.title?.trim() || `Sản phẩm trên ${platformLabel[c.platform]}`}</span><span className="shrink-0 text-[#a98a3e]">{c.clickedAt.toLocaleString("vi-VN", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}</span></li>)}</ul></div></div></section>}
     <section className="mt-5 grid gap-4 xl:grid-cols-[minmax(0,1fr)_18rem]">
       <div className="overflow-hidden rounded-xl border border-[#dfe9f5] bg-white shadow-[0_5px_14px_rgba(26,73,124,0.04)]"><div className="overflow-x-auto"><table className="min-w-[950px] w-full text-left"><thead className="border-b border-[#dfe9f5] bg-[#f8fbff] text-xs font-bold text-[#234168]"><tr><th className="px-5 py-4">Sàn</th><th className="px-3 py-4">Mã đơn hàng</th><th className="px-3 py-4">Sản phẩm</th><th className="px-3 py-4">Giá trị đơn</th><th className="px-3 py-4">Tiền hoàn</th><th className="px-3 py-4">Trạng thái</th><th className="px-3 py-4">Ngày mua</th><th className="px-4 py-4 text-center">Hành động</th></tr></thead><tbody className="divide-y divide-[#e8eef6]">
         {pageRows.length === 0 ? <tr><td colSpan={8} className="px-5 py-16 text-center text-sm text-[#6681a7]">Không có đơn hàng phù hợp với bộ lọc này.</td></tr> : pageRows.map((row) => { const status = STATUS_META[row.status as Status]; const StatusIcon = status.icon; return <tr key={row.id} className="text-xs text-[#35537c] transition-colors hover:bg-[#fbfdff]"><td className="px-5 py-3.5"><div className="flex items-center gap-2"><PlatformMark platform={row.platform} /><span className="font-medium">{platformLabel[row.platform]}</span></div></td><td className="px-3 py-3.5"><div className="flex items-center gap-1.5 font-medium"><span>{row.externalOrderId}</span><CopyLink value={row.externalOrderId} /></div></td><td className="px-3 py-3.5"><div className="flex max-w-[15rem] items-center gap-2.5"><ProductTile name={row.productName} /><span className="line-clamp-2 font-semibold leading-4 text-[#244a7c]">{row.productName}</span></div></td><td className="px-3 py-3.5 font-medium">{formatVnd(row.orderAmount)}</td><td className="px-3 py-3.5 font-bold text-[#168146]">{formatVnd(row.cashbackAmount)}</td><td className="px-3 py-3.5"><span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold ${status.className}`}><StatusIcon className="h-3.5 w-3.5" />{status.label}</span></td><td className="px-3 py-3.5 leading-4">{row.orderedAt.toLocaleDateString("vi-VN")}<br /><span className="text-[#7790b1]">{row.orderedAt.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}</span></td><td className="px-4 py-3.5"><div className="flex items-center justify-center"><OrderDetailButton order={{ platformLabel: platformLabel[row.platform], externalOrderId: row.externalOrderId, productName: row.productName, orderAmount: formatVnd(row.orderAmount), commissionAmount: formatVnd(row.commissionAmount), cashbackAmount: formatVnd(row.cashbackAmount), statusLabel: status.label, statusClass: status.className, orderedAt: row.orderedAt.toLocaleString("vi-VN") }} /></div></td></tr>; })}

@@ -13,6 +13,7 @@ import {
   Gift,
   Compass,
   ClipboardCheck,
+  Ticket,
   type LucideIcon,
 } from "lucide-react";
 
@@ -31,6 +32,7 @@ export const customerNav: NavItem[] = [
   { href: "/dashboard/don-hang", icon: ShoppingBag, label: "Đơn hàng của tôi", short: "Đơn hàng" },
   { href: "/dashboard/vi", icon: Wallet, label: "Ví hoàn tiền", short: "Ví" },
   { href: "/dashboard/nhiem-vu", icon: Gift, label: "Nhiệm vụ nhận quà", short: "Nhiệm vụ" },
+  { href: "/dashboard/rut-tham", icon: Ticket, label: "Rút thăm may mắn", short: "Rút thăm" },
   { href: "/dashboard/kham-pha", icon: Compass, label: "Sàn sale", short: "Sàn sale" },
   { href: "/dashboard/tai-khoan", icon: Settings, label: "Cài đặt" },
 ];
@@ -43,6 +45,7 @@ export const adminNav: NavItem[] = [
   { href: "/admin/rut-tien", icon: Banknote, label: "Yêu cầu rút tiền", short: "Rút tiền" },
   { href: "/admin/don-hang", icon: ShoppingBag, label: "Đơn hàng", short: "Đơn hàng" },
   { href: "/admin/nhiem-vu", icon: ClipboardCheck, label: "Duyệt nhiệm vụ", short: "Nhiệm vụ" },
+  { href: "/admin/rut-tham", icon: Ticket, label: "Rút thăm may mắn", short: "Rút thăm" },
   { href: "/admin/integrations", icon: Plug, label: "Kết nối sàn", short: "Kết nối" },
 ];
 

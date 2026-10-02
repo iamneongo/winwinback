@@ -46,10 +46,18 @@ interface FetchedOrder {
   productId?: string;
   productName?: string;
   amount: number;
+  /** Affiliate commission in VND (what cashback is a share of). */
+  commission: number;
 }
 
 function toFetched(o: AffiliateOrder): FetchedOrder {
   const sku = o.skus?.[0];
+  // Cashback is a share of the commission the creator actually earns — never of
+  // the order's gross price. Prefer the finalised amount, fall back to the
+  // estimate while the order is still pending.
+  const commission =
+    parseAmount(sku?.actual_commission?.amount) ||
+    parseAmount(sku?.estimated_commission?.amount);
   return {
     id: o.id,
     status: o.status,
@@ -57,6 +65,7 @@ function toFetched(o: AffiliateOrder): FetchedOrder {
     productId: sku?.product_id,
     productName: sku?.product_name,
     amount: parseAmount(sku?.price?.amount),
+    commission,
   };
 }
 
@@ -141,21 +150,34 @@ export async function syncTikTokOrders(
     const mapped = mapTikTokStatus(o.status);
 
     if (row) {
-      // Known order → status sync (+ re-settle if completed but uncredited).
-      if (mapped && mapped !== row.status) {
+      // Known order → status sync + refresh commission/cashback until it is paid
+      // (the estimate at attribution time is replaced by the settled amount).
+      const statusChanged = Boolean(mapped && mapped !== row.status);
+      const pendingPayout = !row.cashbackCreditedAt;
+      const refreshPayout = pendingPayout && o.commission > 0;
+      if (statusChanged || refreshPayout) {
         await db
           .update(orders)
           .set({
-            status: mapped,
-            tiktokVerifiedStatus: verifiedFrom(mapped),
-            tiktokVerifiedAt: new Date(),
+            ...(statusChanged
+              ? {
+                  status: mapped!,
+                  tiktokVerifiedStatus: verifiedFrom(mapped),
+                  tiktokVerifiedAt: new Date(),
+                }
+              : {}),
+            ...(refreshPayout
+              ? {
+                  commissionAmount: o.commission,
+                  cashbackAmount: Math.round(o.commission * cashbackRate),
+                }
+              : {}),
           })
           .where(eq(orders.id, row.id));
         updated++;
-        if (mapped === "completed") toSettle.add(row.id);
-      } else if (row.status === "completed" && !row.cashbackCreditedAt) {
-        toSettle.add(row.id);
       }
+      const nextStatus = mapped ?? (row.status as OrderStatus);
+      if (nextStatus === "completed" && pendingPayout) toSettle.add(row.id);
       continue;
     }
 
@@ -205,7 +227,7 @@ async function attributeOrder(
   if (!click) return null;
 
   const status: OrderStatus = mapped ?? "pending";
-  const cashback = Math.round(o.amount * cashbackRate);
+  const cashback = Math.round(o.commission * cashbackRate);
 
   try {
     const created = await db.transaction(async (tx) => {
@@ -218,7 +240,7 @@ async function attributeOrder(
           externalOrderId: o.id,
           productName: o.productName ?? "Đơn TikTok Shop",
           orderAmount: o.amount,
-          commissionAmount: 0,
+          commissionAmount: o.commission,
           cashbackAmount: cashback,
           status,
           tiktokVerifiedStatus: verifiedFrom(mapped),

@@ -5,7 +5,7 @@ import { users, orders, walletTransactions } from "@/db/schema";
 import { notifyCashbackCredited } from "@/lib/notify";
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
-type WalletTxType = "cashback" | "withdrawal" | "refund" | "adjustment" | "reward";
+type WalletTxType = "cashback" | "withdrawal" | "refund" | "adjustment" | "reward" | "prize";
 
 /**
  * Record a wallet movement atomically: lock the user row, compute the new
@@ -71,32 +71,40 @@ export async function settleOrderCashback(orderId: string): Promise<boolean> {
     if (!order) return null;
     if (order.status !== "completed") return null;
     if (order.cashbackCreditedAt) return null;
-    if (order.cashbackAmount <= 0) {
-      await tx
-        .update(orders)
-        .set({ cashbackCreditedAt: new Date() })
-        .where(eq(orders.id, orderId));
-      return null;
-    }
 
-    await recordWalletTx(tx, {
+    // Every completed order funds the lucky draw (10% of commission) and mints
+    // one lottery ticket — exactly once, inside the same settlement guard.
+    // Dynamic import avoids a wallet <-> lucky-draw import cycle.
+    const { contributeAndIssueTicket } = await import("@/lib/lucky-draw/service");
+    await contributeAndIssueTicket(tx, {
+      id: order.id,
       userId: order.userId,
-      type: "cashback",
-      amount: order.cashbackAmount,
-      orderId: order.id,
-      note: `Hoàn tiền đơn ${order.externalOrderId}`,
+      externalOrderId: order.externalOrderId,
+      commissionAmount: order.commissionAmount,
     });
+
+    if (order.cashbackAmount > 0) {
+      await recordWalletTx(tx, {
+        userId: order.userId,
+        type: "cashback",
+        amount: order.cashbackAmount,
+        orderId: order.id,
+        note: `Hoàn tiền đơn ${order.externalOrderId}`,
+      });
+    }
 
     await tx
       .update(orders)
       .set({ cashbackCreditedAt: new Date() })
       .where(eq(orders.id, orderId));
 
-    return {
-      userId: order.userId,
-      externalOrderId: order.externalOrderId,
-      amount: order.cashbackAmount,
-    };
+    return order.cashbackAmount > 0
+      ? {
+          userId: order.userId,
+          externalOrderId: order.externalOrderId,
+          amount: order.cashbackAmount,
+        }
+      : null;
   });
 
   if (!credited) return false;

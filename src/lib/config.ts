@@ -1,6 +1,14 @@
+// Each affiliate commission is split 50% platform / 40% buyer cashback / 10%
+// lucky-draw prize fund. Rates are env-overridable but default to that split.
 export const cashbackRate = (() => {
   const v = Number(process.env.CASHBACK_RATE);
-  return Number.isFinite(v) && v >= 0 && v <= 1 ? v : 0.7;
+  return Number.isFinite(v) && v >= 0 && v <= 1 ? v : 0.4;
+})();
+
+/** Share of each affiliate commission routed to the lucky-draw prize fund. */
+export const prizeFundRate = (() => {
+  const v = Number(process.env.PRIZE_FUND_RATE);
+  return Number.isFinite(v) && v >= 0 && v <= 1 ? v : 0.1;
 })();
 
 export const minWithdrawal = (() => {

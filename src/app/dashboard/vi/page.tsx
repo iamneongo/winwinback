@@ -21,6 +21,7 @@ const typeMeta = {
   refund: { label: "Hoàn lại giao dịch", tone: "bg-[#f6e9ff] text-[#aa34de]", icon: CircleDollarSign },
   adjustment: { label: "Điều chỉnh số dư", tone: "bg-[#fff3d8] text-[#dd9100]", icon: CircleDollarSign },
   reward: { label: "Thưởng nhiệm vụ", tone: "bg-[#eafbe0] text-[#3f8a2e]", icon: Gift },
+  prize: { label: "Trúng thưởng rút thăm", tone: "bg-[#f6e9ff] text-[#aa34de]", icon: Gift },
 } as const;
 
 const TYPE_TABS: { label: string; value?: "cashback" | "withdrawal" | "refund" | "adjustment" }[] = [

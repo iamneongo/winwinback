@@ -179,12 +179,22 @@ export async function generateSharingLinks(
 // Affiliate orders (creator.affiliate_collaboration.read)
 // ---------------------------------------------------------------------------
 
+/** A money field in the affiliate order response (e.g. "6.300₫"). */
+interface TikTokMoney {
+  amount?: string;
+  currency?: string;
+}
+
 /** A single product line inside an affiliate order. */
 export interface AffiliateOrderSku {
   id?: string;
   product_id?: string;
   product_name?: string;
-  price?: { amount?: string; currency?: string };
+  price?: TikTokMoney;
+  /** Finalised commission the creator earned (present once settled). */
+  actual_commission?: TikTokMoney;
+  /** Estimated commission before settlement (the pre-settlement fallback). */
+  estimated_commission?: TikTokMoney;
   campaign_id?: string;
   open_collaboration_id?: string;
   target_collaboration_id?: string;

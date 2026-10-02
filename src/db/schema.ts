@@ -34,7 +34,12 @@ export const walletTxType = pgEnum("wallet_tx_type", [
   "refund", // credit back when a withdrawal is rejected
   "adjustment", // manual admin correction (+/-)
   "reward", // credit from completing a mission / quest
+  "prize", // credit from winning a lucky-draw period
 ]);
+
+// A lucky-draw period is opened by an admin with an explicit date window, then
+// drawn (Vietlott-style on the last 4 digits of order ids) to pay out the fund.
+export const luckyDrawStatus = pgEnum("lucky_draw_status", ["open", "drawn"]);
 
 export const withdrawalStatus = pgEnum("withdrawal_status", [
   "pending",
@@ -395,6 +400,79 @@ export const integrationTokens = pgTable("integration_tokens", {
     .defaultNow(),
 });
 
+// ---------------------------------------------------------------------------
+// Lucky draw (quỹ rút thăm may mắn)
+// ---------------------------------------------------------------------------
+//
+// 10% of every completed order's commission accrues into a single global fund
+// (prizeFund). Each completed order also mints one ticket whose number is the
+// last 4 digits of its external order id. An admin opens a period with an
+// explicit [startAt, endAt] window and later draws it: a random 4-digit number
+// is picked; exact matches split the whole fund, otherwise the nearest ticket
+// takes 20% and the rest rolls over (it simply stays in the fund).
+
+// Single-row global prize fund. Balance is the amount currently available to be
+// won; unwon remainders naturally roll over because they stay here.
+export const prizeFund = pgTable("prize_fund", {
+  id: text("id").primaryKey().default("global"),
+  balance: bigint("balance", { mode: "number" }).notNull().default(0),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export const luckyDrawPeriods = pgTable("lucky_draw_periods", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  name: text("name").notNull(),
+  status: luckyDrawStatus("status").notNull().default("open"),
+  startAt: timestamp("start_at", { withTimezone: true }).notNull(),
+  endAt: timestamp("end_at", { withTimezone: true }).notNull(),
+  // Draw result — null until drawn.
+  winningNumber: text("winning_number"),
+  // Fund snapshot at draw time, and how much was actually paid to winners.
+  potTotal: bigint("pot_total", { mode: "number" }).notNull().default(0),
+  paidOut: bigint("paid_out", { mode: "number" }).notNull().default(0),
+  // Whether the draw hit an exact 4-digit match (vs. nearest-ticket payout).
+  exactMatch: boolean("exact_match"),
+  drawnAt: timestamp("drawn_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export const luckyDrawTickets = pgTable(
+  "lucky_draw_tickets",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    // One ticket per order (unique) — minted when the order settles.
+    orderId: uuid("order_id")
+      .notNull()
+      .references(() => orders.id, { onDelete: "cascade" })
+      .unique(),
+    // Set when a draw consumes the ticket; null while it still awaits a draw.
+    periodId: uuid("period_id").references(() => luckyDrawPeriods.id, {
+      onDelete: "set null",
+    }),
+    // Last 4 digits of the order id, zero-padded (the lottery number).
+    number: text("number").notNull(),
+    isWinner: boolean("is_winner").notNull().default(false),
+    prizeAmount: bigint("prize_amount", { mode: "number" })
+      .notNull()
+      .default(0),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    index("lucky_draw_tickets_user_idx").on(t.userId),
+    index("lucky_draw_tickets_period_idx").on(t.periodId),
+    index("lucky_draw_tickets_created_idx").on(t.createdAt),
+  ],
+);
+
 export type User = typeof users.$inferSelect;
 export type AffiliateLink = typeof affiliateLinks.$inferSelect;
 export type IntegrationToken = typeof integrationTokens.$inferSelect;
@@ -404,3 +482,6 @@ export type Withdrawal = typeof withdrawals.$inferSelect;
 export type LinkClick = typeof linkClicks.$inferSelect;
 export type Notification = typeof notifications.$inferSelect;
 export type MissionClaim = typeof missionClaims.$inferSelect;
+export type PrizeFund = typeof prizeFund.$inferSelect;
+export type LuckyDrawPeriod = typeof luckyDrawPeriods.$inferSelect;
+export type LuckyDrawTicket = typeof luckyDrawTickets.$inferSelect;
