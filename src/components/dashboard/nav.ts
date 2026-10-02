@@ -11,7 +11,6 @@ import {
   ShieldCheck,
   Banknote,
   Gift,
-  Compass,
   ClipboardCheck,
   Ticket,
   type LucideIcon,
@@ -33,7 +32,6 @@ export const customerNav: NavItem[] = [
   { href: "/dashboard/vi", icon: Wallet, label: "Ví hoàn tiền", short: "Ví" },
   { href: "/dashboard/nhiem-vu", icon: Gift, label: "Nhiệm vụ nhận quà", short: "Nhiệm vụ" },
   { href: "/dashboard/rut-tham", icon: Ticket, label: "Rút thăm may mắn", short: "Rút thăm" },
-  { href: "/dashboard/kham-pha", icon: Compass, label: "Sàn sale", short: "Sàn sale" },
   { href: "/dashboard/tai-khoan", icon: Settings, label: "Cài đặt" },
 ];
 
