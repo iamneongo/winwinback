@@ -13,6 +13,7 @@ import {
   Gift,
   ClipboardCheck,
   Ticket,
+  FileText,
   type LucideIcon,
 } from "lucide-react";
 
@@ -44,6 +45,7 @@ export const adminNav: NavItem[] = [
   { href: "/admin/don-hang", icon: ShoppingBag, label: "Đơn hàng", short: "Đơn hàng" },
   { href: "/admin/nhiem-vu", icon: ClipboardCheck, label: "Duyệt nhiệm vụ", short: "Nhiệm vụ" },
   { href: "/admin/rut-tham", icon: Ticket, label: "Rút thăm may mắn", short: "Rút thăm" },
+  { href: "/admin/bai-viet", icon: FileText, label: "Bài viết SEO", short: "Bài viết" },
   { href: "/admin/integrations", icon: Plug, label: "Kết nối sàn", short: "Kết nối" },
 ];
 

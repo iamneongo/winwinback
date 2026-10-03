@@ -8,6 +8,7 @@ import { eq } from "drizzle-orm";
 import { requireUser } from "@/lib/auth/guards";
 import { detectPlatform } from "@/lib/affiliate/platform";
 import { getAffiliateProvider } from "@/lib/affiliate/providers";
+import { generateAndSaveArticle } from "@/lib/articles/service";
 import { generateShortCode } from "@/lib/shortcode";
 import { recordWalletTx } from "@/lib/wallet";
 import { notifyNewWithdrawalRequest } from "@/lib/notify";
@@ -105,6 +106,8 @@ export async function createLinkAction(
   let affiliateUrl: string;
   let title: string | undefined;
   let productId: string | undefined;
+  let price: number | undefined;
+  let imageUrl: string | undefined;
   let estimatedCashback: number | undefined;
   let estimatedCashbackMax: number | undefined;
   try {
@@ -116,6 +119,8 @@ export async function createLinkAction(
     affiliateUrl = result.affiliateUrl;
     title = result.title;
     productId = result.productId;
+    price = result.price;
+    imageUrl = result.imageUrl;
     estimatedCashback =
       result.estimatedCommission != null
         ? Math.round(result.estimatedCommission * cashbackRate)
@@ -151,6 +156,21 @@ export async function createLinkAction(
         title,
       });
       revalidatePath("/dashboard");
+      // Fire-and-forget: generate the product's SEO article in the background
+      // (AI is slow; never block link creation). Idempotent per product.
+      if (productId && title) {
+        void generateAndSaveArticle({
+          platform,
+          productId,
+          productUrl: parsed.data.url,
+          userId: user.id,
+          productName: title,
+          price,
+          imageUrl,
+          estimatedCashback,
+          affiliateShortCode: code,
+        });
+      }
       return {
         success: "Đã tạo link affiliate",
         link: {

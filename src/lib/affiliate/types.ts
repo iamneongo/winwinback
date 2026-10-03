@@ -16,6 +16,10 @@ export interface ConvertResult {
   estimatedCommission?: number;
   /** Upper bound of the commission range (VND) when the product spans SKUs. */
   estimatedCommissionMax?: number;
+  /** Product price in VND (lower bound for multi-SKU) — for the SEO article. */
+  price?: number;
+  /** Product image URL — for the SEO article. */
+  imageUrl?: string;
 }
 
 /**

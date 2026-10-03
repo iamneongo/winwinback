@@ -149,7 +149,8 @@ class ShopeeAffProvider implements AffiliateProvider {
       // getCashbackLink compacts the UUID into a Shopee-safe subId1 and caches
       // the result, so repeated pastes of the same URL don't re-hit the worker.
       const affiliateUrl = await getCashbackLink(opts.userId, url);
-      // Best-effort projected commission (same worker) to preview cashback.
+      // Best-effort projected product info (same worker) — preview cashback +
+      // feed the SEO article.
       const info = await getShopeeProductInfo(url);
       const estimatedCommission =
         info?.commission && info.commission > 0
@@ -158,6 +159,9 @@ class ShopeeAffProvider implements AffiliateProvider {
       return {
         affiliateUrl,
         productId: extractShopeeItemId(url) ?? undefined,
+        title: info?.name || undefined,
+        price: info?.price && info.price > 0 ? Math.round(info.price) : undefined,
+        imageUrl: info?.image || undefined,
         estimatedCommission,
       };
     } catch (error) {
@@ -228,24 +232,44 @@ class TikTokProvider implements AffiliateProvider {
       );
     }
 
-    // Best-effort commission estimate to preview cashback — never block the link.
+    // Best-effort product lookup to preview cashback + feed the SEO article —
+    // never block the link.
     let estimatedCommission: number | undefined;
     let estimatedCommissionMax: number | undefined;
+    let title: string | undefined;
+    let price: number | undefined;
+    let imageUrl: string | undefined;
     try {
       const [info] = await getOpenCollaborationProductsByIds(
         [productId],
         accessToken,
       );
-      const range = parseCommissionRange(info?.commission?.amount);
-      if (range) {
-        estimatedCommission = range.min;
-        estimatedCommissionMax = range.max;
+      if (info) {
+        const range = parseCommissionRange(info.commission?.amount);
+        if (range) {
+          estimatedCommission = range.min;
+          estimatedCommissionMax = range.max;
+        }
+        title = info.title || undefined;
+        imageUrl = info.main_image_url || undefined;
+        const p = Math.round(
+          parseFloat(String(info.original_price?.minimum_amount ?? "").replace(/[^\d.]/g, "")),
+        );
+        if (Number.isFinite(p) && p > 0) price = p;
       }
     } catch {
-      // Ignore — the estimate is optional.
+      // Ignore — the estimate/article data is optional.
     }
 
-    return { affiliateUrl, productId, estimatedCommission, estimatedCommissionMax };
+    return {
+      affiliateUrl,
+      productId,
+      title,
+      price,
+      imageUrl,
+      estimatedCommission,
+      estimatedCommissionMax,
+    };
   }
 }
 
