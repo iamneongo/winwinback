@@ -115,6 +115,67 @@ export async function settleOrderCashback(orderId: string): Promise<boolean> {
 }
 
 /**
+ * Claw back an order's cashback when it is cancelled / refunded / flagged fraud
+ * after having been credited. Debits the wallet (clamped so the balance never
+ * goes negative — any shortfall, e.g. already withdrawn, is noted on the order
+ * for manual follow-up), clears the credited marker, marks the order cancelled,
+ * and reverses its lucky-draw contribution + still-undrawn ticket. Idempotent:
+ * does nothing if the order was never credited.
+ */
+export async function reverseOrderCashback(orderId: string): Promise<boolean> {
+  const reversed = await db.transaction(async (tx) => {
+    const rows = await tx
+      .select()
+      .from(orders)
+      .where(eq(orders.id, orderId))
+      .for("update")
+      .limit(1);
+    const order = rows[0];
+    if (!order || !order.cashbackCreditedAt) return false;
+
+    const locked = await tx
+      .select({ balance: users.balance })
+      .from(users)
+      .where(eq(users.id, order.userId))
+      .for("update")
+      .limit(1);
+    const balance = locked[0]?.balance ?? 0;
+    const debit = Math.min(order.cashbackAmount, Math.max(0, balance));
+    if (debit > 0) {
+      await recordWalletTx(tx, {
+        userId: order.userId,
+        type: "adjustment",
+        amount: -debit,
+        orderId: order.id,
+        note: `Thu hồi hoàn tiền đơn ${order.externalOrderId} (huỷ/hoàn/fraud)`,
+      });
+    }
+    const shortfall = order.cashbackAmount - debit;
+    await tx
+      .update(orders)
+      .set({
+        status: "cancelled",
+        cashbackCreditedAt: null,
+        adminNote:
+          shortfall > 0
+            ? `Thu hồi thiếu ${shortfall}₫ (số dư không đủ, cần xử lý tay)`
+            : order.adminNote,
+      })
+      .where(eq(orders.id, order.id));
+
+    const { reverseContributionAndTicket } = await import(
+      "@/lib/lucky-draw/service"
+    );
+    await reverseContributionAndTicket(tx, {
+      orderId: order.id,
+      commissionAmount: order.commissionAmount,
+    });
+    return true;
+  });
+  return reversed;
+}
+
+/**
  * Record a /go/<code> visit: append a click row (for order→user attribution)
  * and bump the link's click counter. Best effort — never blocks the redirect.
  */

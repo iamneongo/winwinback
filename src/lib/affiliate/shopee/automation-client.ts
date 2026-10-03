@@ -59,6 +59,57 @@ interface JsonEnvelope {
   subIds?: Record<string, string>;
   // GET /api/report
   list?: ShopeeReportCheckout[];
+  // GET /api/conversions
+  conversions?: ShopeeConversion[];
+  summary?: ShopeeConversionsSummary;
+}
+
+/** One line item inside a conversion (GET /api/conversions). */
+export interface ShopeeConversionItem {
+  itemId?: number | string;
+  name?: string;
+  shopName?: string;
+  price?: number;
+  actual?: number;
+  refunded?: number;
+  qty?: number;
+  commission?: number;
+  status?: string;
+  isFraud?: boolean;
+  fraudReason?: string | null;
+}
+
+/**
+ * A processed conversion from GET /api/conversions. Unlike /api/report this is
+ * already matched to our user (userId = subId1), carries product info, money in
+ * VND (no /100000), and a fraud verdict — the preferred reconciliation source.
+ */
+export interface ShopeeConversion {
+  orderSn: string;
+  checkoutId?: string;
+  /** subId1 (compact 32-hex user id) or "" when the worker could not match. */
+  userId?: string;
+  subId?: string;
+  matched?: boolean;
+  manual?: boolean;
+  commission?: number; // VND
+  status?: string; // COMPLETED | CANCELLED | REFUNDED | PENDING ...
+  isFraud?: boolean;
+  orderValue?: number; // VND
+  itemName?: string;
+  purchaseTime?: number; // unix seconds
+  completeTime?: number | null;
+  device?: string;
+  source?: string;
+  items?: ShopeeConversionItem[];
+}
+
+export interface ShopeeConversionsSummary {
+  total?: number;
+  matched?: number;
+  unmatched?: number;
+  commission?: number;
+  byStatus?: Record<string, number>;
 }
 
 async function request<T extends JsonEnvelope>(
@@ -170,4 +221,51 @@ export async function getShopeeAffReport(input: {
   });
   const response = await request<JsonEnvelope>(`/api/report?${query}`);
   return { list: response.list ?? [] };
+}
+
+/**
+ * Fetch processed conversions (GET /api/conversions). Already matched to a user
+ * (userId = subId1), with product info, VND money and an isFraud verdict.
+ */
+export async function getShopeeConversions(input: {
+  days: number;
+  size?: number;
+  unmatched?: boolean;
+  status?: "COMPLETED" | "CANCELLED" | "REFUNDED" | "PENDING";
+  userId?: string;
+}): Promise<ShopeeConversion[]> {
+  const query = new URLSearchParams({ days: String(input.days) });
+  if (input.size != null) query.set("size", String(input.size));
+  if (input.unmatched) query.set("unmatched", "1");
+  if (input.status) query.set("status", input.status);
+  if (input.userId) query.set("userId", input.userId);
+  const response = await request<JsonEnvelope>(`/api/conversions?${query}`);
+  return response.conversions ?? [];
+}
+
+/** Manually bind an order_sn to a user (POST /api/conversions/map). */
+export async function mapShopeeConversion(
+  orderSn: string,
+  userId: string,
+): Promise<void> {
+  await request<JsonEnvelope>("/api/conversions/map", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ orderSn, userId }),
+  });
+}
+
+/** Worker self-check (GET /api/selfcheck) — for health monitoring. */
+export async function getShopeeAffSelfcheck(): Promise<{
+  ok: boolean;
+  at?: string;
+  checks: { name: string; ok: boolean; detail?: string }[];
+}> {
+  const res = await request<
+    JsonEnvelope & {
+      at?: string;
+      checks?: { name: string; ok: boolean; detail?: string }[];
+    }
+  >("/api/selfcheck");
+  return { ok: Boolean(res.ok), at: res.at, checks: res.checks ?? [] };
 }

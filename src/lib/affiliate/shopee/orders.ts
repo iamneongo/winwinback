@@ -1,30 +1,35 @@
 import "server-only";
-import { getShopeeAffReport } from "./automation-client";
+import { getShopeeConversions } from "./automation-client";
 import { isShopeeAffConfigured } from "./config";
-import { flattenCheckout } from "./sync";
 import type { VerifyResult } from "../tiktok/orders";
 
-/** Find a single order in the ShopeeAff report for the admin verification UI. */
+const COMPLETED = new Set(["COMPLETED", "SETTLED", "VALIDATED"]);
+const CANCELLED = new Set(["CANCELLED", "CANCELED", "REFUNDED", "REJECTED", "RETURNED"]);
+
+/**
+ * Verify a single Shopee order via the conversion API for the admin UI.
+ * "settled" requires status COMPLETED and not flagged fraud (anti-fraud gate);
+ * fraud or cancelled/refunded map to "cancelled".
+ */
 export async function verifyShopeeOrder(
   externalOrderId: string,
-  opts: { sinceDays?: number; maxPages?: number } = {},
+  opts: { sinceDays?: number } = {},
 ): Promise<VerifyResult> {
   if (!isShopeeAffConfigured()) return { connected: false, status: null };
 
-  const size = 100;
-  for (let page = 1; page <= (opts.maxPages ?? 30); page++) {
-    const { list } = await getShopeeAffReport({ days: opts.sinceDays ?? 90, page, size });
-    const hit = list
-      .flatMap(flattenCheckout)
-      .find((order) => order.orderSn === externalOrderId);
-    if (hit) {
-      return {
-        connected: true,
-        status: hit.status === "completed" ? "settled" : hit.status === "cancelled" ? "cancelled" : "pending",
-        rawStatus: hit.rawStatus,
-      };
-    }
-    if (list.length < size) break;
-  }
-  return { connected: true, status: "not_found" };
+  const conversions = await getShopeeConversions({
+    days: opts.sinceDays ?? 90,
+    size: 500,
+  });
+  const hit = conversions.find((c) => c.orderSn === externalOrderId);
+  if (!hit) return { connected: true, status: "not_found" };
+
+  const raw = (hit.status ?? "").toUpperCase();
+  const status =
+    COMPLETED.has(raw) && !hit.isFraud
+      ? "settled"
+      : hit.isFraud || CANCELLED.has(raw)
+        ? "cancelled"
+        : "pending";
+  return { connected: true, status, rawStatus: hit.status };
 }

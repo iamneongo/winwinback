@@ -68,6 +68,37 @@ export async function contributeAndIssueTicket(
     .onConflictDoNothing();
 }
 
+/**
+ * Undo an order's fund contribution + ticket when it is clawed back (cancelled
+ * / refunded / fraud). Only removes the ticket if it has NOT been drawn yet;
+ * a ticket already consumed by a draw is left as-is (cannot be un-drawn).
+ * Runs inside the caller's transaction.
+ */
+export async function reverseContributionAndTicket(
+  tx: Tx,
+  input: { orderId: string; commissionAmount: number },
+): Promise<void> {
+  const rows = await tx
+    .select()
+    .from(luckyDrawTickets)
+    .where(eq(luckyDrawTickets.orderId, input.orderId))
+    .limit(1);
+  const ticket = rows[0];
+  if (!ticket || ticket.periodId !== null) return; // no ticket, or already drawn
+
+  await tx.delete(luckyDrawTickets).where(eq(luckyDrawTickets.id, ticket.id));
+  const contribution = Math.round(input.commissionAmount * prizeFundRate);
+  if (contribution > 0) {
+    await tx
+      .update(prizeFund)
+      .set({
+        balance: sql`GREATEST(0, ${prizeFund.balance} - ${contribution})`,
+        updatedAt: new Date(),
+      })
+      .where(eq(prizeFund.id, FUND_ID));
+  }
+}
+
 /** Current global fund balance (VND). */
 export async function getFundBalance(): Promise<number> {
   const rows = await db

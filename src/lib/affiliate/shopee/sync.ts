@@ -1,11 +1,12 @@
 import "server-only";
 import { and, eq, inArray } from "drizzle-orm";
 import { db } from "@/db";
-import { affiliateLinks, orders, users } from "@/db/schema";
+import { orders, users } from "@/db/schema";
 import { cashbackRate } from "@/lib/config";
-import { settleOrderCashback } from "@/lib/wallet";
+import { settleOrderCashback, reverseOrderCashback } from "@/lib/wallet";
 import {
-  getShopeeAffReport,
+  getShopeeConversions,
+  type ShopeeConversion,
   type ShopeeReportCheckout,
 } from "./automation-client";
 import { isShopeeAffConfigured } from "./config";
@@ -33,8 +34,8 @@ export function mapShopeeStatus(raw?: string): OrderStatus | null {
   const status = raw.trim().toLocaleUpperCase("vi-VN");
   if (["COMPLETED", "SETTLED", "VALIDATED", "ĐÃ DUYỆT", "ĐÃ HOÀN THÀNH"].includes(status)) return "completed";
   if (["CANCELLED", "CANCELED", "REJECTED", "RETURNED", "ĐÃ HỦY", "ĐÃ HUỶ", "ĐÃ TRẢ HÀNG"].includes(status)) return "cancelled";
-  if (["PENDING", "PROCESSING", "CONFIRMED", "DELIVERED", "ĐÃ GIAO", "ĐANG XỬ LÝ", "ĐÃ XÁC NHẬN"].includes(status)) return "confirmed";
-  if (["UNPAID", "CREATED", "TO_PAY", "CHỜ THANH TOÁN"].includes(status)) return "pending";
+  if (["PROCESSING", "CONFIRMED", "DELIVERED", "ĐÃ GIAO", "ĐANG XỬ LÝ", "ĐÃ XÁC NHẬN"].includes(status)) return "confirmed";
+  if (["PENDING", "UNPAID", "CREATED", "TO_PAY", "CHỜ THANH TOÁN"].includes(status)) return "pending";
   return null;
 }
 
@@ -118,35 +119,32 @@ export interface ShopeeReconcileResult {
 }
 
 /**
- * Reconcile the ShopeeAff conversion report against our orders. Attributes each
- * order to a user via utm_content, upserts it, and credits cashback (once, when
- * COMPLETED). Idempotent: keyed on order_sn via orders.externalOrderId and
- * guarded by orders.cashbackCreditedAt in settleOrderCashback().
+ * Reconcile Shopee conversions (GET /api/conversions) against our orders.
+ *
+ * The worker already matches each conversion to a user (userId = subId1),
+ * carries product info + VND money, and flags fraud. We upsert by order_sn then:
+ * - credit cashback once when status=COMPLETED and isFraud=false;
+ * - claw back a previously-credited order that turned cancelled/refunded/fraud.
+ * Idempotent (guarded by orders.cashbackCreditedAt).
  */
 export async function reconcile(
-  opts: { sinceDays?: number; maxPages?: number } = {},
+  opts: { sinceDays?: number } = {},
 ): Promise<ShopeeReconcileResult> {
   const empty = { connected: false, scanned: 0, updated: 0, credited: 0, attributed: 0, unmatched: 0 };
   if (!isShopeeAffConfigured()) return empty;
 
   const sinceDays = opts.sinceDays ?? 30;
-  const maxPages = opts.maxPages ?? 10;
-  const pageSize = 100;
-  const byOrderSn = new Map<string, AttributedShopeeOrder>();
+  const conversions = await getShopeeConversions({ days: sinceDays, size: 500 });
 
-  for (let page = 1; page <= maxPages; page++) {
-    const { list } = await getShopeeAffReport({ days: sinceDays, page, size: pageSize });
-    for (const checkout of list) {
-      for (const order of flattenCheckout(checkout)) {
-        const prev = byOrderSn.get(order.orderSn);
-        if (!prev || rank(order.status) >= rank(prev.status)) {
-          byOrderSn.set(order.orderSn, order);
-        }
-      }
+  // Keep the most advanced status if an order_sn appears more than once.
+  const byOrderSn = new Map<string, ShopeeConversion>();
+  for (const c of conversions) {
+    if (!c.orderSn) continue;
+    const prev = byOrderSn.get(c.orderSn);
+    if (!prev || rank(mapShopeeStatus(c.status)) >= rank(mapShopeeStatus(prev.status))) {
+      byOrderSn.set(c.orderSn, c);
     }
-    if (list.length < pageSize) break;
   }
-
   const fetched = [...byOrderSn.values()];
   if (!fetched.length) return { ...empty, connected: true };
 
@@ -156,7 +154,7 @@ export async function reconcile(
     .where(
       and(
         eq(orders.platform, "shopee"),
-        inArray(orders.externalOrderId, fetched.map((o) => o.orderSn)),
+        inArray(orders.externalOrderId, fetched.map((c) => c.orderSn)),
       ),
     );
   const existingBySn = new Map(existing.map((o) => [o.externalOrderId, o]));
@@ -165,86 +163,90 @@ export async function reconcile(
   let attributed = 0;
   let unmatched = 0;
   const toSettle = new Set<string>();
+  const toReverse = new Set<string>();
 
-  for (const order of fetched) {
-    const current = existingBySn.get(order.orderSn);
+  for (const c of fetched) {
+    const status = mapShopeeStatus(c.status);
+    const payable = status === "completed" && !c.isFraud;
+    const commission = Math.round(c.commission ?? 0);
+    const orderValue = Math.round(c.orderValue ?? 0);
+    const productName = c.itemName?.trim() || "Đơn Shopee";
+    const cashback = payable ? Math.round(commission * cashbackRate) : 0;
+    const orderedAt = c.purchaseTime ? new Date(c.purchaseTime * 1000) : undefined;
+    const verified = c.isFraud ? "fraud" : verifiedFrom(status);
+
+    const current = existingBySn.get(c.orderSn);
     if (current) {
-      const nextStatus = order.status ?? (current.status as OrderStatus);
       const pendingPayout = !current.cashbackCreditedAt;
       await db
         .update(orders)
         .set({
-          status: nextStatus,
-          commissionAmount: order.commission || current.commissionAmount,
-          cashbackAmount: pendingPayout
-            ? Math.round((order.commission || current.commissionAmount) * cashbackRate)
-            : current.cashbackAmount,
-          tiktokVerifiedStatus: verifiedFrom(order.status),
+          status: status ?? (current.status as OrderStatus),
+          productName,
+          orderAmount: orderValue || current.orderAmount,
+          commissionAmount: commission || current.commissionAmount,
+          cashbackAmount: pendingPayout ? cashback : current.cashbackAmount,
+          tiktokVerifiedStatus: verified,
           tiktokVerifiedAt: new Date(),
-          orderedAt: order.purchaseTime ?? current.orderedAt,
+          orderedAt: orderedAt ?? current.orderedAt,
         })
         .where(eq(orders.id, current.id));
       updated++;
-      if (nextStatus === "completed" && pendingPayout) toSettle.add(current.id);
+      if (payable && pendingPayout) toSettle.add(current.id);
+      // Credited before, now cancelled/refunded/fraud → claw it back.
+      if (current.cashbackCreditedAt && (status === "cancelled" || c.isFraud)) {
+        toReverse.add(current.id);
+      }
       continue;
     }
 
-    const created = await createAttributedShopeeOrder(order);
-    if (created) {
+    // New conversion — only create when the worker matched it to a real user.
+    const userId = c.matched && c.userId ? fromShopeeSubId1(c.userId) : null;
+    if (!userId) {
+      unmatched++;
+      continue;
+    }
+    const user = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+    if (!user[0]) {
+      unmatched++;
+      continue;
+    }
+
+    try {
+      const inserted = await db
+        .insert(orders)
+        .values({
+          userId,
+          platform: "shopee",
+          externalOrderId: c.orderSn,
+          productName,
+          orderAmount: orderValue,
+          commissionAmount: commission,
+          cashbackAmount: cashback,
+          status: status ?? "pending",
+          tiktokVerifiedStatus: verified,
+          tiktokVerifiedAt: new Date(),
+          orderedAt,
+        })
+        .returning({ id: orders.id });
       attributed++;
-      if (order.status === "completed") toSettle.add(created);
-    } else {
+      if (payable) toSettle.add(inserted[0].id);
+    } catch {
       unmatched++;
     }
   }
 
   let credited = 0;
   for (const id of toSettle) if (await settleOrderCashback(id)) credited++;
+  for (const id of toReverse) await reverseOrderCashback(id);
+
   return { connected: true, scanned: fetched.length, updated, credited, attributed, unmatched };
 }
 
 function rank(status: OrderStatus | null): number {
   return status ? STATUS_RANK[status] : -1;
-}
-
-async function createAttributedShopeeOrder(order: AttributedShopeeOrder): Promise<string | null> {
-  const user = await db
-    .select({ id: users.id })
-    .from(users)
-    .where(eq(users.id, order.userId))
-    .limit(1);
-  if (!user[0]) return null;
-
-  // The report carries no product id, so attribute to the user's Shopee link if
-  // they have exactly one; otherwise leave linkId null (still credits the user).
-  const links = await db
-    .select({ id: affiliateLinks.id })
-    .from(affiliateLinks)
-    .where(and(eq(affiliateLinks.userId, order.userId), eq(affiliateLinks.platform, "shopee")))
-    .limit(2);
-  const linkId = links.length === 1 ? links[0].id : undefined;
-
-  const status = order.status ?? "pending";
-  try {
-    const inserted = await db
-      .insert(orders)
-      .values({
-        userId: order.userId,
-        linkId,
-        platform: "shopee",
-        externalOrderId: order.orderSn,
-        productName: "Đơn Shopee",
-        orderAmount: 0,
-        commissionAmount: order.commission,
-        cashbackAmount: Math.round(order.commission * cashbackRate),
-        status,
-        tiktokVerifiedStatus: verifiedFrom(order.status),
-        tiktokVerifiedAt: new Date(),
-        orderedAt: order.purchaseTime,
-      })
-      .returning({ id: orders.id });
-    return inserted[0]?.id ?? null;
-  } catch {
-    return null;
-  }
 }
