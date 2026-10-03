@@ -11,7 +11,7 @@ import { getAffiliateProvider } from "@/lib/affiliate/providers";
 import { generateShortCode } from "@/lib/shortcode";
 import { recordWalletTx } from "@/lib/wallet";
 import { notifyNewWithdrawalRequest } from "@/lib/notify";
-import { minWithdrawal } from "@/lib/config";
+import { minWithdrawal, cashbackRate } from "@/lib/config";
 import { platformLabel } from "@/lib/labels";
 
 export type ActionState =
@@ -19,7 +19,15 @@ export type ActionState =
       error?: string;
       success?: string;
       /** Set after a link is created so the client can offer to open it. */
-      link?: { goPath: string; platformName: string };
+      link?: {
+        goPath: string;
+        platformName: string;
+        /** Estimated cashback for the buyer in VND, when resolvable. For a
+         * product with several SKUs this is the lower bound and
+         * `estimatedCashbackMax` the upper bound. */
+        estimatedCashback?: number;
+        estimatedCashbackMax?: number;
+      };
       /**
        * Set when the pasted product cannot earn cashback (no affiliate program
        * for it). The UI shows a friendly popup instead of a raw error.
@@ -97,6 +105,8 @@ export async function createLinkAction(
   let affiliateUrl: string;
   let title: string | undefined;
   let productId: string | undefined;
+  let estimatedCashback: number | undefined;
+  let estimatedCashbackMax: number | undefined;
   try {
     const result = await getAffiliateProvider(platform).convertLink(
       platform,
@@ -106,6 +116,14 @@ export async function createLinkAction(
     affiliateUrl = result.affiliateUrl;
     title = result.title;
     productId = result.productId;
+    estimatedCashback =
+      result.estimatedCommission != null
+        ? Math.round(result.estimatedCommission * cashbackRate)
+        : undefined;
+    estimatedCashbackMax =
+      result.estimatedCommissionMax != null
+        ? Math.round(result.estimatedCommissionMax * cashbackRate)
+        : undefined;
   } catch (e) {
     const msg = e instanceof Error ? e.message : "";
     // Admin/config problems (provider not set up / not connected) are real
@@ -138,6 +156,8 @@ export async function createLinkAction(
         link: {
           goPath: `/go/${code}`,
           platformName: platformLabel[platform] ?? "cửa hàng",
+          estimatedCashback,
+          estimatedCashbackMax,
         },
       };
     } catch (e) {

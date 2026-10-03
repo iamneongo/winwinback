@@ -131,6 +131,25 @@ export function CreateLinkForm({ defaultUrl }: { defaultUrl?: string }) {
               Mua để tự nhận hoàn tiền, hoặc chia sẻ link cho bạn bè — có đơn
               phát sinh qua link là bạn nhận tiền.
             </Dialog.Description>
+            {created?.estimatedCashback ? (
+              <div className="mt-4 rounded-xl border border-[#d8f0bd] bg-[#f3fbe9] px-4 py-3 text-left">
+                <p className="text-xs font-medium text-[#4a7a2e]">
+                  Hoàn tiền dự kiến cho đơn này
+                </p>
+                <p className="mt-0.5 text-2xl font-black tracking-tight text-[#2f7d1e]">
+                  ~{created.estimatedCashback.toLocaleString("vi-VN")}
+                  {created.estimatedCashbackMax &&
+                  created.estimatedCashbackMax !== created.estimatedCashback
+                    ? ` – ${created.estimatedCashbackMax.toLocaleString("vi-VN")}`
+                    : ""}
+                  ₫
+                </p>
+                <p className="mt-1 text-[11px] leading-4 text-[#6a8c53]">
+                  Ước tính theo hoa hồng sản phẩm; có thể thay đổi theo giá /
+                  khuyến mãi khi đặt hàng.
+                </p>
+              </div>
+            ) : null}
             <div className="mt-5 flex flex-col gap-2">
               <Button
                 variant="cta"

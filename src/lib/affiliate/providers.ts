@@ -2,7 +2,27 @@ import "server-only";
 import type { AffiliateProvider, ConvertResult, Platform } from "./types";
 import { isTikTokConfigured } from "./tiktok/config";
 import { resolveTikTokProductId } from "./tiktok/product";
-import { generateSharingLinks, TikTokApiError } from "./tiktok/client";
+import {
+  generateSharingLinks,
+  getOpenCollaborationProductsByIds,
+  TikTokApiError,
+} from "./tiktok/client";
+
+/**
+ * Parse an affiliate commission amount into a VND range. The value is either a
+ * single number ("6300") or a "min - max" range ("2099.93 - 6299.93") when the
+ * product has several SKUs. Returns null when nothing parseable is present.
+ */
+function parseCommissionRange(
+  amount: string | undefined,
+): { min: number; max: number } | null {
+  if (!amount) return null;
+  const nums = (amount.match(/[\d][\d.,]*/g) ?? [])
+    .map((n) => Math.round(parseFloat(n.replace(/,/g, ""))))
+    .filter((n) => Number.isFinite(n) && n > 0);
+  if (!nums.length) return null;
+  return { min: Math.min(...nums), max: Math.max(...nums) };
+}
 import { getValidTikTokAccessToken } from "./tiktok/tokens";
 import { isShopeeConfigured } from "./shopee/config";
 import { generateShortLink, ShopeeApiError } from "./shopee/client";
@@ -197,7 +217,24 @@ class TikTokProvider implements AffiliateProvider {
       );
     }
 
-    return { affiliateUrl, productId };
+    // Best-effort commission estimate to preview cashback — never block the link.
+    let estimatedCommission: number | undefined;
+    let estimatedCommissionMax: number | undefined;
+    try {
+      const [info] = await getOpenCollaborationProductsByIds(
+        [productId],
+        accessToken,
+      );
+      const range = parseCommissionRange(info?.commission?.amount);
+      if (range) {
+        estimatedCommission = range.min;
+        estimatedCommissionMax = range.max;
+      }
+    } catch {
+      // Ignore — the estimate is optional.
+    }
+
+    return { affiliateUrl, productId, estimatedCommission, estimatedCommissionMax };
   }
 }
 

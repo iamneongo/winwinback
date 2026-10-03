@@ -37,6 +37,14 @@ export const TIKTOK_ORDERS_SEARCH_PATH =
 export const TIKTOK_OPEN_COLLAB_SEARCH_PATH =
   "/affiliate_creator/202405/open_collaborations/products/search";
 
+/**
+ * Look up open-collaboration products by id (POST, product_ids as a
+ * comma-separated query param). Returns real commission + price, so it can
+ * preview a product's cashback before purchase.
+ */
+export const TIKTOK_OPEN_COLLAB_PRODUCTS_PATH =
+  "/affiliate_creator/202509/open_collaborations/products";
+
 export function getTikTokAppKey(): string {
   return process.env.TIKTOK_APP_KEY ?? "";
 }

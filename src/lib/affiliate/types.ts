@@ -7,6 +7,15 @@ export interface ConvertResult {
   title?: string;
   /** Marketplace product id the link points to (TikTok: starts with 17...). */
   productId?: string;
+  /**
+   * Best-effort estimated affiliate commission for the product in VND, when the
+   * provider can resolve it before purchase. Used to preview the buyer's
+   * estimated cashback; undefined when unknown. For a product with several SKUs
+   * this is the lower bound and `estimatedCommissionMax` the upper bound.
+   */
+  estimatedCommission?: number;
+  /** Upper bound of the commission range (VND) when the product spans SKUs. */
+  estimatedCommissionMax?: number;
 }
 
 /**

@@ -5,6 +5,7 @@ import {
   TIKTOK_GENERATE_LINK_PATH,
   TIKTOK_ORDERS_SEARCH_PATH,
   TIKTOK_OPEN_COLLAB_SEARCH_PATH,
+  TIKTOK_OPEN_COLLAB_PRODUCTS_PATH,
   getTikTokAppKey,
   getTikTokAppSecret,
 } from "./config";
@@ -323,4 +324,41 @@ export async function searchOpenCollaborationProducts(
     total: data.total_count,
     raw: data,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Open collaboration products by id (real commission + price, pre-purchase)
+// ---------------------------------------------------------------------------
+
+export interface OpenCollabProductInfo {
+  id?: string;
+  title?: string;
+  /** `amount` is a single value or a "min - max" range string (SKU prices). */
+  commission?: { amount?: string; currency?: string; rate?: number };
+  original_price?: {
+    minimum_amount?: string;
+    maximum_amount?: string;
+    currency?: string;
+  };
+  main_image_url?: string;
+  shop?: { name?: string };
+}
+
+/**
+ * Look up open-collaboration products by id. Returns real commission + price,
+ * so a product's cashback can be previewed before purchase. `product_ids` is a
+ * comma-separated query param; the request body is empty.
+ */
+export async function getOpenCollaborationProductsByIds(
+  productIds: string[],
+  accessToken: string,
+): Promise<OpenCollabProductInfo[]> {
+  if (!productIds.length) return [];
+  const data = await signedPost<{ products?: OpenCollabProductInfo[] }>(
+    TIKTOK_OPEN_COLLAB_PRODUCTS_PATH,
+    accessToken,
+    {},
+    { product_ids: productIds.join(",") },
+  );
+  return data.products ?? [];
 }
