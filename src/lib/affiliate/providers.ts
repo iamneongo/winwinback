@@ -28,7 +28,11 @@ import { isShopeeConfigured } from "./shopee/config";
 import { generateShortLink, ShopeeApiError } from "./shopee/client";
 import { extractShopeeItemId } from "./shopee/product";
 import { getAffiliateProductLink, ShopeeDataApiError } from "./shopee/data-client";
-import { getCashbackLink, ShopeeAffApiError } from "./shopee/automation-client";
+import {
+  getCashbackLink,
+  getShopeeProductInfo,
+  ShopeeAffApiError,
+} from "./shopee/automation-client";
 
 /**
  * Mock provider — works with no external credentials.
@@ -145,9 +149,16 @@ class ShopeeAffProvider implements AffiliateProvider {
       // getCashbackLink compacts the UUID into a Shopee-safe subId1 and caches
       // the result, so repeated pastes of the same URL don't re-hit the worker.
       const affiliateUrl = await getCashbackLink(opts.userId, url);
+      // Best-effort projected commission (same worker) to preview cashback.
+      const info = await getShopeeProductInfo(url);
+      const estimatedCommission =
+        info?.commission && info.commission > 0
+          ? Math.round(info.commission)
+          : undefined;
       return {
         affiliateUrl,
         productId: extractShopeeItemId(url) ?? undefined,
+        estimatedCommission,
       };
     } catch (error) {
       if (error instanceof ShopeeAffApiError) {

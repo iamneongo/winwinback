@@ -255,6 +255,41 @@ export async function mapShopeeConversion(
   });
 }
 
+/** Projected product info (GET /api/product) used to preview cashback. */
+export interface ShopeeProductInfo {
+  itemId?: number | string;
+  shopId?: number | string;
+  name?: string;
+  shopName?: string;
+  price?: number;
+  image?: string;
+  productLink?: string;
+  /** Estimated affiliate commission in VND ("dự kiến"). */
+  commission?: number;
+  totalRatePercent?: number;
+  cap?: number;
+  isCapped?: boolean;
+  estimate?: boolean;
+}
+
+/**
+ * Best-effort projected commission + price for a Shopee product URL
+ * (GET /api/product). Returns null on any failure — this only previews cashback
+ * so it must never throw or block link creation.
+ */
+export async function getShopeeProductInfo(
+  url: string,
+): Promise<ShopeeProductInfo | null> {
+  try {
+    const res = await request<JsonEnvelope & { product?: ShopeeProductInfo }>(
+      `/api/product?${new URLSearchParams({ url })}`,
+    );
+    return res.product ?? null;
+  } catch {
+    return null;
+  }
+}
+
 /** Worker self-check (GET /api/selfcheck) — for health monitoring. */
 export async function getShopeeAffSelfcheck(): Promise<{
   ok: boolean;
