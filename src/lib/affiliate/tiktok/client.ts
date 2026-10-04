@@ -342,6 +342,8 @@ export interface OpenCollabProductInfo {
   };
   main_image_url?: string;
   shop?: { name?: string };
+  category_chains?: { id?: string; local_name?: string; is_leaf?: boolean }[];
+  units_sold?: number;
 }
 
 /**

@@ -106,8 +106,6 @@ export async function createLinkAction(
   let affiliateUrl: string;
   let title: string | undefined;
   let productId: string | undefined;
-  let price: number | undefined;
-  let imageUrl: string | undefined;
   let estimatedCashback: number | undefined;
   let estimatedCashbackMax: number | undefined;
   try {
@@ -119,8 +117,6 @@ export async function createLinkAction(
     affiliateUrl = result.affiliateUrl;
     title = result.title;
     productId = result.productId;
-    price = result.price;
-    imageUrl = result.imageUrl;
     estimatedCashback =
       result.estimatedCommission != null
         ? Math.round(result.estimatedCommission * cashbackRate)
@@ -157,18 +153,16 @@ export async function createLinkAction(
       });
       revalidatePath("/dashboard");
       // Fire-and-forget: generate the product's SEO article in the background
-      // (AI is slow; never block link creation). Idempotent per product.
-      if (productId && title) {
+      // (AI is slow; never block link creation). Idempotent per product; the
+      // service fetches full product data itself.
+      if (productId) {
         void generateAndSaveArticle({
           platform,
           productId,
           productUrl: parsed.data.url,
           userId: user.id,
-          productName: title,
-          price,
-          imageUrl,
-          estimatedCashback,
           affiliateShortCode: code,
+          estimatedCashback,
         });
       }
       return {

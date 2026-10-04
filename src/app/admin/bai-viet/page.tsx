@@ -1,10 +1,14 @@
 import Link from "next/link";
-import { ExternalLink, Eye, EyeOff, FileText, Trash2 } from "lucide-react";
+import { ExternalLink, Eye, EyeOff, FileText, RefreshCw, Trash2 } from "lucide-react";
 import { requireAdmin } from "@/lib/auth/guards";
 import { listArticles } from "@/lib/articles/service";
 import { formatVnd } from "@/lib/config";
 import { platformLabel } from "@/lib/labels";
-import { toggleArticleAction, deleteArticleAction } from "./actions";
+import {
+  toggleArticleAction,
+  deleteArticleAction,
+  regenerateArticleAction,
+} from "./actions";
 
 export const metadata = { title: "Bài viết SEO — Quản trị" };
 export const dynamic = "force-dynamic";
@@ -43,6 +47,12 @@ export default async function AdminArticlesPage() {
                 <td className="px-3 py-3.5">{a.createdAt.toLocaleDateString("vi-VN")}</td>
                 <td className="px-4 py-3.5">
                   <div className="flex items-center justify-center gap-2">
+                    <form action={regenerateArticleAction}>
+                      <input type="hidden" name="id" value={a.id} />
+                      <button type="submit" className="inline-flex items-center gap-1 rounded-lg border border-[#cfe0f5] px-2.5 py-1.5 font-bold text-[#1261ed] hover:bg-[#f4f9ff]">
+                        <RefreshCw className="h-3.5 w-3.5" /> Tạo lại
+                      </button>
+                    </form>
                     <form action={toggleArticleAction}>
                       <input type="hidden" name="id" value={a.id} />
                       <input type="hidden" name="status" value={a.status === "published" ? "hidden" : "published"} />

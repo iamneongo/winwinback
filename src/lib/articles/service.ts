@@ -5,7 +5,10 @@ import { articles, type Article } from "@/db/schema";
 import type { Platform } from "@/lib/affiliate/types";
 import { nvidiaChat, isNvidiaConfigured } from "@/lib/ai/nvidia";
 import { platformLabel } from "@/lib/labels";
-import { formatVnd } from "@/lib/config";
+import { formatVnd, cashbackRate } from "@/lib/config";
+import { getShopeeProductInfo } from "@/lib/affiliate/shopee/automation-client";
+import { getOpenCollaborationProductsByIds } from "@/lib/affiliate/tiktok/client";
+import { getValidTikTokAccessToken } from "@/lib/affiliate/tiktok/tokens";
 
 export interface ArticleSection {
   q: string;
@@ -42,26 +45,194 @@ export interface GenerateArticleInput {
   productId: string;
   productUrl: string;
   userId?: string;
-  productName: string;
+  affiliateShortCode?: string;
+  estimatedCashback?: number;
+}
+
+interface ArticleProductData {
+  name?: string;
   price?: number;
   imageUrl?: string;
-  estimatedCashback?: number;
-  affiliateShortCode?: string;
+  shopName?: string;
+  category?: string;
+  rating?: string;
+  soldCount?: number;
+  commission?: number;
+}
+
+/** Fetch rich product data from the marketplace to ground the article. */
+async function fetchArticleProductData(
+  platform: Platform,
+  productUrl: string,
+  productId: string,
+): Promise<ArticleProductData | null> {
+  try {
+    if (platform === "shopee") {
+      const p = await getShopeeProductInfo(productUrl);
+      if (!p) return null;
+      return {
+        name: p.name,
+        price: typeof p.price === "number" ? p.price : undefined,
+        imageUrl: p.image,
+        shopName: p.shopName,
+        category:
+          Array.isArray(p.category) && p.category.length
+            ? p.category.join(" › ")
+            : undefined,
+        rating: p.rating != null ? String(p.rating) : undefined,
+        soldCount: typeof p.sales === "number" ? p.sales : undefined,
+        commission: typeof p.commission === "number" ? p.commission : undefined,
+      };
+    }
+    const token = await getValidTikTokAccessToken();
+    if (!token) return null;
+    const [info] = await getOpenCollaborationProductsByIds([productId], token);
+    if (!info) return null;
+    const price = Math.round(
+      parseFloat(
+        String(info.original_price?.minimum_amount ?? "").replace(/[^\d.]/g, ""),
+      ),
+    );
+    const commission = Math.round(
+      parseFloat(
+        String(info.commission?.amount ?? "").split("-")[0].replace(/[^\d.]/g, ""),
+      ),
+    );
+    const category = (info.category_chains ?? [])
+      .map((c) => c.local_name)
+      .filter(Boolean)
+      .join(" › ");
+    return {
+      name: info.title,
+      price: Number.isFinite(price) && price > 0 ? price : undefined,
+      imageUrl: info.main_image_url,
+      shopName: info.shop?.name,
+      category: category || undefined,
+      soldCount:
+        typeof info.units_sold === "number" ? info.units_sold : undefined,
+      commission:
+        Number.isFinite(commission) && commission > 0 ? commission : undefined,
+    };
+  } catch {
+    return null;
+  }
+}
+
+interface BuiltArticle {
+  title: string;
+  metaDescription: string | null;
+  intro: string | null;
+  sections: ArticleSection[];
+  productName: string;
+  price: number | null;
+  imageUrl: string | null;
+  estimatedCashback: number | null;
+  slug: string;
+}
+
+/** Fetch product data + ask the AI for the article content (no DB write). */
+async function buildArticle(
+  input: GenerateArticleInput,
+): Promise<BuiltArticle | null> {
+  if (!isNvidiaConfigured() || !input.productId) return null;
+
+  const data = await fetchArticleProductData(
+    input.platform,
+    input.productUrl,
+    input.productId,
+  );
+  const name = data?.name;
+  if (!name) return null; // need a real product name for a good article
+
+  const estimatedCashback =
+    input.estimatedCashback ??
+    (data?.commission ? Math.round(data.commission * cashbackRate) : undefined);
+
+  const san = platformLabel[input.platform] ?? input.platform;
+  const facts = [
+    `Tên sản phẩm: ${name}`,
+    data?.price ? `Giá: ${formatVnd(data.price)}` : null,
+    `Sàn: ${san}`,
+    data?.shopName ? `Shop: ${data.shopName}` : null,
+    data?.category ? `Danh mục: ${data.category}` : null,
+    data?.rating ? `Đánh giá: ${data.rating}/5 sao` : null,
+    data?.soldCount ? `Đã bán: ${data.soldCount.toLocaleString("vi-VN")}` : null,
+    estimatedCashback
+      ? `Tiền hoàn dự kiến khi mua qua Win-Win Back: ${formatVnd(estimatedCashback)}`
+      : null,
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  const system =
+    "Bạn là chuyên gia viết bài review & SEO tiếng Việt cho Win-Win Back (website hoàn tiền khi mua trên Shopee/TikTok Shop). " +
+    "Viết chi tiết, tự nhiên, thuyết phục, bám sát dữ liệu được cung cấp. KHÔNG bịa thông số kỹ thuật cụ thể nếu không chắc chắn. " +
+    "CHỈ trả về JSON hợp lệ, không markdown, không giải thích.";
+  const user =
+    `DỮ LIỆU SẢN PHẨM:\n${facts}\n\n` +
+    "Viết bài review SEO tiếng Việt CHI TIẾT và DÀI (tổng khoảng 550-750 từ). Trả về JSON đúng dạng:\n" +
+    '{"title": tiêu đề SEO hấp dẫn chứa tên sản phẩm, dạng "[Tên rút gọn] - Có Nên Mua Không? Giá, Đánh Giá & Mua Ở Đâu Hoàn Tiền?", ' +
+    '"metaDescription": khoảng 155 ký tự chứa tên sản phẩm + giá + hoàn tiền, ' +
+    '"intro": đoạn mở đầu khoảng 90 từ, ' +
+    '"sections": [' +
+    '{"q":"Thông tin & đặc điểm nổi bật","a":"khoảng 130 từ: mô tả sản phẩm dựa trên tên, danh mục, shop; công dụng; đối tượng phù hợp"},' +
+    '{"q":"Đánh giá: sản phẩm có tốt không? Ưu & nhược điểm","a":"khoảng 130 từ: nêu ưu điểm nổi bật và một vài nhược điểm/lưu ý khách quan"},' +
+    '{"q":"Giá bán và độ tin cậy","a":"khoảng 100 từ: nhận xét mức giá có hợp lý không, dựa vào đánh giá sao và lượt bán nếu có"},' +
+    '{"q":"Mua ở đâu rẻ nhất, có hoàn tiền không?","a":"khoảng 110 từ: nhấn mạnh mua qua Win-Win Back được hoàn tiền' +
+    (estimatedCashback ? ` khoảng ${formatVnd(estimatedCashback)}` : "") +
+    '"},' +
+    '{"q":"Bao lâu thì nhận được tiền hoàn?","a":"khoảng 70 từ: tiền hoàn về ví sau khi đơn hoàn tất và hết thời gian đổi trả"}]}';
+
+  const raw = await nvidiaChat({
+    system,
+    user,
+    maxTokens: 2800,
+    temperature: 0.6,
+    timeoutMs: 150_000,
+  });
+  const parsed = parseJsonObject(raw);
+  if (!parsed) return null;
+
+  const title =
+    (typeof parsed.title === "string" && parsed.title.trim()) ||
+    `${name} - Có Nên Mua Không? Mua Ở Đâu Được Hoàn Tiền?`;
+  const sections = Array.isArray(parsed.sections)
+    ? (parsed.sections as unknown[])
+        .filter(
+          (s): s is ArticleSection =>
+            !!s &&
+            typeof (s as ArticleSection).q === "string" &&
+            typeof (s as ArticleSection).a === "string",
+        )
+        .map((s) => ({ q: s.q, a: s.a }))
+    : [];
+
+  const slug = `${slugify(title)}-${input.productId.replace(/\D/g, "").slice(-6)}`;
+
+  return {
+    title,
+    metaDescription:
+      typeof parsed.metaDescription === "string"
+        ? parsed.metaDescription.slice(0, 300)
+        : null,
+    intro: typeof parsed.intro === "string" ? parsed.intro : null,
+    sections,
+    productName: name,
+    price: data?.price ?? null,
+    imageUrl: data?.imageUrl ?? null,
+    estimatedCashback: estimatedCashback ?? null,
+    slug,
+  };
 }
 
 /**
- * Generate an SEO review article for a product via NVIDIA AI and store it.
- * Idempotent per (platform, productId). Best-effort: returns null (never throws)
- * so it can be fire-and-forget from the link-creation flow.
+ * Generate + store an article. Idempotent per (platform, productId).
+ * Best-effort: returns null (never throws) so it can be fire-and-forget.
  */
 export async function generateAndSaveArticle(
   input: GenerateArticleInput,
 ): Promise<Article | null> {
   try {
-    if (!isNvidiaConfigured() || !input.productId || !input.productName) {
-      return null;
-    }
-
     const existing = await db
       .select()
       .from(articles)
@@ -74,66 +245,26 @@ export async function generateAndSaveArticle(
       .limit(1);
     if (existing[0]) return existing[0];
 
-    const san = platformLabel[input.platform] ?? input.platform;
-    const priceStr = input.price ? formatVnd(input.price) : "đang cập nhật";
-    const cashbackStr = input.estimatedCashback
-      ? formatVnd(input.estimatedCashback)
-      : "hoàn tiền hấp dẫn";
-
-    const system =
-      "Bạn là cây viết SEO tiếng Việt cho Win-Win Back (website hoàn tiền khi mua trên Shopee/TikTok Shop). " +
-      "CHỈ trả về JSON hợp lệ, không markdown, không giải thích.";
-    const user =
-      `Sản phẩm: ${input.productName}. Giá: ${priceStr}. Sàn: ${san}. Tiền hoàn dự kiến: ${cashbackStr}.\n\n` +
-      'Viết bài review SEO tiếng Việt, thuyết phục, tự nhiên. Trả về JSON đúng dạng: ' +
-      '{"title": tiêu đề SEO dạng "[Tên rút gọn] - Có Nên Mua Không? Mua Ở Đâu Được Hoàn Tiền?", ' +
-      '"metaDescription": khoảng 155 ký tự, ' +
-      '"intro": đoạn mở đầu khoảng 70 từ, ' +
-      '"sections": [' +
-      '{"q":"Sản phẩm này có tốt không?","a":"khoảng 80 từ"},' +
-      '{"q":"Mua ở đâu rẻ nhất, có hoàn tiền không?","a":"khoảng 80 từ, nhấn mạnh mua qua Win-Win Back được hoàn tiền"},' +
-      '{"q":"Bao lâu thì nhận được tiền hoàn?","a":"khoảng 60 từ, giải thích tiền hoàn về sau khi đơn hoàn tất"}]}';
-
-    const raw = await nvidiaChat({ system, user, maxTokens: 1500, temperature: 0.6 });
-    const parsed = parseJsonObject(raw);
-    if (!parsed) return null;
-
-    const title =
-      (typeof parsed.title === "string" && parsed.title.trim()) ||
-      `${input.productName} - Có Nên Mua Không? Mua Ở Đâu Được Hoàn Tiền?`;
-    const sections = Array.isArray(parsed.sections)
-      ? (parsed.sections as unknown[])
-          .filter(
-            (s): s is ArticleSection =>
-              !!s &&
-              typeof (s as ArticleSection).q === "string" &&
-              typeof (s as ArticleSection).a === "string",
-          )
-          .map((s) => ({ q: s.q, a: s.a }))
-      : [];
-
-    const slug = `${slugify(title)}-${input.productId.replace(/\D/g, "").slice(-6)}`;
+    const c = await buildArticle(input);
+    if (!c) return null;
 
     const inserted = await db
       .insert(articles)
       .values({
-        slug,
+        slug: c.slug,
         platform: input.platform,
         productId: input.productId,
         userId: input.userId,
-        title,
-        metaDescription:
-          typeof parsed.metaDescription === "string"
-            ? parsed.metaDescription.slice(0, 300)
-            : null,
-        intro: typeof parsed.intro === "string" ? parsed.intro : null,
-        sections: JSON.stringify(sections),
-        productName: input.productName,
-        price: input.price ?? null,
-        imageUrl: input.imageUrl ?? null,
+        title: c.title,
+        metaDescription: c.metaDescription,
+        intro: c.intro,
+        sections: JSON.stringify(c.sections),
+        productName: c.productName,
+        price: c.price,
+        imageUrl: c.imageUrl,
         productUrl: input.productUrl,
         affiliateShortCode: input.affiliateShortCode ?? null,
-        estimatedCashback: input.estimatedCashback ?? null,
+        estimatedCashback: c.estimatedCashback,
         status: "published",
       })
       .onConflictDoNothing()
@@ -142,6 +273,41 @@ export async function generateAndSaveArticle(
   } catch {
     return null;
   }
+}
+
+/** Admin: regenerate an article in place from fresh data (kept if AI fails). */
+export async function regenerateArticle(id: string): Promise<Article | null> {
+  const rows = await db
+    .select()
+    .from(articles)
+    .where(eq(articles.id, id))
+    .limit(1);
+  const old = rows[0];
+  if (!old) return null;
+  const c = await buildArticle({
+    platform: old.platform,
+    productId: old.productId,
+    productUrl: old.productUrl ?? "",
+    userId: old.userId ?? undefined,
+    affiliateShortCode: old.affiliateShortCode ?? undefined,
+    estimatedCashback: old.estimatedCashback ?? undefined,
+  });
+  if (!c) return old; // keep the old article if generation failed
+  const updated = await db
+    .update(articles)
+    .set({
+      title: c.title,
+      metaDescription: c.metaDescription,
+      intro: c.intro,
+      sections: JSON.stringify(c.sections),
+      productName: c.productName,
+      price: c.price,
+      imageUrl: c.imageUrl,
+      estimatedCashback: c.estimatedCashback,
+    })
+    .where(eq(articles.id, id))
+    .returning();
+  return updated[0] ?? old;
 }
 
 /** Public: fetch a published article by slug + bump view count (best-effort). */

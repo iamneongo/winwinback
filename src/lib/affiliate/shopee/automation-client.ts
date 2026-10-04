@@ -264,6 +264,9 @@ export interface ShopeeProductInfo {
   price?: number;
   image?: string;
   productLink?: string;
+  category?: string[];
+  rating?: string | number;
+  sales?: number;
   /** Estimated affiliate commission in VND ("dự kiến"). */
   commission?: number;
   totalRatePercent?: number;
