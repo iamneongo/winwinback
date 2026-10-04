@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ExternalLink, Eye, EyeOff, FileText, RefreshCw, Trash2 } from "lucide-react";
+import { ExternalLink, Eye, EyeOff, FileText, Pencil, RefreshCw, Trash2 } from "lucide-react";
 import { requireAdmin } from "@/lib/auth/guards";
 import { listArticles } from "@/lib/articles/service";
 import { formatVnd } from "@/lib/config";
@@ -47,6 +47,9 @@ export default async function AdminArticlesPage() {
                 <td className="px-3 py-3.5">{a.createdAt.toLocaleDateString("vi-VN")}</td>
                 <td className="px-4 py-3.5">
                   <div className="flex items-center justify-center gap-2">
+                    <Link href={`/admin/bai-viet/${a.id}/sua`} className="inline-flex items-center gap-1 rounded-lg border border-[#d9e5f4] px-2.5 py-1.5 font-bold text-[#34527d] hover:bg-[#f6f9fd]">
+                      <Pencil className="h-3.5 w-3.5" /> Sửa
+                    </Link>
                     <form action={regenerateArticleAction}>
                       <input type="hidden" name="id" value={a.id} />
                       <button type="submit" className="inline-flex items-center gap-1 rounded-lg border border-[#cfe0f5] px-2.5 py-1.5 font-bold text-[#1261ed] hover:bg-[#f4f9ff]">

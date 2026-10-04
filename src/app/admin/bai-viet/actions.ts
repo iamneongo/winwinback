@@ -7,6 +7,7 @@ import {
   setArticleStatus,
   deleteArticle,
   regenerateArticle,
+  updateArticleContent,
 } from "@/lib/articles/service";
 
 const idSchema = z.string().uuid();
@@ -35,5 +36,17 @@ export async function deleteArticleAction(formData: FormData): Promise<void> {
   const id = idSchema.safeParse(String(formData.get("id") ?? ""));
   if (!id.success) return;
   await deleteArticle(id.data);
+  revalidatePath("/admin/bai-viet");
+}
+
+/** Save edited rich-HTML body from the WYSIWYG editor. */
+export async function saveArticleContentAction(
+  id: string,
+  html: string,
+): Promise<void> {
+  await requireAdmin();
+  const parsed = idSchema.safeParse(id);
+  if (!parsed.success) return;
+  await updateArticleContent(parsed.data, String(html ?? "").slice(0, 600_000));
   revalidatePath("/admin/bai-viet");
 }

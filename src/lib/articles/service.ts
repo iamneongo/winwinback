@@ -1,4 +1,5 @@
 import "server-only";
+import sanitizeHtml from "sanitize-html";
 import { and, desc, eq, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { articles, type Article } from "@/db/schema";
@@ -123,11 +124,49 @@ interface BuiltArticle {
   metaDescription: string | null;
   intro: string | null;
   sections: ArticleSection[];
+  contentHtml: string;
   productName: string;
   price: number | null;
   imageUrl: string | null;
   estimatedCashback: number | null;
   slug: string;
+}
+
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+/** Serve product images through our proxy so hotlink-protected CDNs display. */
+export function proxiedImageUrl(url: string | null | undefined): string | null {
+  if (!url) return null;
+  if (url.startsWith("data:") || url.startsWith("/")) return url;
+  return `/api/img?url=${encodeURIComponent(url)}`;
+}
+
+/** Build the editable rich-HTML body from the generated pieces. */
+function buildContentHtml(opts: {
+  imageUrl: string | null;
+  productName: string;
+  intro: string | null;
+  sections: ArticleSection[];
+}): string {
+  const parts: string[] = [];
+  const img = proxiedImageUrl(opts.imageUrl);
+  if (img) {
+    parts.push(
+      `<p><img src="${img}" alt="${escapeHtml(opts.productName)}" /></p>`,
+    );
+  }
+  if (opts.intro) parts.push(`<p>${escapeHtml(opts.intro)}</p>`);
+  for (const s of opts.sections) {
+    parts.push(`<h2>${escapeHtml(s.q)}</h2>`);
+    parts.push(`<p>${escapeHtml(s.a)}</p>`);
+  }
+  return parts.join("\n");
 }
 
 /** Fetch product data + ask the AI for the article content (no DB write). */
@@ -209,14 +248,22 @@ async function buildArticle(
 
   const slug = `${slugify(title)}-${input.productId.replace(/\D/g, "").slice(-6)}`;
 
+  const intro = typeof parsed.intro === "string" ? parsed.intro : null;
+
   return {
     title,
     metaDescription:
       typeof parsed.metaDescription === "string"
         ? parsed.metaDescription.slice(0, 300)
         : null,
-    intro: typeof parsed.intro === "string" ? parsed.intro : null,
+    intro,
     sections,
+    contentHtml: buildContentHtml({
+      imageUrl: data?.imageUrl ?? null,
+      productName: name,
+      intro,
+      sections,
+    }),
     productName: name,
     price: data?.price ?? null,
     imageUrl: data?.imageUrl ?? null,
@@ -259,6 +306,7 @@ export async function generateAndSaveArticle(
         metaDescription: c.metaDescription,
         intro: c.intro,
         sections: JSON.stringify(c.sections),
+        contentHtml: c.contentHtml,
         productName: c.productName,
         price: c.price,
         imageUrl: c.imageUrl,
@@ -300,6 +348,7 @@ export async function regenerateArticle(id: string): Promise<Article | null> {
       metaDescription: c.metaDescription,
       intro: c.intro,
       sections: JSON.stringify(c.sections),
+      contentHtml: c.contentHtml,
       productName: c.productName,
       price: c.price,
       imageUrl: c.imageUrl,
@@ -352,6 +401,16 @@ export function parseSections(sections: string | null): ArticleSection[] {
   }
 }
 
+/** Admin: fetch one article by id (any status). */
+export async function getArticleById(id: string): Promise<Article | null> {
+  const rows = await db
+    .select()
+    .from(articles)
+    .where(eq(articles.id, id))
+    .limit(1);
+  return rows[0] ?? null;
+}
+
 /** Admin: list articles (most recent first). */
 export async function listArticles(limit = 100): Promise<Article[]> {
   return db
@@ -370,4 +429,51 @@ export async function setArticleStatus(
 
 export async function deleteArticle(id: string): Promise<void> {
   await db.delete(articles).where(eq(articles.id, id));
+}
+
+const SANITIZE_OPTS: sanitizeHtml.IOptions = {
+  allowedTags: [
+    "p", "br", "h1", "h2", "h3", "h4", "strong", "b", "em", "i", "u", "s",
+    "blockquote", "ul", "ol", "li", "a", "img", "figure", "figcaption",
+    "span", "div", "pre", "code", "hr", "table", "thead", "tbody", "tr", "th", "td",
+  ],
+  allowedAttributes: {
+    a: ["href", "target", "rel"],
+    img: ["src", "alt", "title", "width", "height", "style"],
+    "*": ["style", "class"],
+  },
+  // data: is only allowed for <img> (admin-pasted base64), never for links.
+  allowedSchemes: ["http", "https", "mailto"],
+  allowedSchemesByTag: { img: ["http", "https", "data"] },
+  allowProtocolRelative: false,
+};
+
+/** Sanitize editor/AI HTML before storing or rendering (XSS-safe). */
+export function sanitizeArticleHtml(html: string): string {
+  return sanitizeHtml(html, SANITIZE_OPTS);
+}
+
+/** Admin: save edited HTML body (sanitized). */
+export async function updateArticleContent(
+  id: string,
+  html: string,
+): Promise<void> {
+  await db
+    .update(articles)
+    .set({ contentHtml: sanitizeArticleHtml(html) })
+    .where(eq(articles.id, id));
+}
+
+/** HTML body for rendering — stored content, or built from sections (old rows). */
+export function articleContentHtml(a: Article): string {
+  const html =
+    a.contentHtml && a.contentHtml.trim()
+      ? a.contentHtml
+      : buildContentHtml({
+          imageUrl: a.imageUrl,
+          productName: a.productName ?? a.title,
+          intro: a.intro,
+          sections: parseSections(a.sections),
+        });
+  return sanitizeArticleHtml(html);
 }

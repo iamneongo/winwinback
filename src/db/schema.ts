@@ -501,8 +501,10 @@ export const articles = pgTable(
     title: text("title").notNull(),
     metaDescription: text("meta_description"),
     intro: text("intro"),
-    // JSON string: [{ q, a }, ...] — the Q&A body sections.
+    // JSON string: [{ q, a }, ...] — the Q&A body sections (kept for fallback).
     sections: text("sections"),
+    // Rich HTML body (admin-editable in the WYSIWYG editor; primary content).
+    contentHtml: text("content_html"),
     productName: text("product_name"),
     price: bigint("price", { mode: "number" }),
     imageUrl: text("image_url"),
