@@ -209,25 +209,25 @@ async function buildArticle(
     "CHỈ trả về JSON hợp lệ, không markdown, không giải thích.";
   const user =
     `DỮ LIỆU SẢN PHẨM:\n${facts}\n\n` +
-    "Viết bài review SEO tiếng Việt CHI TIẾT và DÀI (tổng khoảng 550-750 từ). Trả về JSON đúng dạng:\n" +
+    "Viết bài review SEO tiếng Việt chi tiết, bám sát dữ liệu. QUAN TRỌNG: mỗi mục TỐI ĐA ~100 từ (súc tích), và trả về JSON HOÀN CHỈNH — đóng đủ ngoặc, hợp lệ. Dạng:\n" +
     '{"title": tiêu đề SEO hấp dẫn chứa tên sản phẩm, dạng "[Tên rút gọn] - Có Nên Mua Không? Giá, Đánh Giá & Mua Ở Đâu Hoàn Tiền?", ' +
     '"metaDescription": khoảng 155 ký tự chứa tên sản phẩm + giá + hoàn tiền, ' +
-    '"intro": đoạn mở đầu khoảng 90 từ, ' +
+    '"intro": đoạn mở đầu ~80 từ, ' +
     '"sections": [' +
-    '{"q":"Thông tin & đặc điểm nổi bật","a":"khoảng 130 từ: mô tả sản phẩm dựa trên tên, danh mục, shop; công dụng; đối tượng phù hợp"},' +
-    '{"q":"Đánh giá: sản phẩm có tốt không? Ưu & nhược điểm","a":"khoảng 130 từ: nêu ưu điểm nổi bật và một vài nhược điểm/lưu ý khách quan"},' +
-    '{"q":"Giá bán và độ tin cậy","a":"khoảng 100 từ: nhận xét mức giá có hợp lý không, dựa vào đánh giá sao và lượt bán nếu có"},' +
-    '{"q":"Mua ở đâu rẻ nhất, có hoàn tiền không?","a":"khoảng 110 từ: nhấn mạnh mua qua Win-Win Back được hoàn tiền' +
+    '{"q":"Thông tin & đặc điểm nổi bật","a":"~100 từ: mô tả sản phẩm dựa trên tên, danh mục, shop; công dụng; đối tượng phù hợp"},' +
+    '{"q":"Đánh giá: sản phẩm có tốt không? Ưu & nhược điểm","a":"~100 từ: ưu điểm nổi bật và vài nhược điểm/lưu ý khách quan"},' +
+    '{"q":"Giá bán và độ tin cậy","a":"~90 từ: mức giá có hợp lý không, dựa vào đánh giá sao và lượt bán nếu có"},' +
+    '{"q":"Mua ở đâu rẻ nhất, có hoàn tiền không?","a":"~100 từ: nhấn mạnh mua qua Win-Win Back được hoàn tiền' +
     (estimatedCashback ? ` khoảng ${formatVnd(estimatedCashback)}` : "") +
     '"},' +
-    '{"q":"Bao lâu thì nhận được tiền hoàn?","a":"khoảng 70 từ: tiền hoàn về ví sau khi đơn hoàn tất và hết thời gian đổi trả"}]}';
+    '{"q":"Bao lâu thì nhận được tiền hoàn?","a":"~60 từ: tiền hoàn về ví sau khi đơn hoàn tất và hết thời gian đổi trả"}]}';
 
   const raw = await nvidiaChat({
     system,
     user,
-    maxTokens: 2800,
+    maxTokens: 6000,
     temperature: 0.6,
-    timeoutMs: 150_000,
+    timeoutMs: 170_000,
   });
   const parsed = parseJsonObject(raw);
   if (!parsed) return null;
