@@ -456,7 +456,11 @@ const SANITIZE_OPTS: sanitizeHtml.IOptions = {
 
 /** Sanitize editor/AI HTML before storing or rendering (XSS-safe). */
 export function sanitizeArticleHtml(html: string): string {
-  return sanitizeHtml(html, SANITIZE_OPTS);
+  // Quill emits word gaps as non-breaking spaces (U+00A0 / &nbsp;), which stop
+  // prose from wrapping and cause horizontal overflow. Collapse them back to
+  // regular spaces so paragraphs wrap normally.
+  const normalized = html.replace(/ /g, " ").replace(/&nbsp;/gi, " ");
+  return sanitizeHtml(normalized, SANITIZE_OPTS);
 }
 
 /** Admin: save edited HTML body (sanitized). */
