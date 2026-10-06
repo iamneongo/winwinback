@@ -506,6 +506,8 @@ export const articles = pgTable(
     // Rich HTML body (admin-editable in the WYSIWYG editor; primary content).
     contentHtml: text("content_html"),
     productName: text("product_name"),
+    // Top-level marketplace category (e.g. "Thực phẩm") — used for the news index.
+    category: text("category"),
     price: bigint("price", { mode: "number" }),
     imageUrl: text("image_url"),
     productUrl: text("product_url"),
@@ -521,6 +523,11 @@ export const articles = pgTable(
   (t) => [
     uniqueIndex("articles_platform_product_idx").on(t.platform, t.productId),
     index("articles_created_idx").on(t.createdAt),
+    index("articles_status_category_created_idx").on(
+      t.status,
+      t.category,
+      t.createdAt,
+    ),
   ],
 );
 

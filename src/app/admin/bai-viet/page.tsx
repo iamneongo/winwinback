@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ExternalLink, Eye, EyeOff, FileText, Pencil, RefreshCw, Trash2 } from "lucide-react";
+import { ExternalLink, Eye, EyeOff, FileText, Pencil, RefreshCw, Tag, Trash2 } from "lucide-react";
 import { requireAdmin } from "@/lib/auth/guards";
 import { listArticles } from "@/lib/articles/service";
 import { formatVnd } from "@/lib/config";
@@ -32,15 +32,16 @@ export default async function AdminArticlesPage() {
       <section className="overflow-hidden rounded-xl border border-[#dfe9f5] bg-white shadow-[0_5px_14px_rgba(26,73,124,0.04)]">
         <div className="overflow-x-auto"><table className="min-w-[900px] w-full text-left text-xs text-[#35537c]">
           <thead className="border-b border-[#dfe9f5] bg-[#f8fbff] text-[#234168]"><tr>
-            <th className="px-5 py-3.5">Tiêu đề</th><th className="px-3 py-3.5">Sàn</th><th className="px-3 py-3.5">Giá</th><th className="px-3 py-3.5">Lượt xem</th><th className="px-3 py-3.5">Trạng thái</th><th className="px-3 py-3.5">Ngày tạo</th><th className="px-4 py-3.5 text-center">Thao tác</th>
+            <th className="px-5 py-3.5">Tiêu đề</th><th className="px-3 py-3.5">Sàn</th><th className="px-3 py-3.5">Danh mục</th><th className="px-3 py-3.5">Giá</th><th className="px-3 py-3.5">Lượt xem</th><th className="px-3 py-3.5">Trạng thái</th><th className="px-3 py-3.5">Ngày tạo</th><th className="px-4 py-3.5 text-center">Thao tác</th>
           </tr></thead>
           <tbody className="divide-y divide-[#e8eef6]">
             {rows.length === 0 ? (
-              <tr><td colSpan={7} className="px-5 py-14 text-center text-[#6681a7]">Chưa có bài viết nào. Bài sẽ tự tạo khi khách tạo link mua hàng.</td></tr>
+              <tr><td colSpan={8} className="px-5 py-14 text-center text-[#6681a7]">Chưa có bài viết nào. Bài sẽ tự tạo khi khách tạo link mua hàng.</td></tr>
             ) : rows.map((a) => (
               <tr key={a.id} className="align-top hover:bg-[#fbfdff]">
                 <td className="px-5 py-3.5"><Link href={`/bai-viet/${a.slug}`} target="_blank" className="inline-flex items-center gap-1.5 font-semibold text-[#1261ed] hover:underline"><span className="line-clamp-2 max-w-[22rem]">{a.title}</span><ExternalLink className="h-3.5 w-3.5 shrink-0" /></Link></td>
                 <td className="px-3 py-3.5">{platformLabel[a.platform] ?? a.platform}</td>
+                <td className="px-3 py-3.5">{a.category ? <span className="inline-flex max-w-32 items-center gap-1 rounded-md bg-[#f3fbe9] px-2 py-1 font-semibold text-[#4a7d1e]"><Tag className="h-3 w-3 shrink-0" /><span className="truncate">{a.category}</span></span> : "—"}</td>
                 <td className="px-3 py-3.5">{a.price ? formatVnd(a.price) : "—"}</td>
                 <td className="px-3 py-3.5">{a.views}</td>
                 <td className="px-3 py-3.5">{a.status === "published" ? <span className="rounded-full bg-[#e7f7ef] px-2.5 py-1 text-[11px] font-bold text-[#168146]">Hiển thị</span> : <span className="rounded-full bg-[#fee9ee] px-2.5 py-1 text-[11px] font-bold text-[#d34862]">Đã ẩn</span>}</td>

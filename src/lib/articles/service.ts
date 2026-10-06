@@ -1,6 +1,6 @@
 import "server-only";
 import sanitizeHtml from "sanitize-html";
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, isNull, or, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { articles, type Article } from "@/db/schema";
 import type { Platform } from "@/lib/affiliate/types";
@@ -26,6 +26,13 @@ function slugify(input: string): string {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 70);
+}
+
+/** Top-level category from a marketplace chain ("A › B › C" -> "A"). */
+export function topCategory(chain?: string | null): string | null {
+  if (!chain) return null;
+  const first = chain.split(/[›>]/)[0]?.trim();
+  return first && first.length ? first.slice(0, 80) : null;
 }
 
 /** Extract the first balanced JSON object from a model response. */
@@ -126,6 +133,7 @@ interface BuiltArticle {
   sections: ArticleSection[];
   contentHtml: string;
   productName: string;
+  category: string | null;
   price: number | null;
   imageUrl: string | null;
   estimatedCashback: number | null;
@@ -265,6 +273,7 @@ async function buildArticle(
       sections,
     }),
     productName: name,
+    category: topCategory(data?.category),
     price: data?.price ?? null,
     imageUrl: data?.imageUrl ?? null,
     estimatedCashback: estimatedCashback ?? null,
@@ -308,6 +317,7 @@ export async function generateAndSaveArticle(
         sections: JSON.stringify(c.sections),
         contentHtml: c.contentHtml,
         productName: c.productName,
+        category: c.category,
         price: c.price,
         imageUrl: c.imageUrl,
         productUrl: input.productUrl,
@@ -350,6 +360,7 @@ export async function regenerateArticle(id: string): Promise<Article | null> {
       sections: JSON.stringify(c.sections),
       contentHtml: c.contentHtml,
       productName: c.productName,
+      category: c.category,
       price: c.price,
       imageUrl: c.imageUrl,
       estimatedCashback: c.estimatedCashback,
@@ -418,6 +429,68 @@ export async function listArticles(limit = 100): Promise<Article[]> {
     .from(articles)
     .orderBy(desc(articles.createdAt))
     .limit(limit);
+}
+
+export const UNCATEGORIZED = "Khác";
+
+/** Public: published articles, optionally filtered by top-level category. */
+export async function listPublishedArticles(opts?: {
+  category?: string;
+  limit?: number;
+}): Promise<Article[]> {
+  const conds = [eq(articles.status, "published")];
+  if (opts?.category) {
+    if (opts.category === UNCATEGORIZED) {
+      const uncategorized = or(
+        isNull(articles.category),
+        eq(articles.category, ""),
+      );
+      if (uncategorized) conds.push(uncategorized);
+    } else {
+      conds.push(eq(articles.category, opts.category));
+    }
+  }
+  return db
+    .select()
+    .from(articles)
+    .where(and(...conds))
+    .orderBy(desc(articles.createdAt))
+    .limit(opts?.limit ?? 200);
+}
+
+export interface CategoryCount {
+  name: string;
+  count: number;
+}
+
+/** Public: distinct top-level categories (published) with article counts. */
+export async function listArticleCategories(): Promise<CategoryCount[]> {
+  const rows = await db
+    .select({
+      name: sql<string>`coalesce(nullif(${articles.category}, ''), ${UNCATEGORIZED})`,
+      count: sql<number>`count(*)::int`,
+    })
+    .from(articles)
+    .where(eq(articles.status, "published"))
+    .groupBy(sql`1`)
+    .orderBy(desc(sql`count(*)`));
+  return rows.map((r) => ({ name: r.name, count: Number(r.count) }));
+}
+
+/** Public: a few related published articles (same category, excluding one). */
+export async function listRelatedArticles(
+  current: Article,
+  limit = 4,
+): Promise<Article[]> {
+  const conds = [eq(articles.status, "published")];
+  if (current.category) conds.push(eq(articles.category, current.category));
+  const rows = await db
+    .select()
+    .from(articles)
+    .where(and(...conds))
+    .orderBy(desc(articles.createdAt))
+    .limit(limit + 1);
+  return rows.filter((r) => r.id !== current.id).slice(0, limit);
 }
 
 export async function setArticleStatus(
