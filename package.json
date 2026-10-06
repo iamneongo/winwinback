@@ -16,6 +16,7 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "db:migrate-articles-category": "node scripts/migrate-articles-category.mjs",
+    "db:migrate-article-progress": "node scripts/migrate-article-progress.mjs",
     "set-role": "node --env-file=.env.local scripts/set-role.mjs"
   },
   "dependencies": {

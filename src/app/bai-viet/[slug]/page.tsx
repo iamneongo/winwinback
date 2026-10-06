@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { BadgeCheck, ChevronRight, Newspaper, ShoppingBag, Tag } from "lucide-react";
-import type { Article } from "@/db/schema";
+import { and, eq } from "drizzle-orm";
+import { ArrowRight, BadgeCheck, ChevronRight, Newspaper, ShoppingBag, Tag } from "lucide-react";
+import { db } from "@/db";
+import { affiliateLinks, type Article } from "@/db/schema";
 import {
   getPublishedArticleBySlug,
   peekPublishedArticle,
@@ -41,123 +43,115 @@ export async function generateMetadata({
 
 export default async function ArticlePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ ref?: string }>;
 }) {
   const { slug } = await params;
   const a = await getPublishedArticleBySlug(slug);
   if (!a) notFound();
 
-  const related = await listRelatedArticles(a, 3);
-  const buyHref = a.affiliateShortCode ? `/go/${a.affiliateShortCode}` : a.productUrl;
+  const [related, { ref }] = await Promise.all([listRelatedArticles(a, 3), searchParams]);
+  const [sharedLink] = ref && /^[a-zA-Z0-9]{4,32}$/.test(ref)
+    ? await db.select({ shortCode: affiliateLinks.shortCode }).from(affiliateLinks).where(and(
+        eq(affiliateLinks.shortCode, ref),
+        eq(affiliateLinks.platform, a.platform),
+        eq(affiliateLinks.productId, a.productId),
+      )).limit(1)
+    : [];
+  const buyHref = sharedLink?.shortCode
+    ? `/go/${sharedLink.shortCode}`
+    : a.affiliateShortCode ? `/go/${a.affiliateShortCode}` : a.productUrl;
   const catHref = a.category
     ? `/bai-viet?danh-muc=${encodeURIComponent(a.category)}`
     : "/bai-viet";
+  const platform = platformLabel[a.platform] ?? a.platform;
 
   return (
-    <main className="mx-auto w-full max-w-3xl px-4 py-6 sm:px-6 sm:py-8">
-      {/* Breadcrumb */}
-      <nav className="mb-4 flex flex-wrap items-center gap-1 text-xs font-semibold text-[#6b83a6]">
+    <main className="mx-auto w-full max-w-6xl px-4 pb-16 pt-6 sm:px-6 sm:pt-8 lg:px-8">
+      <nav aria-label="Đường dẫn trang" className="mb-8 flex min-w-0 flex-wrap items-center gap-2 text-xs font-semibold text-[#526e91]">
         <Link href="/" className="hover:text-[#1261ed]">Trang chủ</Link>
-        <ChevronRight className="h-3.5 w-3.5 text-[#aab9cf]" />
+        <ChevronRight className="size-3.5 text-[#9db0ca]" aria-hidden="true" />
         <Link href="/bai-viet" className="hover:text-[#1261ed]">Tin tức</Link>
         {a.category ? (
           <>
-            <ChevronRight className="h-3.5 w-3.5 text-[#aab9cf]" />
-            <Link href={catHref} className="hover:text-[#1261ed]">{a.category}</Link>
+            <ChevronRight className="size-3.5 text-[#9db0ca]" aria-hidden="true" />
+            <Link href={catHref} className="min-w-0 truncate hover:text-[#1261ed]">{a.category}</Link>
           </>
         ) : null}
       </nav>
 
-      <article className="overflow-hidden rounded-2xl border border-[#e1eaf6] bg-white shadow-[0_8px_30px_rgba(26,73,124,0.06)]">
-        {/* Product card */}
-        <div className="border-b border-[#eef3f9] p-5 sm:p-7">
-          <div className="mb-2 flex flex-wrap items-center gap-2 text-xs font-bold text-[#6b8290]">
-            <span className="rounded-md bg-[#eef6ff] px-2 py-1 text-[#287be5]">
-              {platformLabel[a.platform] ?? a.platform}
-            </span>
+      <div className="mx-auto max-w-4xl">
+        <header>
+          <div className="flex flex-wrap items-center gap-2 text-xs font-bold">
+            <span className="rounded-md bg-[#e4effd] px-2.5 py-1 text-[#1764c6]">{platform}</span>
             {a.category ? (
-              <Link
-                href={catHref}
-                className="inline-flex items-center gap-1 rounded-md bg-[#f3fbe9] px-2 py-1 text-[#4a7d1e] hover:underline"
-              >
-                <Tag className="h-3 w-3" /> {a.category}
+              <Link href={catHref} className="inline-flex items-center gap-1 rounded-md bg-[#eaf4df] px-2.5 py-1 text-[#3f7122] hover:underline">
+                <Tag className="size-3.5" aria-hidden="true" /> {a.category}
               </Link>
             ) : null}
           </div>
-          <h1 className="text-xl font-black leading-snug tracking-tight text-[#11335e] sm:text-2xl">
+          <h1 className="mt-5 text-balance text-[clamp(1.75rem,3.2vw,2.625rem)] font-black leading-[1.18] tracking-[-0.025em] text-[#11335e]">
             {a.title}
           </h1>
-          <div className="mt-3 flex flex-wrap items-center gap-3">
-            {a.price ? (
-              <span className="text-2xl font-black text-[#ee4d2d]">
-                {formatVnd(a.price)}
-              </span>
-            ) : null}
-            {a.estimatedCashback ? (
-              <span className="inline-flex items-center gap-1.5 rounded-lg bg-[#f3fbe9] px-2.5 py-1 text-sm font-bold text-[#2f7d1e]">
-                <BadgeCheck className="h-4 w-4" />
-                Hoàn tiền dự kiến ~{formatVnd(a.estimatedCashback)}
-              </span>
-            ) : null}
-          </div>
-          {buyHref ? (
-            <Link
-              href={buyHref}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#b7e961] px-4 py-3 font-bold text-[#173b5e] transition hover:bg-[#a9e75e]"
-            >
-              <ShoppingBag className="h-5 w-5" />
-              Mua ngay &amp; nhận hoàn tiền trên {platformLabel[a.platform] ?? "sàn"}
-            </Link>
+          {a.metaDescription ? (
+            <p className="mt-5 hidden max-w-3xl text-pretty text-base leading-7 text-[#45617f] sm:block sm:text-lg sm:leading-8">
+              {a.metaDescription}
+            </p>
           ) : null}
-        </div>
+        </header>
 
-        {/* Article body (editable rich HTML with inline images) */}
-        <div
-          className="article-body p-5 text-[15px] leading-7 text-[#45617f] sm:p-7 [&_h1]:mt-6 [&_h1]:text-xl [&_h1]:font-bold [&_h1]:text-[#12335f] [&_h2]:mt-6 [&_h2]:text-lg [&_h2]:font-bold [&_h2]:text-[#12335f] [&_h3]:mt-5 [&_h3]:font-bold [&_h3]:text-[#12335f] [&_p]:mt-3 [&_img]:my-4 [&_img]:max-w-full [&_img]:rounded-xl [&_ul]:mt-3 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:mt-3 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:mt-1 [&_a]:font-semibold [&_a]:text-[#1261ed] [&_a]:underline [&_blockquote]:border-l-4 [&_blockquote]:border-[#b7e961] [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-[#5a7596] [&_strong]:text-[#2a4669]"
+        {(a.price || (a.estimatedCashback && a.estimatedCashback > 0) || buyHref) ? (
+          <section aria-label="Thông tin mua sản phẩm" className="mt-7 flex flex-col gap-5 border-y border-[#dce6f3] py-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+              {a.price ? <span className="text-2xl font-black text-[#e84d2c]">{formatVnd(a.price)}</span> : null}
+              {a.estimatedCashback && a.estimatedCashback > 0 ? (
+                <span className="inline-flex items-center gap-1.5 text-sm font-bold text-[#32721d]">
+                  <BadgeCheck className="size-4" aria-hidden="true" /> Hoàn tiền dự kiến ~{formatVnd(a.estimatedCashback)}
+                </span>
+              ) : null}
+            </div>
+            {buyHref ? (
+              <Link href={buyHref} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-[#b7e961] px-5 py-3 text-sm font-bold text-[#173b5e] transition-colors hover:bg-[#a9e75e]">
+                <ShoppingBag className="size-4" aria-hidden="true" /> Xem sản phẩm trên {platform}
+                <ArrowRight className="size-4" aria-hidden="true" />
+              </Link>
+            ) : null}
+          </section>
+        ) : null}
+
+        <article
+          className="article-body mt-8 min-w-0 overflow-x-auto rounded-2xl bg-white px-5 py-7 text-base leading-8 text-[#34516f] sm:px-9 sm:py-10 [&>p:first-child]:mt-0 [&>p:first-child_img]:my-0 [&_a]:font-semibold [&_a]:text-[#1261ed] [&_a]:underline [&_blockquote]:my-6 [&_blockquote]:border-l-4 [&_blockquote]:border-[#b7e961] [&_blockquote]:pl-4 [&_blockquote]:italic [&_h1]:mt-10 [&_h1]:text-2xl [&_h1]:font-black [&_h1]:text-[#12335f] [&_h2]:mb-3 [&_h2]:mt-10 [&_h2]:text-balance [&_h2]:text-[22px] [&_h2]:font-black [&_h2]:leading-snug [&_h2]:text-[#12335f] [&_h3]:mt-8 [&_h3]:text-xl [&_h3]:font-bold [&_h3]:text-[#12335f] [&_img]:my-5 [&_img]:h-auto [&_img]:max-w-full [&_img]:rounded-xl [&_li]:mt-1 [&_ol]:mt-4 [&_ol]:list-decimal [&_ol]:pl-6 [&_p]:mt-5 [&_strong]:text-[#244566] [&_ul]:mt-4 [&_ul]:list-disc [&_ul]:pl-6"
           dangerouslySetInnerHTML={{ __html: articleContentHtml(a) }}
         />
 
-        {/* Bottom CTA */}
         {buyHref ? (
-          <div className="px-5 pb-6 sm:px-7">
-            <Link
-              href={buyHref}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#11335e] px-4 py-3 font-bold text-white transition hover:bg-[#15406f]"
-            >
-              <ShoppingBag className="h-5 w-5" />
-              Mua &amp; nhận hoàn tiền ngay
+          <div className="mt-7 flex flex-col gap-3 rounded-xl bg-[#eaf5de] px-5 py-5 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm font-semibold leading-6 text-[#315e28]">Xem sản phẩm và kiểm tra mức hoàn tiền trước khi đặt hàng.</p>
+            <Link href={buyHref} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-lg bg-[#11335e] px-4 py-2.5 text-sm font-bold text-white hover:bg-[#1b4b7d]">
+              Mở {platform} <ArrowRight className="size-4" aria-hidden="true" />
             </Link>
           </div>
         ) : null}
-      </article>
+      </div>
 
-      {/* Related articles */}
-      {related.length > 0 ? (
-        <section className="mt-10">
-          <div className="mb-4 flex items-center gap-2">
-            <Newspaper className="h-5 w-5 text-[#287be5]" />
-            <h2 className="text-lg font-black tracking-tight text-[#11335e]">
-              Bài viết liên quan
-            </h2>
+      <section className="mt-16 border-t border-[#dce6f3] pt-9" aria-labelledby="related-title">
+        <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <p className="mb-1 text-sm font-semibold text-[#4f719c]">Khám phá thêm</p>
+            <h2 id="related-title" className="text-2xl font-black tracking-tight text-[#11335e]">Bài viết liên quan</h2>
           </div>
-          <div className="grid gap-5 sm:grid-cols-3">
-            {related.map((r) => (
-              <RelatedCard key={r.id} a={r} />
-            ))}
+          <Link href="/bai-viet" className="inline-flex items-center gap-1 text-sm font-bold text-[#1261ed] hover:underline">Xem tất cả <ArrowRight className="size-4" aria-hidden="true" /></Link>
+        </div>
+        {related.length > 0 ? (
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {related.map((r) => <RelatedCard key={r.id} a={r} />)}
           </div>
-        </section>
-      ) : null}
-
-      <p className="mt-8 text-center text-sm text-[#6681a7]">
-        <Link href="/bai-viet" className="font-bold text-[#1261ed]">
-          ← Xem tất cả bài viết
-        </Link>
-      </p>
+        ) : (
+          <div className="rounded-xl bg-white px-5 py-8 text-sm text-[#58749a]">Chưa có bài viết khác. Khám phá thêm tại <Link href="/bai-viet" className="font-bold text-[#1261ed] underline">Tin tức</Link>.</div>
+        )}
+      </section>
     </main>
   );
 }
@@ -165,29 +159,17 @@ export default async function ArticlePage({
 function RelatedCard({ a }: { a: Article }) {
   const src = proxiedImageUrl(a.imageUrl);
   return (
-    <Link
-      href={`/bai-viet/${a.slug}`}
-      className="group flex flex-col overflow-hidden rounded-2xl border border-[#e1eaf6] bg-white shadow-[0_5px_18px_rgba(26,73,124,0.05)] transition hover:-translate-y-0.5 hover:shadow-[0_12px_30px_rgba(26,73,124,0.12)]"
-    >
+    <Link href={`/bai-viet/${a.slug}`} className="group flex min-w-0 flex-col overflow-hidden rounded-xl bg-white transition-colors hover:bg-[#fdfefe]">
       {src ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={src} alt={a.productName ?? a.title} loading="lazy" className="h-36 w-full object-cover" />
+        <img src={src} alt={a.productName ?? a.title} loading="lazy" className="aspect-[16/10] w-full object-cover" />
       ) : (
-        <div className="flex h-36 w-full items-center justify-center bg-[#eef3fa]">
-          <Newspaper className="h-8 w-8 text-[#b7c9e0]" />
-        </div>
+        <div className="flex aspect-[16/10] w-full items-center justify-center bg-[#e8eff8]"><Newspaper className="size-9 text-[#9cb4d2]" aria-hidden="true" /></div>
       )}
-      <div className="flex flex-1 flex-col p-4">
-        <h3 className="line-clamp-3 text-sm font-black leading-snug text-[#11335e] group-hover:text-[#1261ed]">
-          {a.title}
-        </h3>
-        {a.estimatedCashback ? (
-          <div className="mt-auto pt-3">
-            <span className="inline-flex w-fit items-center gap-1 rounded-md bg-[#f3fbe9] px-2 py-0.5 text-xs font-bold text-[#2f7d1e]">
-              <BadgeCheck className="h-3.5 w-3.5" /> Hoàn ~{formatVnd(a.estimatedCashback)}
-            </span>
-          </div>
-        ) : null}
+      <div className="flex flex-1 flex-col gap-2 p-4">
+        <span className="text-xs font-bold text-[#287be5]">{platformLabel[a.platform] ?? a.platform}{a.category ? ` · ${a.category}` : ""}</span>
+        <h3 className="line-clamp-3 text-base font-black leading-snug text-[#11335e] group-hover:text-[#1261ed]">{a.title}</h3>
+        {a.estimatedCashback && a.estimatedCashback > 0 ? <span className="mt-auto pt-1 text-xs font-bold text-[#32721d]">Hoàn tiền dự kiến ~{formatVnd(a.estimatedCashback)}</span> : null}
       </div>
     </Link>
   );

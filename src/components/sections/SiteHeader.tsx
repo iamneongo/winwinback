@@ -25,9 +25,9 @@ export function SiteHeader() {
           variant="cta"
           nativeButton={false}
           className="h-auto gap-1.5 rounded-full px-4 py-2 text-sm font-bold"
-          render={<a href="/register" />}
+          render={<a href="/login" />}
         >
-          Nhận hoàn tiền ngay <ArrowRight className="h-3.5 w-3.5" />
+          Đăng nhập <ArrowRight className="h-3.5 w-3.5" />
         </Button>
       </div>
     </header>

@@ -164,6 +164,12 @@ export const affiliateLinks = pgTable(
     // Short code used in /go/<code> to track clicks then redirect.
     shortCode: text("short_code").notNull().unique(),
     title: text("title"),
+    // Per-link AI article progress. A product may have one public article but
+    // each customer's link keeps its own share URL and generation state.
+    articleStatus: text("article_status"),
+    articlePreview: text("article_preview"),
+    articleSlug: text("article_slug"),
+    articleUpdatedAt: timestamp("article_updated_at", { withTimezone: true }),
     clicks: integer("clicks").notNull().default(0),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()

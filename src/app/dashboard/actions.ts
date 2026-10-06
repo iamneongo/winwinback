@@ -1,14 +1,15 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { z } from "zod";
 import { db } from "@/db";
 import { affiliateLinks, users, withdrawals } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { and, eq, lt, ne, or } from "drizzle-orm";
 import { requireUser } from "@/lib/auth/guards";
 import { detectPlatform } from "@/lib/affiliate/platform";
 import { getAffiliateProvider } from "@/lib/affiliate/providers";
-import { generateAndSaveArticle } from "@/lib/articles/service";
+import { runArticleGeneration } from "@/lib/articles/progress";
 import { generateShortCode } from "@/lib/shortcode";
 import { recordWalletTx } from "@/lib/wallet";
 import { notifyNewWithdrawalRequest } from "@/lib/notify";
@@ -22,6 +23,7 @@ export type ActionState =
       /** Set after a link is created so the client can offer to open it. */
       link?: {
         goPath: string;
+        articleCode?: string;
         platformName: string;
         /** Estimated cashback for the buyer in VND, when resolvable. For a
          * product with several SKUs this is the lower bound and
@@ -150,25 +152,20 @@ export async function createLinkAction(
         productId,
         shortCode: code,
         title,
+        articleStatus: productId ? "queued" : null,
+        articleUpdatedAt: productId ? new Date() : null,
       });
       revalidatePath("/dashboard");
-      // Fire-and-forget: generate the product's SEO article in the background
-      // (AI is slow; never block link creation). Idempotent per product; the
-      // service fetches full product data itself.
+      // Next.js keeps this work alive after the link response is sent. Its
+      // progress is stored on the link so the popup can reconnect later.
       if (productId) {
-        void generateAndSaveArticle({
-          platform,
-          productId,
-          productUrl: parsed.data.url,
-          userId: user.id,
-          affiliateShortCode: code,
-          estimatedCashback,
-        });
+        after(() => runArticleGeneration(code));
       }
       return {
         success: "Đã tạo link affiliate",
         link: {
           goPath: `/go/${code}`,
+          articleCode: productId ? code : undefined,
           platformName: platformLabel[platform] ?? "cửa hàng",
           estimatedCashback,
           estimatedCashbackMax,
@@ -183,6 +180,33 @@ export async function createLinkAction(
     }
   }
   return { error: "Không tạo được mã link, thử lại" };
+}
+
+export async function retryArticleAction(formData: FormData): Promise<void> {
+  const user = await requireUser();
+  const code = formData.get("code");
+  if (typeof code !== "string" || !/^[a-zA-Z0-9]{4,32}$/.test(code)) return;
+
+  const staleBefore = new Date(Date.now() - 4 * 60_000);
+  const [link] = await db
+    .update(affiliateLinks)
+    .set({ articleStatus: "queued", articlePreview: null, articleUpdatedAt: new Date() })
+    .where(and(
+      eq(affiliateLinks.shortCode, code),
+      eq(affiliateLinks.userId, user.id),
+      ne(affiliateLinks.productId, ""),
+      or(
+        eq(affiliateLinks.articleStatus, "failed"),
+        and(
+          ne(affiliateLinks.articleStatus, "published"),
+          lt(affiliateLinks.articleUpdatedAt, staleBefore),
+        ),
+      ),
+    ))
+    .returning({ shortCode: affiliateLinks.shortCode });
+  if (!link) return;
+  after(() => runArticleGeneration(link.shortCode));
+  revalidatePath("/dashboard/bai-viet");
 }
 
 const withdrawalSchema = z.object({

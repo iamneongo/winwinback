@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { createLinkAction, type ActionState } from "@/app/dashboard/actions";
 import { Button } from "@/components/ui/button";
+import { ArticleProgress } from "@/components/dashboard/ArticleProgress";
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -120,7 +121,7 @@ export function CreateLinkForm({ defaultUrl }: { defaultUrl?: string }) {
       >
         <Dialog.Portal>
           <Dialog.Backdrop className="fixed inset-0 z-50 bg-black/45 backdrop-blur-[2px] transition-opacity duration-150 data-ending-style:opacity-0 data-starting-style:opacity-0" />
-          <Dialog.Popup className="fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-6 text-center shadow-[0_24px_60px_rgba(9,54,95,0.28)] transition duration-150 data-ending-style:scale-95 data-ending-style:opacity-0 data-starting-style:scale-95 data-starting-style:opacity-0">
+          <Dialog.Popup className="fixed left-1/2 top-1/2 z-50 max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl bg-white p-5 text-center shadow-[0_24px_60px_rgba(9,54,95,0.28)] transition duration-150 data-ending-style:scale-95 data-ending-style:opacity-0 data-starting-style:scale-95 data-starting-style:opacity-0 sm:p-6">
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#eafbe0] text-[#3f8a2e]">
               <CheckCircle2 className="h-6 w-6" />
             </div>
@@ -195,6 +196,13 @@ export function CreateLinkForm({ defaultUrl }: { defaultUrl?: string }) {
                 Để sau
               </Dialog.Close>
             </div>
+            {created?.articleCode ? (
+              <ArticleProgress key={created.articleCode} code={created.articleCode} />
+            ) : (
+              <p className="mt-4 border-t border-[#e5edf6] pt-4 text-left text-xs leading-5 text-[#58749a]">
+                Chưa đủ thông tin sản phẩm để tạo bài viết cho link này.
+              </p>
+            )}
           </Dialog.Popup>
         </Dialog.Portal>
       </Dialog.Root>

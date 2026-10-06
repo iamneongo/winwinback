@@ -1,6 +1,6 @@
 import "server-only";
 import sanitizeHtml from "sanitize-html";
-import { and, desc, eq, isNull, or, sql } from "drizzle-orm";
+import { and, desc, eq, isNull, ne, or, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { articles, type Article } from "@/db/schema";
 import type { Platform } from "@/lib/affiliate/types";
@@ -140,6 +140,27 @@ interface BuiltArticle {
   slug: string;
 }
 
+export interface ArticleProgress {
+  stage: "fetching_product" | "generating";
+  preview?: string;
+}
+
+/** Pull readable fields from a partially streamed JSON response. */
+function previewFromPartialArticle(raw: string): string {
+  const pieces: string[] = [];
+  for (const match of raw.matchAll(/"(title|intro|a)"\s*:\s*"((?:\\.|[^"\\])*)/g)) {
+    const fragment = match[2] ?? "";
+    let plain: string;
+    try {
+      plain = JSON.parse(`"${fragment}"`) as string;
+    } catch {
+      plain = fragment.replace(/\\n/g, "\n").replace(/\\"/g, '"');
+    }
+    if (plain.trim()) pieces.push(plain.trim());
+  }
+  return pieces.join("\n\n").slice(0, 2400);
+}
+
 function escapeHtml(s: string): string {
   return s
     .replace(/&/g, "&amp;")
@@ -180,9 +201,11 @@ function buildContentHtml(opts: {
 /** Fetch product data + ask the AI for the article content (no DB write). */
 async function buildArticle(
   input: GenerateArticleInput,
+  onProgress?: (progress: ArticleProgress) => Promise<void>,
 ): Promise<BuiltArticle | null> {
   if (!isNvidiaConfigured() || !input.productId) return null;
 
+  await onProgress?.({ stage: "fetching_product" });
   const data = await fetchArticleProductData(
     input.platform,
     input.productUrl,
@@ -190,6 +213,7 @@ async function buildArticle(
   );
   const name = data?.name;
   if (!name) return null; // need a real product name for a good article
+  await onProgress?.({ stage: "generating", preview: name });
 
   const estimatedCashback =
     input.estimatedCashback ??
@@ -230,13 +254,27 @@ async function buildArticle(
     '"},' +
     '{"q":"Bao lâu thì nhận được tiền hoàn?","a":"~60 từ: tiền hoàn về ví sau khi đơn hoàn tất và hết thời gian đổi trả"}]}';
 
+  let lastPreview = name;
+  let lastWrite = 0;
   const raw = await nvidiaChat({
     system,
     user,
     maxTokens: 6000,
     temperature: 0.6,
     timeoutMs: 170_000,
+    onDelta: onProgress
+      ? async (partial) => {
+          const preview = previewFromPartialArticle(partial);
+          const now = Date.now();
+          if (preview && preview !== lastPreview && now - lastWrite >= 550) {
+            lastPreview = preview;
+            lastWrite = now;
+            await onProgress({ stage: "generating", preview });
+          }
+        }
+      : undefined,
   });
+  await onProgress?.({ stage: "generating", preview: previewFromPartialArticle(raw) });
   const parsed = parseJsonObject(raw);
   if (!parsed) return null;
 
@@ -287,6 +325,7 @@ async function buildArticle(
  */
 export async function generateAndSaveArticle(
   input: GenerateArticleInput,
+  onProgress?: (progress: ArticleProgress) => Promise<void>,
 ): Promise<Article | null> {
   try {
     const existing = await db
@@ -301,7 +340,7 @@ export async function generateAndSaveArticle(
       .limit(1);
     if (existing[0]) return existing[0];
 
-    const c = await buildArticle(input);
+    const c = await buildArticle(input, onProgress);
     if (!c) return null;
 
     const inserted = await db
@@ -327,7 +366,14 @@ export async function generateAndSaveArticle(
       })
       .onConflictDoNothing()
       .returning();
-    return inserted[0] ?? null;
+    if (inserted[0]) return inserted[0];
+    // Another link may have generated this product at the same time.
+    const concurrent = await db
+      .select()
+      .from(articles)
+      .where(and(eq(articles.platform, input.platform), eq(articles.productId, input.productId)))
+      .limit(1);
+    return concurrent[0] ?? null;
   } catch {
     return null;
   }
@@ -477,20 +523,20 @@ export async function listArticleCategories(): Promise<CategoryCount[]> {
   return rows.map((r) => ({ name: r.name, count: Number(r.count) }));
 }
 
-/** Public: a few related published articles (same category, excluding one). */
+/** Public: prioritize category, then platform; fill remaining slots with recent articles. */
 export async function listRelatedArticles(
   current: Article,
   limit = 4,
 ): Promise<Article[]> {
-  const conds = [eq(articles.status, "published")];
-  if (current.category) conds.push(eq(articles.category, current.category));
-  const rows = await db
+  return db
     .select()
     .from(articles)
-    .where(and(...conds))
-    .orderBy(desc(articles.createdAt))
-    .limit(limit + 1);
-  return rows.filter((r) => r.id !== current.id).slice(0, limit);
+    .where(and(eq(articles.status, "published"), ne(articles.id, current.id)))
+    .orderBy(
+      sql`case when ${articles.category} = ${current.category} then 0 when ${articles.platform} = ${current.platform} then 1 else 2 end`,
+      desc(articles.createdAt),
+    )
+    .limit(limit);
 }
 
 export async function setArticleStatus(

@@ -47,9 +47,9 @@ export function NavBar() {
           variant="cta"
           nativeButton={false}
           className="hidden h-auto gap-1.5 rounded-full px-5 py-2.5 hover:scale-[1.03] sm:inline-flex"
-          render={<a href="/register" />}
+          render={<a href="/login" />}
         >
-          Nhận hoàn tiền ngay <ArrowRight className="h-3.5 w-3.5" />
+          Đăng nhập <ArrowRight className="h-3.5 w-3.5" />
         </Button>
         </div>
       </div>

@@ -30,6 +30,7 @@ export type NavItem = {
 export const customerNav: NavItem[] = [
   { href: "/dashboard", icon: Home, label: "Tổng quan", exact: true },
   { href: "/dashboard/don-hang", icon: ShoppingBag, label: "Đơn hàng của tôi", short: "Đơn hàng" },
+  { href: "/dashboard/bai-viet", icon: FileText, label: "Bài viết của bạn", short: "Bài viết" },
   { href: "/dashboard/vi", icon: Wallet, label: "Ví hoàn tiền", short: "Ví" },
   { href: "/dashboard/nhiem-vu", icon: Gift, label: "Nhiệm vụ nhận quà", short: "Nhiệm vụ" },
   { href: "/dashboard/rut-tham", icon: Ticket, label: "Rút thăm may mắn", short: "Rút thăm" },
