@@ -15,8 +15,10 @@ export function SiteHeader() {
         <Link href="/" className="flex items-center gap-2">
           <BrandLogo light />
         </Link>
-        <nav className="ml-7 mr-auto hidden items-center gap-5 text-sm font-semibold text-white/85 sm:flex">
-          <Link href="/" className="transition hover:text-white">Trang chủ</Link>
+        <nav className="ml-7 mr-auto hidden items-center gap-6 text-[15px] font-semibold text-white/85 lg:flex" aria-label="Điều hướng chính">
+          <Link href="/#cach-hoat-dong" className="transition hover:text-white">Cách hoạt động</Link>
+          <Link href="/#doi-tac" className="transition hover:text-white">Đối tác</Link>
+          <Link href="/#giai-dap" className="transition hover:text-white">Giải đáp</Link>
           <Link href="/bai-viet" className="transition hover:text-white">Tin tức</Link>
         </nav>
         <Button

@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import { BrandLogo } from '@/components/BrandLogo';
 import { Button } from '@/components/ui/button';
@@ -19,7 +20,7 @@ export function NavBar() {
           <BrandLogo light />
         </a>
         {/* Nav links */}
-        <nav className="hidden md:flex items-center gap-6">
+        <nav className="hidden lg:flex items-center gap-7" aria-label="Điều hướng chính">
           {[
             { label: 'Cách hoạt động', id: 'cach-hoat-dong' },
             { label: 'Đối tác', id: 'doi-tac' },
@@ -28,11 +29,17 @@ export function NavBar() {
             <button
               key={id}
               onClick={() => scrollTo(id)}
-              className="text-[11px] font-bold text-white/75 hover:text-white transition-colors tracking-wide"
+              className="text-sm font-semibold text-white/80 transition-colors hover:text-white"
             >
               {label}
             </button>
           ))}
+          <Link
+            href="/bai-viet"
+            className="text-sm font-semibold text-white/80 transition-colors hover:text-white"
+          >
+            Tin tức
+          </Link>
         </nav>
         {/* Auth + CTA */}
         <div className="flex items-center gap-4">
