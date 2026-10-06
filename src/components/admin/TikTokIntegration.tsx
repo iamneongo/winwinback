@@ -1,53 +1,17 @@
 "use client";
 
 import { useActionState } from "react";
-import Link from "next/link";
-import { ArrowRight } from "lucide-react";
 import {
-  connectTikTokAction,
   refreshTikTokAction,
   disconnectTikTokAction,
   type ActionState,
 } from "@/app/admin/integrations/actions";
 import { SubmitButton } from "@/components/forms/SubmitButton";
 
-const inputClass =
-  "w-full rounded-xl border border-[#d9e5f4] bg-[#f9fbff] px-4 py-3 text-sm text-[#173861] placeholder-[#8ba0bd] outline-none focus:border-[#8bd950] focus:ring-2 focus:ring-[#b7e961]/25";
-
 export interface TikTokStatus {
   configured: boolean;
   connected: boolean;
   sellerName: string | null;
-  openId: string | null;
-  userType: number | null;
-  grantedScopes: string[];
-  accessTokenExpiresAt: string | null;
-  refreshTokenExpiresAt: string | null;
-}
-
-function ManualConnectForm() {
-  const [state, action] = useActionState<ActionState, FormData>(
-    connectTikTokAction,
-    undefined,
-  );
-  return (
-    <form action={action} className="space-y-3">
-      <input
-        name="authCode"
-        type="text"
-        required
-        placeholder="Dán auth code (tham số ?code=... trên URL callback)"
-        className={inputClass}
-      />
-      <div className="flex items-center gap-4">
-        <SubmitButton>Kết nối bằng auth code</SubmitButton>
-        {state?.error && <p className="text-sm text-red-600">{state.error}</p>}
-        {state?.success && (
-          <p className="text-sm font-medium text-[#2f7a1c]">{state.success}</p>
-        )}
-      </div>
-    </form>
-  );
 }
 
 function RefreshButton() {
@@ -101,34 +65,7 @@ export function TikTokIntegration({ status }: { status: TikTokStatus }) {
                 {status.sellerName}
               </span>
             )}
-            {status.userType !== null && (
-              <span className="text-xs text-[#6681a7]">
-                user_type: {status.userType}
-                {status.userType === 1 ? " (creator)" : " (không phải creator!)"}
-              </span>
-            )}
           </div>
-          <dl className="grid gap-1 text-xs text-[#49688f]">
-            {status.openId && (
-              <div>
-                <span className="text-[#8aa0bd]">open_id:</span> {status.openId}
-              </div>
-            )}
-            <div>
-              <span className="text-[#8aa0bd]">Access token hết hạn:</span>{" "}
-              {status.accessTokenExpiresAt ?? "—"}
-            </div>
-            <div>
-              <span className="text-[#8aa0bd]">Refresh token hết hạn:</span>{" "}
-              {status.refreshTokenExpiresAt ?? "—"}
-            </div>
-            {status.grantedScopes.length > 0 && (
-              <div>
-                <span className="text-[#8aa0bd]">Scopes:</span>{" "}
-                {status.grantedScopes.join(", ")}
-              </div>
-            )}
-          </dl>
           <div className="flex flex-wrap items-center gap-3 pt-1">
             <RefreshButton />
             <DisconnectButton />
@@ -136,50 +73,17 @@ export function TikTokIntegration({ status }: { status: TikTokStatus }) {
         </div>
       ) : null}
 
-      {status.connected && (
-        <Link
-          href="/admin/integrations/tiktok-orders"
-          className="flex items-center justify-between gap-3 rounded-2xl border border-[#e1eaf6] bg-[#f9fbff] p-4 transition-colors hover:border-[#8bd950] hover:bg-[#f3f9ec]"
-        >
-          <div>
-            <p className="text-sm font-semibold text-[#173861]">
-              Dữ liệu đơn hàng từ TikTok Shop
-            </p>
-            <p className="text-xs text-[#6681a7]">
-              Đồng bộ &amp; xem đơn affiliate thật ở trang riêng.
-            </p>
-          </div>
-          <ArrowRight className="size-4 shrink-0 text-[#1766e7]" />
-        </Link>
-      )}
-
       {!status.connected && (
-        <p className="text-sm text-[#6681a7]">
-          Chưa kết nối tài khoản Affiliate Creator.
-        </p>
+        <div className="flex flex-wrap items-center gap-3">
+          <p className="text-sm text-[#49688f]">Chưa kết nối tài khoản TikTok Shop Creator.</p>
+          <a
+            href="/admin/integrations/tiktok/start"
+            className="inline-flex min-h-10 items-center justify-center rounded-lg bg-[#b7e961] px-4 text-sm font-bold text-[#173b5e] hover:bg-[#a9e75e]"
+          >
+            Kết nối TikTok Shop
+          </a>
+        </div>
       )}
-
-      <div className="space-y-3">
-        <p className="text-sm font-semibold text-[#173861]">Cách kết nối</p>
-        <ol className="list-decimal space-y-1 pl-5 text-sm text-[#49688f]">
-          <li>
-            Bấm{" "}
-            <a
-              href="/admin/integrations/tiktok/start"
-              className="font-semibold text-[#1766e7] underline"
-            >
-              Bắt đầu uỷ quyền
-            </a>{" "}
-            và đăng nhập bằng tài khoản <b>TikTok Shop Creator</b> của bạn.
-          </li>
-          <li>
-            Sau khi đồng ý, TikTok chuyển hướng về Redirect URL kèm{" "}
-            <code>?code=...</code>. Nếu callback tự động chưa bật, copy giá trị{" "}
-            <code>code</code> đó và dán vào ô dưới đây.
-          </li>
-        </ol>
-        <ManualConnectForm />
-      </div>
     </div>
   );
 }
