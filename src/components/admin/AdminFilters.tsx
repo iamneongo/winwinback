@@ -4,6 +4,7 @@ import { useEffect, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -62,15 +63,16 @@ export function AdminFilters({
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <label className="flex h-9 w-56 items-center gap-2 rounded-lg border border-[#dbe6f2] px-3 text-xs text-[#8298b6]">
+      <div className="flex h-9 w-56 items-center gap-2 rounded-lg border border-[#dbe6f2] px-3 text-xs text-[#8298b6] focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50">
         <Search className="size-4" />
-        <input
+        <Input
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          className="w-full bg-transparent outline-none placeholder:text-[#9aabc3]"
+          aria-label={searchPlaceholder}
+          className="h-full border-0 bg-transparent px-0 text-xs shadow-none placeholder:text-[#7890b0] focus-visible:border-0 focus-visible:ring-0"
           placeholder={searchPlaceholder}
         />
-      </label>
+      </div>
 
       {filters.map((filter) => (
         <Select
@@ -127,12 +129,13 @@ export function AdminSearchInput({
 }) {
   return (
     <form action={action} className="hidden xl:block">
-      <label className="flex h-9 w-[264px] items-center gap-2 rounded-lg border border-[#e4ebf5] px-3 text-xs text-[#8aa0bd]">
+      <label className="flex h-9 w-[264px] items-center gap-2 rounded-lg border border-[#e4ebf5] px-3 text-xs text-[#8aa0bd] focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50">
         <Search className="size-4" />
-        <input
+        <Input
           name="q"
           defaultValue={defaultValue}
-          className="min-w-0 flex-1 bg-transparent outline-none placeholder:text-[#9aabc3]"
+          aria-label={placeholder}
+          className="h-full min-w-0 flex-1 border-0 bg-transparent px-0 text-xs shadow-none placeholder:text-[#7890b0] focus-visible:border-0 focus-visible:ring-0"
           placeholder={placeholder}
         />
       </label>

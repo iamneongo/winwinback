@@ -5,6 +5,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { ExternalLink, Eye, EyeOff, Pencil, RefreshCw, Trash2 } from "lucide-react";
 import { AdminDataTable } from "@/components/admin/AdminDataTable";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { formatVnd } from "@/lib/config";
 import { platformLabel } from "@/lib/labels";
 import { deleteArticleAction, regenerateArticleAction, toggleArticleAction } from "./actions";
@@ -21,7 +22,7 @@ export type ArticleTableRow = {
   createdAt: string;
 };
 
-const actionClass = "inline-flex min-h-9 w-full items-center justify-center gap-1 rounded-lg border border-[#d9e5f4] px-2 font-semibold text-[#34527d] hover:bg-[#f6f9fd]";
+const actionClass = "h-9 w-full gap-1 border-[#d9e5f4] px-2 text-xs font-semibold text-[#34527d] hover:bg-[#f6f9fd]";
 
 const columns: ColumnDef<ArticleTableRow>[] = [
   { accessorKey: "title", header: "Tiêu đề", size: 320, cell: ({ row }) => <Link href={`/bai-viet/${row.original.slug}`} target="_blank" className="inline-flex items-start gap-1 font-semibold text-[#1261ed] hover:underline"><span className="line-clamp-2 break-words">{row.original.title}</span><ExternalLink className="mt-0.5 size-3.5 shrink-0" /></Link> },
@@ -35,9 +36,9 @@ const columns: ColumnDef<ArticleTableRow>[] = [
     const article = row.original;
     return <div className="grid grid-cols-2 gap-1.5">
       <Link href={`/admin/bai-viet/${article.id}/sua`} className={actionClass}><Pencil className="size-3.5" /> Sửa</Link>
-      <form action={regenerateArticleAction}><input type="hidden" name="id" value={article.id} /><button type="submit" className={actionClass}><RefreshCw className="size-3.5" /> Tạo lại</button></form>
-      <form action={toggleArticleAction}><input type="hidden" name="id" value={article.id} /><input type="hidden" name="status" value={article.status === "published" ? "hidden" : "published"} /><button type="submit" className={actionClass}>{article.status === "published" ? <><EyeOff className="size-3.5" /> Ẩn</> : <><Eye className="size-3.5" /> Hiện</>}</button></form>
-      <form action={deleteArticleAction}><input type="hidden" name="id" value={article.id} /><button type="submit" className={`${actionClass} border-[#f3c6d0] text-[#d34862] hover:bg-[#fee9ee]`}><Trash2 className="size-3.5" /> Xóa</button></form>
+      <form action={regenerateArticleAction}><input type="hidden" name="id" value={article.id} /><Button type="submit" variant="outline" className={actionClass}><RefreshCw className="size-3.5" /> Tạo lại</Button></form>
+      <form action={toggleArticleAction}><input type="hidden" name="id" value={article.id} /><input type="hidden" name="status" value={article.status === "published" ? "hidden" : "published"} /><Button type="submit" variant="outline" className={actionClass}>{article.status === "published" ? <><EyeOff className="size-3.5" /> Ẩn</> : <><Eye className="size-3.5" /> Hiện</>}</Button></form>
+      <form action={deleteArticleAction}><input type="hidden" name="id" value={article.id} /><Button type="submit" variant="outline" className={`${actionClass} border-[#f3c6d0] text-[#d34862] hover:bg-[#fee9ee]`}><Trash2 className="size-3.5" /> Xóa</Button></form>
     </div>;
   } },
 ];

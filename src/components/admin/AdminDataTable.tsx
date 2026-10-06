@@ -16,6 +16,13 @@ import { parseAsInteger, parseAsString, useQueryStates } from "nuqs";
 import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, ChevronRight, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 export type AdminTableFilter = {
@@ -23,6 +30,8 @@ export type AdminTableFilter = {
   label: string;
   options: { value: string; label: string }[];
 };
+
+const ALL_FILTERS = "__all__";
 
 type AdminDataTableProps<TData> = {
   data: TData[];
@@ -125,21 +134,25 @@ export function AdminDataTable<TData>({
           />
         </div>
         {filters.map((filter) => (
-          <select
+          <Select
             key={filter.key}
-            aria-label={filter.label}
-            value={mode === "client" ? String(localFilters.find((item) => item.id === filter.key)?.value ?? "") : query[filter.key]}
-            onChange={(event) => {
+            value={(mode === "client" ? String(localFilters.find((item) => item.id === filter.key)?.value ?? "") : query[filter.key]) || ALL_FILTERS}
+            onValueChange={(selected) => {
+              const value = selected === ALL_FILTERS ? "" : selected ?? "";
               if (mode === "client") {
-                setLocalFilters((current) => [...current.filter((item) => item.id !== filter.key), ...(event.target.value ? [{ id: filter.key, value: event.target.value }] : [])]);
+                setLocalFilters((current) => [...current.filter((item) => item.id !== filter.key), ...(value ? [{ id: filter.key, value }] : [])]);
                 setLocalPage(1);
-              } else void setQuery({ [filter.key]: event.target.value, trang: 1 });
+              } else void setQuery({ [filter.key]: value, trang: 1 });
             }}
-            className="h-10 max-w-full rounded-lg border border-[#dbe6f3] bg-white px-3 text-sm font-medium text-[#34527d] outline-none focus-visible:ring-2 focus-visible:ring-[#1261ed]"
           >
-            <option value="">{filter.label}</option>
-            {filter.options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-          </select>
+            <SelectTrigger aria-label={filter.label} className="h-10 w-40 border-[#dbe6f3] text-sm font-medium text-[#34527d]">
+              <SelectValue placeholder={filter.label} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL_FILTERS}>{filter.label}</SelectItem>
+              {filter.options.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}
+            </SelectContent>
+          </Select>
         ))}
         {(draft || activeFilters || sorting.length) ? (
           <Button variant="ghost" size="lg" onClick={() => { setDraft(""); if (mode === "client") { setLocalFilters([]); setLocalSorting([]); setLocalPage(1); } else void setQuery({ q: "", status: "", platform: "", role: "", sort: "", dir: "desc", trang: 1 }); }} className="text-[#49688f]">
@@ -157,19 +170,20 @@ export function AdminDataTable<TData>({
                 return (
                   <TableHead key={header.id} scope="col" style={{ width: header.getSize() }} className="px-3 py-3 text-xs font-bold">
                     {header.isPlaceholder ? null : header.column.getCanSort() ? (
-                      <button
+                      <Button
                         type="button"
+                        variant="ghost"
                         onClick={() => {
                           const next = direction === "asc" ? "desc" : direction === "desc" ? "" : "asc";
                           if (mode === "client") { setLocalSorting(next ? [{ id: header.column.id, desc: next === "desc" }] : []); setLocalPage(1); }
                           else void setQuery({ sort: next ? header.column.id : "", dir: next || "desc", trang: 1 });
                         }}
-                        className="inline-flex min-h-9 items-center gap-1 text-left hover:text-[#1261ed] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1261ed]"
+                        className="h-auto min-h-9 justify-start gap-1 px-0 text-left text-xs font-bold hover:bg-transparent hover:text-[#1261ed]"
                         aria-label={`Sắp xếp theo ${String(header.column.columnDef.header)}`}
                       >
                         {flexRender(header.column.columnDef.header, header.getContext())}
                         {direction === "asc" ? <ArrowUp className="size-3.5" /> : direction === "desc" ? <ArrowDown className="size-3.5" /> : <ArrowUpDown className="size-3.5 text-[#8aa0bd]" />}
-                      </button>
+                      </Button>
                     ) : flexRender(header.column.columnDef.header, header.getContext())}
                   </TableHead>
                 );

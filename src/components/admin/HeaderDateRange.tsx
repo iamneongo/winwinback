@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { type DateRange } from "react-day-picker";
+import { vi } from "date-fns/locale";
 import { CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -46,6 +47,7 @@ export function HeaderDateRange({
       <PopoverContent align="end" className="w-auto p-2">
         <Calendar
           mode="range"
+          locale={vi}
           numberOfMonths={2}
           selected={range}
           onSelect={setRange}

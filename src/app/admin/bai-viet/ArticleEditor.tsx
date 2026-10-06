@@ -13,6 +13,9 @@ import Link from "next/link";
 import { Check, ExternalLink, ImagePlus, Loader2, Save, Trash2 } from "lucide-react";
 import "react-quill-new/dist/quill.snow.css";
 import { saveArticleContentAction } from "./actions";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
 // react-quill-new touches `document`, so it must be client-only. Wrap it in a
 // forwardRef so we can reach the Quill instance for the image handler.
@@ -209,11 +212,12 @@ export function ArticleEditor({
         >
           Xem bài <ExternalLink className="h-3.5 w-3.5" />
         </Link>
-        <button
+        <Button
           type="button"
+          variant="cta"
           onClick={save}
           disabled={pending}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-[#b7e961] px-4 py-2 text-sm font-bold text-[#173b5e] transition hover:bg-[#a9e75e] disabled:opacity-60"
+          className="gap-1.5 px-4 text-sm font-bold text-[#173b5e]"
         >
           {pending ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -223,7 +227,7 @@ export function ArticleEditor({
             <Save className="h-4 w-4" />
           )}
           {pending ? "Đang lưu…" : saved ? "Đã lưu" : "Lưu bài viết"}
-        </button>
+        </Button>
       </div>
       {error ? <p role="alert" className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p> : null}
       <section className="space-y-5 rounded-xl border border-[#dfe9f5] bg-white p-4 sm:p-6" aria-label="Thông tin bài viết và SEO">
@@ -234,13 +238,13 @@ export function ArticleEditor({
         <div className="grid gap-5 md:grid-cols-[minmax(0,1fr)_260px]">
           <div className="space-y-4">
             <label className="block text-sm font-bold text-[#234568]" htmlFor="article-title">Tiêu đề bài viết</label>
-            <input id="article-title" value={title} onChange={(event) => { setTitle(event.target.value); setSaved(false); }} maxLength={180} className="-mt-2 w-full rounded-lg border border-[#cddced] px-3 py-2.5 text-sm outline-none focus:border-[#1261ed]" />
+            <Input id="article-title" value={title} onChange={(event) => { setTitle(event.target.value); setSaved(false); }} maxLength={180} className="-mt-2 h-10 border-[#cddced] text-sm focus-visible:border-[#1261ed]" />
             <p className="-mt-2 text-xs text-[#6681a7]">{title.length}/180 ký tự · Nên khoảng 50–65 ký tự. URL bài viết giữ nguyên để không gãy liên kết cũ.</p>
             <label className="block text-sm font-bold text-[#234568]" htmlFor="article-description">Mô tả SEO</label>
-            <textarea id="article-description" value={metaDescription} onChange={(event) => { setMetaDescription(event.target.value); setSaved(false); }} maxLength={300} rows={3} className="-mt-2 w-full resize-y rounded-lg border border-[#cddced] px-3 py-2.5 text-sm outline-none focus:border-[#1261ed]" />
+            <Textarea id="article-description" value={metaDescription} onChange={(event) => { setMetaDescription(event.target.value); setSaved(false); }} maxLength={300} rows={3} className="-mt-2 min-h-20 resize-y border-[#cddced] text-sm focus-visible:border-[#1261ed]" />
             <p className="-mt-2 text-xs text-[#6681a7]">{metaDescription.length}/300 ký tự · Nên khoảng 120–160 ký tự, mô tả đúng nội dung bài.</p>
             <label className="block text-sm font-bold text-[#234568]" htmlFor="article-category">Danh mục</label>
-            <input id="article-category" value={category} onChange={(event) => { setCategory(event.target.value); setSaved(false); }} maxLength={80} className="-mt-2 w-full rounded-lg border border-[#cddced] px-3 py-2.5 text-sm outline-none focus:border-[#1261ed]" />
+            <Input id="article-category" value={category} onChange={(event) => { setCategory(event.target.value); setSaved(false); }} maxLength={80} className="-mt-2 h-10 border-[#cddced] text-sm focus-visible:border-[#1261ed]" />
           </div>
           <div>
             <p className="mb-2 text-sm font-bold text-[#234568]">Ảnh đại diện</p>
@@ -255,7 +259,7 @@ export function ArticleEditor({
                 <ImagePlus className="size-4" /> Tải ảnh mới
                 <input type="file" accept="image/*" className="sr-only" onChange={(event) => { void selectCover(event.target.files?.[0]); event.target.value = ""; }} />
               </label>
-              {imageUrl ? <button type="button" onClick={() => { setImageUrl(""); setSaved(false); }} className="inline-flex items-center gap-1 rounded-lg px-2 py-2 text-xs font-bold text-red-700 hover:bg-red-50"><Trash2 className="size-4" /> Xóa ảnh</button> : null}
+              {imageUrl ? <Button type="button" variant="ghost" onClick={() => { setImageUrl(""); setSaved(false); }} className="h-9 gap-1 px-2 text-xs font-bold text-red-700 hover:bg-red-50"><Trash2 className="size-4" /> Xóa ảnh</Button> : null}
             </div>
             <p className="mt-2 text-xs leading-5 text-[#6681a7]">Ảnh tự nén thành JPEG; dùng ở trang Tin tức và ảnh chia sẻ. Ảnh trong nội dung bài viết chỉnh riêng bên dưới.</p>
           </div>

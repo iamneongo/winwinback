@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   approveClaimAction,
   rejectClaimAction,
@@ -40,11 +41,12 @@ export function MissionClaimControls({ claimId }: { claimId: string }) {
     <div className="space-y-2">
       {rejecting ? (
         <div className="flex flex-col gap-2 sm:flex-row">
-          <input
+          <Input
             value={note}
             onChange={(e) => setNote(e.target.value)}
             placeholder="Lý do từ chối (không bắt buộc)"
-            className="min-w-0 flex-1 rounded-lg border border-[#e2ebf6] px-3 py-1.5 text-xs text-[#3a557c] outline-none focus:border-[#9ddd5d]"
+            aria-label="Lý do từ chối"
+            className="h-9 min-w-0 flex-1 border-[#e2ebf6] px-3 text-xs text-[#3a557c] focus-visible:border-[#9ddd5d]"
           />
           <div className="flex gap-2">
             <Button

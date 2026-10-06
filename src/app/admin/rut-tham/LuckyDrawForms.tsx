@@ -9,6 +9,8 @@ import {
   type ActionState,
 } from "./actions";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { DateTimeField } from "@/components/admin/DateTimeField";
 
 function Submit({ label, pendingLabel, icon: Icon }: { label: string; pendingLabel: string; icon: typeof Dices }) {
   const { pending } = useFormStatus();
@@ -25,14 +27,10 @@ export function CreatePeriodForm() {
   return (
     <form action={action} className="grid gap-3 sm:grid-cols-[1.4fr_1fr_1fr_auto] sm:items-end">
       <label className="grid gap-1.5 text-xs font-bold text-[#213e67]">Tên kỳ
-        <input name="name" required placeholder="VD: Kỳ tháng 10/2026" className="h-11 rounded-lg border border-[#d9e5f4] bg-white px-3 text-sm text-[#35537c] outline-none focus:border-[#8bd950] focus:ring-2 focus:ring-[#b7e961]/25" />
+        <Input name="name" required placeholder="VD: Kỳ tháng 10/2026" className="h-11 border-[#d9e5f4] text-sm text-[#35537c] focus-visible:border-[#8bd950] focus-visible:ring-[#b7e961]/25" />
       </label>
-      <label className="grid gap-1.5 text-xs font-bold text-[#213e67]">Ngày mở
-        <input name="startAt" type="datetime-local" required className="h-11 rounded-lg border border-[#d9e5f4] bg-white px-3 text-sm text-[#35537c] outline-none focus:border-[#8bd950] focus:ring-2 focus:ring-[#b7e961]/25" />
-      </label>
-      <label className="grid gap-1.5 text-xs font-bold text-[#213e67]">Ngày đóng
-        <input name="endAt" type="datetime-local" required className="h-11 rounded-lg border border-[#d9e5f4] bg-white px-3 text-sm text-[#35537c] outline-none focus:border-[#8bd950] focus:ring-2 focus:ring-[#b7e961]/25" />
-      </label>
+      <div className="grid gap-1.5 text-xs font-bold text-[#213e67]"><span>Ngày mở</span><DateTimeField name="startAt" label="Ngày mở" /></div>
+      <div className="grid gap-1.5 text-xs font-bold text-[#213e67]"><span>Ngày đóng</span><DateTimeField name="endAt" label="Ngày đóng" /></div>
       <Submit label="Tạo kỳ" pendingLabel="Đang tạo…" icon={CalendarPlus} />
       {state?.error && <p className="text-sm text-red-600 sm:col-span-4">{state.error}</p>}
       {state?.success && <p className="text-sm text-[#168146] sm:col-span-4">{state.success}</p>}
