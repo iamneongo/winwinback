@@ -2,10 +2,18 @@
 
 import Link from "next/link";
 import type { ColumnDef } from "@tanstack/react-table";
-import { ExternalLink, Eye, EyeOff, Pencil, RefreshCw, Trash2 } from "lucide-react";
+import { Ellipsis, ExternalLink, Eye, EyeOff, Pencil, RefreshCw, Trash2 } from "lucide-react";
 import { AdminDataTable } from "@/components/admin/AdminDataTable";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { formatVnd } from "@/lib/config";
 import { platformLabel } from "@/lib/labels";
 import { deleteArticleAction, regenerateArticleAction, toggleArticleAction } from "./actions";
@@ -22,8 +30,6 @@ export type ArticleTableRow = {
   createdAt: string;
 };
 
-const actionClass = "h-9 w-full gap-1 border-[#d9e5f4] px-2 text-xs font-semibold text-[#34527d] hover:bg-[#f6f9fd]";
-
 const columns: ColumnDef<ArticleTableRow>[] = [
   { accessorKey: "title", header: "Tiêu đề", size: 320, cell: ({ row }) => <Link href={`/bai-viet/${row.original.slug}`} target="_blank" className="inline-flex items-start gap-1 font-semibold text-[#1261ed] hover:underline"><span className="line-clamp-2 break-words">{row.original.title}</span><ExternalLink className="mt-0.5 size-3.5 shrink-0" /></Link> },
   { accessorKey: "platform", header: "Sàn", size: 95, enableSorting: false, cell: ({ row }) => platformLabel[row.original.platform] ?? row.original.platform },
@@ -32,14 +38,43 @@ const columns: ColumnDef<ArticleTableRow>[] = [
   { accessorKey: "views", header: "Lượt xem", size: 90, cell: ({ row }) => row.original.views },
   { accessorKey: "status", header: "Trạng thái", size: 105, enableSorting: false, cell: ({ row }) => <Badge variant={row.original.status === "published" ? "success" : "warning"}>{row.original.status === "published" ? "Hiển thị" : "Đã ẩn"}</Badge> },
   { accessorKey: "createdAt", header: "Ngày tạo", size: 110, cell: ({ row }) => new Date(row.original.createdAt).toLocaleDateString("vi-VN") },
-  { id: "actions", header: "Thao tác", size: 220, enableSorting: false, cell: ({ row }) => {
+  { id: "actions", header: "Thao tác", size: 76, enableSorting: false, cell: ({ row }) => {
     const article = row.original;
-    return <div className="grid grid-cols-2 gap-1.5">
-      <Link href={`/admin/bai-viet/${article.id}/sua`} className={actionClass}><Pencil className="size-3.5" /> Sửa</Link>
-      <form action={regenerateArticleAction}><input type="hidden" name="id" value={article.id} /><Button type="submit" variant="outline" className={actionClass}><RefreshCw className="size-3.5" /> Tạo lại</Button></form>
-      <form action={toggleArticleAction}><input type="hidden" name="id" value={article.id} /><input type="hidden" name="status" value={article.status === "published" ? "hidden" : "published"} /><Button type="submit" variant="outline" className={actionClass}>{article.status === "published" ? <><EyeOff className="size-3.5" /> Ẩn</> : <><Eye className="size-3.5" /> Hiện</>}</Button></form>
-      <form action={deleteArticleAction}><input type="hidden" name="id" value={article.id} /><Button type="submit" variant="outline" className={`${actionClass} border-[#f3c6d0] text-[#d34862] hover:bg-[#fee9ee]`}><Trash2 className="size-3.5" /> Xóa</Button></form>
-    </div>;
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          render={<Button type="button" variant="ghost" size="icon-sm" aria-label={`Thao tác bài viết: ${article.title}`} />}
+        >
+          <Ellipsis className="size-4" />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="min-w-44">
+          <DropdownMenuLabel>Thao tác</DropdownMenuLabel>
+          <DropdownMenuItem render={<Link href={`/admin/bai-viet/${article.id}/sua`} />}>
+            <Pencil /> Sửa bài viết
+          </DropdownMenuItem>
+          <form action={regenerateArticleAction}>
+            <input type="hidden" name="id" value={article.id} />
+            <DropdownMenuItem render={<button type="submit" className="w-full" />}>
+              <RefreshCw /> Tạo lại nội dung
+            </DropdownMenuItem>
+          </form>
+          <form action={toggleArticleAction}>
+            <input type="hidden" name="id" value={article.id} />
+            <input type="hidden" name="status" value={article.status === "published" ? "hidden" : "published"} />
+            <DropdownMenuItem render={<button type="submit" className="w-full" />}>
+              {article.status === "published" ? <><EyeOff /> Ẩn bài viết</> : <><Eye /> Hiện bài viết</>}
+            </DropdownMenuItem>
+          </form>
+          <DropdownMenuSeparator />
+          <form action={deleteArticleAction}>
+            <input type="hidden" name="id" value={article.id} />
+            <DropdownMenuItem variant="destructive" render={<button type="submit" className="w-full" />}>
+              <Trash2 /> Xóa bài viết
+            </DropdownMenuItem>
+          </form>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
   } },
 ];
 
