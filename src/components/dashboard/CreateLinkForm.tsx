@@ -197,7 +197,7 @@ export function CreateLinkForm({ defaultUrl }: { defaultUrl?: string }) {
               </Dialog.Close>
             </div>
             {created?.articleCode ? (
-              <ArticleProgress key={created.articleCode} code={created.articleCode} />
+              <ArticleProgress key={created.articleCode} code={created.articleCode} showFullArticle />
             ) : (
               <p className="mt-4 border-t border-[#e5edf6] pt-4 text-left text-xs leading-5 text-[#58749a]">
                 Chưa đủ thông tin sản phẩm để tạo bài viết cho link này.

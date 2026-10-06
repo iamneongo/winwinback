@@ -148,7 +148,7 @@ export interface ArticleProgress {
 /** Pull readable fields from a partially streamed JSON response. */
 function previewFromPartialArticle(raw: string): string {
   const pieces: string[] = [];
-  for (const match of raw.matchAll(/"(title|intro|a)"\s*:\s*"((?:\\.|[^"\\])*)/g)) {
+  for (const match of raw.matchAll(/"(title|intro|q|a)"\s*:\s*"((?:\\.|[^"\\])*)/g)) {
     const fragment = match[2] ?? "";
     let plain: string;
     try {
@@ -158,7 +158,7 @@ function previewFromPartialArticle(raw: string): string {
     }
     if (plain.trim()) pieces.push(plain.trim());
   }
-  return pieces.join("\n\n").slice(0, 2400);
+  return pieces.join("\n\n");
 }
 
 function escapeHtml(s: string): string {
