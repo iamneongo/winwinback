@@ -14,7 +14,8 @@ import {
 } from "@/components/admin/TikTokIntegration";
 import { isTikTokConfigured } from "@/lib/affiliate/tiktok/config";
 import { getStoredTikTokToken } from "@/lib/affiliate/tiktok/tokens";
-import { isShopeeDataConfigured } from "@/lib/affiliate/shopee/config";
+import { getAffiliateProvider } from "@/lib/affiliate/providers";
+import { isShopeeAffConfigured } from "@/lib/affiliate/shopee/config";
 import { Badge } from "@/components/ui/badge";
 
 export const metadata = { title: "Kết nối sàn — Win-Win Back" };
@@ -52,9 +53,13 @@ export default async function IntegrationsPage({ searchParams }: { searchParams:
     accessTokenExpiresAt: stored?.accessTokenExpiresAt?.toLocaleString("vi-VN") ?? null,
     refreshTokenExpiresAt: stored?.refreshTokenExpiresAt?.toLocaleString("vi-VN") ?? null,
   };
-  const shopeeConfigured = isShopeeDataConfigured();
-  const shopeeEnabled = shopeeConfigured && process.env.AFFILIATE_PROVIDER_SHOPEE === "addlivetag";
-  const connectedCount = Number(shopeeEnabled) + Number(tiktokStatus.connected);
+  const shopeeSelected = getAffiliateProvider("shopee").name === "shopee-aff";
+  const shopeeConfigured = isShopeeAffConfigured();
+  const shopeeReady = shopeeSelected && shopeeConfigured;
+  const connectedCount = Number(shopeeReady) + Number(tiktokStatus.connected);
+  const shopeeSetupMessage = !shopeeSelected
+    ? "Chọn AFFILIATE_PROVIDER_SHOPEE=shopee-aff trong môi trường triển khai."
+    : "Thiết lập SHOPEE_AFF_API_KEY và địa chỉ SHOPEE_AFF_API_URL của worker.";
   const banner = tiktok ? callbacks[tiktok] : undefined;
 
   return <main className="mx-auto w-full max-w-[1600px] px-4 py-5 sm:px-6 lg:px-5">
@@ -62,23 +67,30 @@ export default async function IntegrationsPage({ searchParams }: { searchParams:
     {banner && <p className={`mb-3 rounded-lg border px-4 py-3 text-sm ${banner.ok ? "border-[#b7e961]/70 bg-[#eefbe0] text-[#2f7a1c]" : "border-red-200 bg-red-50 text-red-600"}`}>{banner.text}</p>}
 
     <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-      <Metric icon={Link2} tone="bg-[#e9f8de] text-[#64bd27]" label="Sàn đang kết nối" value={String(connectedCount)} hint={connectedCount ? "Đang có kênh affiliate hoạt động" : "Chưa có sàn nào được cấu hình"} />
-      <Metric icon={ShieldCheck} tone="bg-[#e8f1ff] text-[#2b78e9]" label="Kết nối hoạt động" value={`${connectedCount}/2`} hint={shopeeEnabled ? "AddliveTag gắn Sub1 cho từng link" : "Chờ cấu hình AddliveTag"} />
-      <Metric icon={Clock3} tone="bg-[#f4e8ff] text-[#a142db]" label="Đồng bộ đơn hàng" value={shopeeEnabled ? "Cần nguồn report" : "—"} hint="AddliveTag chỉ tạo link; đối soát đơn cần dữ liệu report riêng." />
-      <Metric icon={ShoppingBag} tone="bg-[#fff3dc] text-[#eda815]" label="Quy tắc chi trả" value="Tự động" hint="Chỉ cộng ví khi commission đã được Shopee chốt." />
+      <Metric icon={Link2} tone="bg-[#e9f8de] text-[#64bd27]" label="Sàn sẵn sàng" value={String(connectedCount)} hint={connectedCount ? "Đã có cấu hình tạo link affiliate" : "Chưa có sàn nào sẵn sàng tạo link"} />
+      <Metric icon={ShieldCheck} tone="bg-[#e8f1ff] text-[#2b78e9]" label="Cấu hình kết nối" value={`${connectedCount}/2`} hint={shopeeReady ? "ShopeeAff gắn SubId1 theo người dùng" : "ShopeeAff chưa sẵn sàng"} />
+      <Metric icon={Clock3} tone="bg-[#f4e8ff] text-[#a142db]" label="Đối soát Shopee" value={shopeeReady ? "Qua report" : "Chưa sẵn sàng"} hint="Cron đọc conversion từ worker; trạng thái này không xác nhận lịch cron đang chạy." />
+      <Metric icon={ShoppingBag} tone="bg-[#fff3dc] text-[#eda815]" label="Quy tắc chi trả" value="Theo đơn" hint="Cộng ví khi đơn hoàn tất và không bị đánh dấu gian lận; hoàn tác nếu đơn bị hủy hoặc hoàn tiền." />
     </section>
 
     <section className="mt-3 grid gap-3 xl:grid-cols-2">
       <article className="overflow-hidden rounded-xl border border-[#e4ebf5] bg-white">
-        <div className="flex items-center justify-between border-b border-[#edf1f7] px-5 py-4"><div className="flex items-center gap-3"><MarketplaceLogo platform="shopee" /><div><h2 className="font-black text-[#102e5c]">Shopee</h2><p className="text-[11px] text-[#6c86a8]">AddliveTag product-data API</p></div></div><Badge variant={shopeeEnabled ? "success" : "warning"} className="px-3 py-1 text-[11px]">{shopeeEnabled ? "Đang hoạt động" : shopeeConfigured ? "Chưa bật provider" : "Chưa cấu hình"}</Badge></div>
-        <div className="p-5"><p className="text-sm leading-6 text-[#60799c]">AddliveTag tạo link <code className="rounded bg-[#f1f5fb] px-1.5 py-0.5 text-xs text-[#35557e]">an_redir</code> bằng API Key và Shopee Affiliate ID. Mỗi link giữ <code className="rounded bg-[#f1f5fb] px-1.5 py-0.5 text-xs text-[#35557e]">Sub1</code> để nhận diện link trên Win-Win Back, không cần Shopee App Secret.</p><div className={`mt-5 flex items-center gap-2 rounded-lg p-3 text-xs ${shopeeEnabled ? "bg-[#f0faed] text-[#426448]" : "bg-[#f8fbff] text-[#587298]"}`}>{shopeeEnabled ? <CircleCheck className="size-4 text-[#26943d]" /> : <CircleAlert className="size-4 text-[#e9a414]" />}{shopeeEnabled ? "Đang tạo link Shopee qua AddliveTag." : shopeeConfigured ? "Đặt AFFILIATE_PROVIDER_SHOPEE=addlivetag để kích hoạt." : "Thiết lập ADDLIVETAG_API_KEY và SHOPEE_AFFILIATE_ID trong môi trường triển khai."}</div></div>
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#edf1f7] px-5 py-4"><div className="flex items-center gap-3"><MarketplaceLogo platform="shopee" /><div><h2 className="font-black text-[#102e5c]">Shopee</h2><p className="text-[11px] text-[#6c86a8]">ShopeeAff browser worker</p></div></div><Badge variant={shopeeReady ? "success" : "warning"} className="px-3 py-1 text-[11px]">{shopeeReady ? "Đã cấu hình" : shopeeSelected ? "Thiếu cấu hình" : "Chưa chọn ShopeeAff"}</Badge></div>
+        <div className="p-5">
+          <p className="text-sm leading-6 text-[#405b7e]">Worker dùng phiên Shopee Affiliate đã đăng nhập để tạo link. Mỗi link gắn <code className="rounded bg-[#f1f5fb] px-1.5 py-0.5 text-xs text-[#35557e]">SubId1</code> theo người dùng, giúp ghép đơn trong báo cáo conversion về đúng tài khoản.</p>
+          <p className="mt-3 text-sm leading-6 text-[#405b7e]">Cron đối soát đọc conversion từ worker, cập nhật trạng thái đơn và chỉ cộng hoàn tiền khi đơn hoàn tất, không bị đánh dấu gian lận. Đơn bị hủy, hoàn tiền hoặc gian lận sẽ được hoàn tác nếu đã cộng ví.</p>
+          <div className={`mt-5 flex items-start gap-2 rounded-lg p-3 text-xs leading-5 ${shopeeReady ? "bg-[#f0faed] text-[#315b39]" : "bg-[#fff8e8] text-[#765215]"}`}>
+            {shopeeReady ? <CircleCheck className="mt-0.5 size-4 shrink-0 text-[#26943d]" /> : <CircleAlert className="mt-0.5 size-4 shrink-0 text-[#b87908]" />}
+            <span>{shopeeReady ? "ShopeeAff đã được chọn và có API key. Trạng thái này chưa kiểm tra worker hoặc lịch cron trực tiếp." : shopeeSetupMessage}</span>
+          </div>
+        </div>
       </article>
       <article className="overflow-hidden rounded-xl border border-[#e4ebf5] bg-white"><div className="flex items-center justify-between border-b border-[#edf1f7] px-5 py-4"><div className="flex items-center gap-3"><MarketplaceLogo platform="tiktok" /><div><h2 className="font-black text-[#102e5c]">TikTok Shop</h2><p className="text-[11px] text-[#6c86a8]">Affiliate Creator API</p></div></div><Badge variant={tiktokStatus.connected ? "success" : "warning"} className="px-3 py-1 text-[11px]">{tiktokStatus.connected ? "Đang hoạt động" : "Chưa kết nối"}</Badge></div><div className="p-5"><TikTokIntegration status={tiktokStatus} /></div></article>
     </section>
 
     <section className="mt-3 grid gap-3 xl:grid-cols-2">
-      <article className="rounded-xl border border-[#e4ebf5] bg-white"><h2 className="border-b border-[#edf1f7] px-5 py-4 text-sm font-black text-[#12355f]">Trạng thái hệ thống kết nối</h2><div className="divide-y divide-[#edf1f7] px-5"><div className="flex items-center gap-3 py-4"><MarketplaceLogo platform="shopee" size={32} /><div className="flex-1"><b className="text-sm text-[#35557e]">Shopee</b><p className="text-[11px] text-[#8298b6]">{shopeeEnabled ? "Tạo link qua AddliveTag; đối soát đơn cần nguồn report riêng" : "Chờ cấu hình AddliveTag"}</p></div><span className={`flex items-center gap-1 text-xs font-bold ${shopeeEnabled ? "text-[#26943d]" : "text-[#d88700]"}`}>{shopeeEnabled ? <CircleCheck className="size-4" /> : <CircleAlert className="size-4" />}{shopeeEnabled ? "Hoạt động" : "Cần thiết lập"}</span></div><div className="flex items-center gap-3 py-4"><MarketplaceLogo platform="tiktok" size={32} /><div className="flex-1"><b className="text-sm text-[#35557e]">TikTok Shop</b><p className="text-[11px] text-[#8298b6]">{tiktokStatus.connected ? tiktokStatus.sellerName ?? "Creator đã kết nối" : "Chờ uỷ quyền Creator"}</p></div><span className={`flex items-center gap-1 text-xs font-bold ${tiktokStatus.connected ? "text-[#26943d]" : "text-[#d88700]"}`}>{tiktokStatus.connected ? <CircleCheck className="size-4" /> : <CircleAlert className="size-4" />}{tiktokStatus.connected ? "Hoạt động" : "Chưa kết nối"}</span></div></div></article>
-      <article className="rounded-xl border border-[#e4ebf5] bg-white"><h2 className="border-b border-[#edf1f7] px-5 py-4 text-sm font-black text-[#12355f]">Cấu hình hoa hồng theo sàn</h2><div className="space-y-3 p-5 text-sm"><p className="flex justify-between text-[#577298]"><span>Shopee</span><b className={shopeeEnabled ? "text-[#2f7a1c]" : "text-[#8298b6]"}>{shopeeEnabled ? "Theo dữ liệu đối soát" : "Chưa thiết lập"}</b></p><p className="flex justify-between text-[#577298]"><span>TikTok Shop</span><b className="text-[#102e5c]">Theo hoa hồng Affiliate</b></p><p className="border-t border-[#edf1f7] pt-3 text-[11px] text-[#8298b6]">Tỷ lệ hoàn tiền cho người dùng được tính từ cấu hình CASHBACK_RATE hiện tại.</p></div></article>
+      <article className="rounded-xl border border-[#e4ebf5] bg-white"><h2 className="border-b border-[#edf1f7] px-5 py-4 text-sm font-black text-[#12355f]">Trạng thái hệ thống kết nối</h2><div className="divide-y divide-[#edf1f7] px-5"><div className="flex items-center gap-3 py-4"><MarketplaceLogo platform="shopee" size={32} /><div className="min-w-0 flex-1"><b className="text-sm text-[#35557e]">Shopee</b><p className="text-[11px] leading-5 text-[#587298]">{shopeeReady ? "ShopeeAff tạo link và cung cấp conversion cho đối soát" : "ShopeeAff chưa sẵn sàng tạo link và đối soát"}</p></div><span className={`flex shrink-0 items-center gap-1 text-xs font-bold ${shopeeReady ? "text-[#26943d]" : "text-[#a66e08]"}`}>{shopeeReady ? <CircleCheck className="size-4" /> : <CircleAlert className="size-4" />}{shopeeReady ? "Đã cấu hình" : "Cần thiết lập"}</span></div><div className="flex items-center gap-3 py-4"><MarketplaceLogo platform="tiktok" size={32} /><div className="flex-1"><b className="text-sm text-[#35557e]">TikTok Shop</b><p className="text-[11px] text-[#8298b6]">{tiktokStatus.connected ? tiktokStatus.sellerName ?? "Creator đã kết nối" : "Chờ uỷ quyền Creator"}</p></div><span className={`flex items-center gap-1 text-xs font-bold ${tiktokStatus.connected ? "text-[#26943d]" : "text-[#d88700]"}`}>{tiktokStatus.connected ? <CircleCheck className="size-4" /> : <CircleAlert className="size-4" />}{tiktokStatus.connected ? "Hoạt động" : "Chưa kết nối"}</span></div></div></article>
+      <article className="rounded-xl border border-[#e4ebf5] bg-white"><h2 className="border-b border-[#edf1f7] px-5 py-4 text-sm font-black text-[#12355f]">Cấu hình hoa hồng theo sàn</h2><div className="space-y-3 p-5 text-sm"><p className="flex justify-between gap-3 text-[#405b7e]"><span>Shopee</span><b className={shopeeReady ? "text-[#2f7a1c]" : "text-[#587298]"}>{shopeeReady ? "Theo conversion" : "Chưa sẵn sàng"}</b></p><p className="flex justify-between gap-3 text-[#405b7e]"><span>TikTok Shop</span><b className="text-[#102e5c]">Theo hoa hồng Affiliate</b></p><p className="border-t border-[#edf1f7] pt-3 text-[11px] leading-5 text-[#587298]">Tỷ lệ hoàn tiền cho người dùng được tính từ cấu hình CASHBACK_RATE hiện tại.</p></div></article>
     </section>
   </main>;
 }

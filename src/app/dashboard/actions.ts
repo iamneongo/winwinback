@@ -129,13 +129,12 @@ export async function createLinkAction(
         : undefined;
   } catch (e) {
     const msg = e instanceof Error ? e.message : "";
-    // Admin/config problems (provider not set up / not connected) are real
-    // system errors — surface them so they can be fixed, not masked.
-    if (/chưa cấu hình|chưa được kết nối|not configured|not connected/i.test(msg)) {
-      return { error: msg || "Không tạo được link affiliate" };
+    // Only a known product-eligibility response belongs in the ineligible
+    // dialog. Worker/network/auth failures must stay visible as errors.
+    if (/sản phẩm.*(chưa tạo được link affiliate|không tham gia|không tìm thấy)|not eligible|no commission/i.test(msg)) {
+      return { ineligible: { platformName } };
     }
-    // Otherwise the product simply isn't in an affiliate/cashback program.
-    return { ineligible: { platformName } };
+    return { error: msg || `Không kiểm tra được link ${platformName}. Vui lòng thử lại.` };
   }
 
   // Insert with the pre-generated code; retry with a fresh code on the rare

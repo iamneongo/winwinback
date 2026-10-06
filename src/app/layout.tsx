@@ -8,6 +8,7 @@ const seoDescription =
   "Win-Win Back | ứng dụng cashback hoàn tiền khi mua Shopee, TikTok Shop. Voucher, sale, mã giảm giá mỗi ngày | Shopee back | Tiktok back";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://winwinback.com"),
   title: seoTitle,
   description: seoDescription,
   openGraph: {

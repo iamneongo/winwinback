@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, BadgeCheck, Newspaper, Tag } from "lucide-react";
+import { BadgeCheck, ChevronLeft, ChevronRight, Newspaper, Tag } from "lucide-react";
 import type { Article } from "@/db/schema";
 import {
   listPublishedArticles,
   listArticleCategories,
-  proxiedImageUrl,
+  articleCoverUrl,
 } from "@/lib/articles/service";
 import { formatVnd } from "@/lib/config";
 import { platformLabel } from "@/lib/labels";
@@ -18,6 +18,8 @@ export const metadata: Metadata = {
     "Tổng hợp bài đánh giá, review sản phẩm Shopee & TikTok Shop — mua ở đâu rẻ nhất và cách nhận hoàn tiền thật về ví qua Win-Win Back.",
 };
 
+const ARTICLES_PER_PAGE = 5;
+
 function excerpt(text: string | null, max = 150): string | null {
   if (!text) return null;
   const t = text.trim();
@@ -27,19 +29,39 @@ function excerpt(text: string | null, max = 150): string | null {
 export default async function NewsIndexPage({
   searchParams,
 }: {
-  searchParams: Promise<{ "danh-muc"?: string }>;
+  searchParams: Promise<{ "danh-muc"?: string; trang?: string }>;
 }) {
-  const { "danh-muc": rawCat } = await searchParams;
+  const { "danh-muc": rawCat, trang: rawPage } = await searchParams;
   const activeCat = rawCat?.trim() || null;
-
-  const [categories, articles] = await Promise.all([
-    listArticleCategories(),
-    listPublishedArticles({ category: activeCat ?? undefined }),
-  ]);
-
+  const categories = await listArticleCategories();
   const total = categories.reduce((s, c) => s + c.count, 0);
-  const featured = !activeCat ? articles[0] : undefined;
-  const rest = featured ? articles.slice(1) : articles;
+  const matchingTotal = activeCat
+    ? categories.find((category) => category.name === activeCat)?.count ?? 0
+    : total;
+  const pageCount = Math.max(1, Math.ceil(matchingTotal / ARTICLES_PER_PAGE));
+  const requestedPage = Number(rawPage);
+  const page = Number.isSafeInteger(requestedPage) && requestedPage > 0
+    ? Math.min(requestedPage, pageCount)
+    : 1;
+  const articles = await listPublishedArticles({
+    category: activeCat ?? undefined,
+    limit: ARTICLES_PER_PAGE,
+    offset: (page - 1) * ARTICLES_PER_PAGE,
+  });
+  const pageHref = (target: number) => {
+    const params = new URLSearchParams();
+    if (activeCat) params.set("danh-muc", activeCat);
+    if (target > 1) params.set("trang", String(target));
+    const query = params.toString();
+    return `/bai-viet${query ? `?${query}` : ""}`;
+  };
+  const visiblePages = Array.from(new Set([
+    1,
+    ...Array.from({ length: Math.min(5, pageCount) }, (_, index) =>
+      Math.min(Math.max(page - 2, 1), Math.max(pageCount - 4, 1)) + index,
+    ),
+    pageCount,
+  ])).sort((a, b) => a - b);
 
   return (
     <>
@@ -51,7 +73,7 @@ export default async function NewsIndexPage({
           </div>
           <h1 className="mt-4 max-w-3xl text-3xl font-black leading-tight tracking-tight text-white sm:text-[42px]">
             Review sản phẩm &amp;{" "}
-            <span className="ww-lime-text-gradient">mẹo nhận hoàn tiền</span>
+            <span className="text-[#b7e961]">mẹo nhận hoàn tiền</span>
           </h1>
           <p className="mt-3 max-w-2xl text-[15px] leading-7 text-[#b9cbe3]">
             Đánh giá chi tiết sản phẩm hot trên Shopee &amp; TikTok Shop — nên
@@ -62,7 +84,7 @@ export default async function NewsIndexPage({
 
       <main className="mx-auto w-full max-w-screen-xl px-5 py-8 sm:py-10">
         {/* Category filter */}
-        <nav className="mb-8 flex flex-wrap gap-2">
+        <nav aria-label="Danh mục tin tức" className="mb-6 flex gap-2 overflow-x-auto pb-2 sm:mb-8 sm:flex-wrap sm:overflow-visible sm:pb-0">
           <CategoryChip label="Tất cả" href="/bai-viet" active={!activeCat} count={total} />
           {categories.map((c) => (
             <CategoryChip
@@ -80,14 +102,23 @@ export default async function NewsIndexPage({
             Chưa có bài viết nào trong mục này.
           </div>
         ) : (
-          <div className="space-y-8">
-            {featured ? <FeaturedCard a={featured} /> : null}
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {rest.map((a) => (
-                <ArticleCard key={a.id} a={a} />
-              ))}
+          <>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {articles.map((a) => <ArticleCard key={a.id} a={a} />)}
             </div>
-          </div>
+            {pageCount > 1 ? (
+              <nav aria-label="Phân trang tin tức" className="mt-8 flex flex-wrap items-center justify-center gap-2">
+                {page > 1 ? <Link href={pageHref(page - 1)} className="inline-flex min-h-10 items-center gap-1 rounded-lg border border-[#dbe6f3] bg-white px-3 text-sm font-semibold text-[#34527d] hover:border-[#b7c9e0]"><ChevronLeft className="size-4" /> Trước</Link> : null}
+                {visiblePages.map((number, index) => (
+                  <span key={number} className="contents">
+                    {index > 0 && number - visiblePages[index - 1] > 1 ? <span className="px-1 text-[#587298]">…</span> : null}
+                    <Link href={pageHref(number)} aria-current={number === page ? "page" : undefined} className={`inline-flex size-10 items-center justify-center rounded-lg text-sm font-bold ${number === page ? "bg-[#11335e] text-white" : "border border-[#dbe6f3] bg-white text-[#34527d] hover:border-[#b7c9e0]"}`}>{number}</Link>
+                  </span>
+                ))}
+                {page < pageCount ? <Link href={pageHref(page + 1)} className="inline-flex min-h-10 items-center gap-1 rounded-lg border border-[#dbe6f3] bg-white px-3 text-sm font-semibold text-[#34527d] hover:border-[#b7c9e0]">Sau <ChevronRight className="size-4" /></Link> : null}
+              </nav>
+            ) : null}
+          </>
         )}
       </main>
     </>
@@ -109,7 +140,7 @@ function CategoryChip({
     <Link
       href={href}
       className={
-        "inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm font-bold transition " +
+        "inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm font-bold transition " +
         (active
           ? "border-[#11335e] bg-[#11335e] text-white"
           : "border-[#dbe6f3] bg-white text-[#34527d] hover:border-[#b7c9e0] hover:bg-[#f6f9fd]")
@@ -125,10 +156,10 @@ function CardImage({
   a,
   className,
 }: {
-  a: { imageUrl: string | null; productName: string | null; title: string };
+  a: { id: string; imageUrl: string | null; productName: string | null; title: string };
   className?: string;
 }) {
-  const src = proxiedImageUrl(a.imageUrl);
+  const src = articleCoverUrl(a);
   if (!src) {
     return (
       <div className={`flex items-center justify-center bg-[#eef3fa] ${className ?? ""}`}>
@@ -161,53 +192,18 @@ function CatTag({ platform, category }: { platform: string; category: string | n
   );
 }
 
-function FeaturedCard({ a }: { a: Article }) {
-  return (
-    <Link
-      href={`/bai-viet/${a.slug}`}
-      className="group grid overflow-hidden rounded-2xl border border-[#e1eaf6] bg-white shadow-[0_8px_30px_rgba(26,73,124,0.06)] transition hover:shadow-[0_12px_38px_rgba(26,73,124,0.12)] md:grid-cols-2"
-    >
-      <CardImage a={a} className="h-56 w-full md:h-full" />
-      <div className="flex flex-col p-6 sm:p-8">
-        <CatTag platform={a.platform} category={a.category} />
-        <h2 className="mt-3 text-xl font-black leading-snug tracking-tight text-[#11335e] group-hover:text-[#1261ed] sm:text-2xl">
-          {a.title}
-        </h2>
-        {excerpt(a.metaDescription ?? a.intro, 200) ? (
-          <p className="mt-3 text-[15px] leading-7 text-[#5a7596]">
-            {excerpt(a.metaDescription ?? a.intro, 200)}
-          </p>
-        ) : null}
-        <div className="mt-auto flex flex-wrap items-center gap-3 pt-5">
-          {a.price ? (
-            <span className="text-lg font-black text-[#ee4d2d]">{formatVnd(a.price)}</span>
-          ) : null}
-          {a.estimatedCashback ? (
-            <span className="inline-flex items-center gap-1.5 rounded-lg bg-[#f3fbe9] px-2.5 py-1 text-sm font-bold text-[#2f7d1e]">
-              <BadgeCheck className="h-4 w-4" /> Hoàn ~{formatVnd(a.estimatedCashback)}
-            </span>
-          ) : null}
-          <span className="ml-auto inline-flex items-center gap-1 text-sm font-bold text-[#1261ed]">
-            Đọc tiếp <ArrowRight className="h-4 w-4" />
-          </span>
-        </div>
-      </div>
-    </Link>
-  );
-}
-
 function ArticleCard({ a }: { a: Article }) {
   return (
     <Link
       href={`/bai-viet/${a.slug}`}
-      className="group flex flex-col overflow-hidden rounded-2xl border border-[#e1eaf6] bg-white shadow-[0_5px_18px_rgba(26,73,124,0.05)] transition hover:-translate-y-0.5 hover:shadow-[0_12px_30px_rgba(26,73,124,0.12)]"
+      className="group flex min-w-0 flex-col overflow-hidden rounded-xl border border-[#e1eaf6] bg-white transition-colors hover:border-[#b7c9e0]"
     >
-      <CardImage a={a} className="h-44 w-full" />
-      <div className="flex flex-1 flex-col p-5">
+      <CardImage a={a} className="h-36 w-full" />
+      <div className="flex flex-1 flex-col p-4">
         <CatTag platform={a.platform} category={a.category} />
-        <h3 className="mt-2.5 line-clamp-3 font-black leading-snug tracking-tight text-[#11335e] group-hover:text-[#1261ed]">
+        <h2 className="mt-2.5 line-clamp-2 font-bold leading-snug text-[#11335e] group-hover:text-[#1261ed]">
           {a.title}
-        </h3>
+        </h2>
         {excerpt(a.metaDescription ?? a.intro, 110) ? (
           <p className="mt-2 line-clamp-2 text-sm leading-6 text-[#5a7596]">
             {excerpt(a.metaDescription ?? a.intro, 110)}

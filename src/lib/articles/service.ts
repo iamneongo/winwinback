@@ -176,6 +176,14 @@ export function proxiedImageUrl(url: string | null | undefined): string | null {
   return `/api/img?url=${encodeURIComponent(url)}`;
 }
 
+/** Uploaded covers are stored as compressed JPEGs; expose them as real image URLs. */
+export function articleCoverUrl(a: Pick<Article, "id" | "imageUrl">): string | null {
+  if (a.imageUrl?.startsWith("data:image/jpeg;base64,")) {
+    return `/api/article-thumbnail/${a.id}`;
+  }
+  return proxiedImageUrl(a.imageUrl);
+}
+
 /** Build the editable rich-HTML body from the generated pieces. */
 function buildContentHtml(opts: {
   imageUrl: string | null;
@@ -468,13 +476,26 @@ export async function getArticleById(id: string): Promise<Article | null> {
   return rows[0] ?? null;
 }
 
-/** Admin: list articles (most recent first). */
-export async function listArticles(limit = 100): Promise<Article[]> {
+/** Admin: list one page of articles (most recent first). */
+export async function listArticles(opts: { limit: number; offset: number }): Promise<Article[]> {
   return db
     .select()
     .from(articles)
-    .orderBy(desc(articles.createdAt))
-    .limit(limit);
+    .orderBy(desc(articles.createdAt), desc(articles.id))
+    .limit(opts.limit)
+    .offset(opts.offset);
+}
+
+/** Counts all articles, not only the currently visible page. */
+export async function getArticleAdminStats(): Promise<{ total: number; published: number; hidden: number }> {
+  const [row] = await db
+    .select({
+      total: sql<number>`count(*)::int`,
+      published: sql<number>`count(*) filter (where ${articles.status} = 'published')::int`,
+      hidden: sql<number>`count(*) filter (where ${articles.status} = 'hidden')::int`,
+    })
+    .from(articles);
+  return row ?? { total: 0, published: 0, hidden: 0 };
 }
 
 export const UNCATEGORIZED = "Khác";
@@ -483,6 +504,7 @@ export const UNCATEGORIZED = "Khác";
 export async function listPublishedArticles(opts?: {
   category?: string;
   limit?: number;
+  offset?: number;
 }): Promise<Article[]> {
   const conds = [eq(articles.status, "published")];
   if (opts?.category) {
@@ -500,8 +522,9 @@ export async function listPublishedArticles(opts?: {
     .select()
     .from(articles)
     .where(and(...conds))
-    .orderBy(desc(articles.createdAt))
-    .limit(opts?.limit ?? 200);
+    .orderBy(desc(articles.createdAt), desc(articles.id))
+    .limit(opts?.limit ?? 200)
+    .offset(opts?.offset ?? 0);
 }
 
 export interface CategoryCount {
@@ -585,11 +608,17 @@ export function sanitizeArticleHtml(html: string): string {
 /** Admin: save edited HTML body (sanitized). */
 export async function updateArticleContent(
   id: string,
-  html: string,
+  input: { html: string; title: string; metaDescription: string; category: string; imageUrl: string },
 ): Promise<void> {
   await db
     .update(articles)
-    .set({ contentHtml: sanitizeArticleHtml(html) })
+    .set({
+      contentHtml: sanitizeArticleHtml(input.html),
+      title: input.title,
+      metaDescription: input.metaDescription || null,
+      category: input.category || null,
+      imageUrl: input.imageUrl || null,
+    })
     .where(eq(articles.id, id));
 }
 

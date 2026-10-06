@@ -1,11 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
-import { useRouter } from 'next/navigation';
-import { Link2, ArrowRight } from 'lucide-react';
+import { Link2, ArrowRight, LoaderCircle } from 'lucide-react';
 import { TikTokIcon, ShopeeIcon } from './BrandIcons';
 import { Button } from '@/components/ui/button';
+import { detectPlatform } from '@/lib/affiliate/platform';
 
 type Platform = 'tiktok' | 'shopee';
 
@@ -38,18 +38,31 @@ const platforms: PlatformConfig[] = [
  * detected from the pasted URL server-side.
  */
 export function HeroLinkForm() {
-  const router = useRouter();
   const [active, setActive] = useState<Platform>('tiktok');
   const [inputValue, setInputValue] = useState('');
+  const [navigating, setNavigating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const resetAfterBack = () => setNavigating(false);
+    window.addEventListener('pageshow', resetAfterBack);
+    return () => window.removeEventListener('pageshow', resetAfterBack);
+  }, []);
 
   function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
     const url = inputValue.trim();
-    router.push(
-      url
-        ? `/dashboard?url=${encodeURIComponent(url)}#tao-link`
-        : '/dashboard#tao-link',
-    );
+    if (!url) {
+      e.preventDefault();
+      setError('Vui lòng dán link sản phẩm trước khi kiểm tra.');
+      return;
+    }
+    if (!detectPlatform(url)) {
+      e.preventDefault();
+      setError('Chỉ hỗ trợ link Shopee hoặc TikTok Shop hợp lệ.');
+      return;
+    }
+    setError(null);
+    setNavigating(true);
   }
 
   return (
@@ -74,26 +87,32 @@ export function HeroLinkForm() {
 
       {/* Input row — button inside input */}
       <form
+        action="/start"
+        method="GET"
         onSubmit={handleSubmit}
         className="flex items-center gap-2 rounded-xl border border-gray-200 px-3 py-2 transition-colors focus-within:border-[#b7e961]"
       >
         <Link2 className="ml-1 h-4 w-4 flex-shrink-0 text-[#6b8290]" />
         <input
+          name="url"
           type="text"
           value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
+          onChange={(e) => { setInputValue(e.target.value); setNavigating(false); setError(null); }}
           placeholder="Dán link sản phẩm..."
           className="min-w-0 flex-1 truncate bg-transparent py-1.5 text-sm text-gray-700 outline-none placeholder:text-gray-400"
         />
         <Button
           type="submit"
           variant="cta"
+          disabled={navigating}
           className="h-auto flex-shrink-0 gap-1.5 whitespace-nowrap rounded-lg px-3 py-2.5 sm:px-4"
         >
-          <span className="hidden sm:inline">Kiểm tra hoàn tiền</span>
-          <ArrowRight className="h-4 w-4" />
+          <span className="hidden sm:inline">{navigating ? 'Đang chuyển…' : 'Kiểm tra hoàn tiền'}</span>
+          {navigating ? <LoaderCircle className="h-4 w-4 animate-spin motion-reduce:animate-none" /> : <ArrowRight className="h-4 w-4" />}
         </Button>
       </form>
+      {error ? <p role="alert" className="mt-2 px-1 text-sm font-medium text-red-700">{error}</p> : null}
+      <p aria-live="polite" className="sr-only">{navigating ? 'Đang mở trang kiểm tra link' : ''}</p>
     </div>
   );
 }

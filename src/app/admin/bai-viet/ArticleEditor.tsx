@@ -10,7 +10,7 @@ import {
 } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { Check, ExternalLink, Loader2, Save } from "lucide-react";
+import { Check, ExternalLink, ImagePlus, Loader2, Save, Trash2 } from "lucide-react";
 import "react-quill-new/dist/quill.snow.css";
 import { saveArticleContentAction } from "./actions";
 
@@ -94,12 +94,25 @@ export function ArticleEditor({
   id,
   slug,
   initialHtml,
+  initialTitle,
+  initialDescription,
+  initialCategory,
+  initialImageUrl,
 }: {
   id: string;
   slug: string;
   initialHtml: string;
+  initialTitle: string;
+  initialDescription: string;
+  initialCategory: string;
+  initialImageUrl: string;
 }) {
   const [html, setHtml] = useState(initialHtml);
+  const [title, setTitle] = useState(initialTitle);
+  const [metaDescription, setMetaDescription] = useState(initialDescription);
+  const [category, setCategory] = useState(initialCategory);
+  const [imageUrl, setImageUrl] = useState(initialImageUrl);
+  const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
   const [pending, startTransition] = useTransition();
   const quillRef = useRef<QuillHost | null>(null);
@@ -149,15 +162,45 @@ export function ArticleEditor({
   );
 
   function save() {
+    setError("");
     startTransition(async () => {
-      await saveArticleContentAction(id, html);
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2500);
+      try {
+        const result = await saveArticleContentAction(id, {
+          html, title, metaDescription, category, imageUrl,
+        });
+        if (!result.ok) {
+          setError(result.error ?? "Không lưu được bài viết.");
+          return;
+        }
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2500);
+      } catch {
+        setError("Không lưu được bài viết. Vui lòng thử lại.");
+      }
     });
   }
 
+  async function selectCover(file: File | undefined) {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setError("Vui lòng chọn tệp ảnh.");
+      return;
+    }
+    try {
+      setError("");
+      setImageUrl(await compressImageToDataUrl(file, 1200, 160_000));
+      setSaved(false);
+    } catch {
+      setError("Ảnh không xử lý được hoặc quá lớn. Vui lòng chọn ảnh khác.");
+    }
+  }
+
+  const coverSrc = imageUrl.startsWith("data:") || imageUrl.startsWith("/")
+    ? imageUrl
+    : imageUrl ? `/api/img?url=${encodeURIComponent(imageUrl)}` : "";
+
   return (
-    <div>
+    <div className="space-y-5">
       <div className="mb-3 flex items-center justify-between gap-3">
         <Link
           href={`/bai-viet/${slug}`}
@@ -182,6 +225,48 @@ export function ArticleEditor({
           {pending ? "Đang lưu…" : saved ? "Đã lưu" : "Lưu bài viết"}
         </button>
       </div>
+      {error ? <p role="alert" className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p> : null}
+      <section className="space-y-5 rounded-xl border border-[#dfe9f5] bg-white p-4 sm:p-6" aria-label="Thông tin bài viết và SEO">
+        <div>
+          <h2 className="text-lg font-black text-[#11335e]">Thông tin bài viết & SEO</h2>
+          <p className="mt-1 text-sm text-[#58749a]">Tiêu đề và mô tả dùng cho trang bài viết, kết quả tìm kiếm và khi chia sẻ link.</p>
+        </div>
+        <div className="grid gap-5 md:grid-cols-[minmax(0,1fr)_260px]">
+          <div className="space-y-4">
+            <label className="block text-sm font-bold text-[#234568]" htmlFor="article-title">Tiêu đề bài viết</label>
+            <input id="article-title" value={title} onChange={(event) => { setTitle(event.target.value); setSaved(false); }} maxLength={180} className="-mt-2 w-full rounded-lg border border-[#cddced] px-3 py-2.5 text-sm outline-none focus:border-[#1261ed]" />
+            <p className="-mt-2 text-xs text-[#6681a7]">{title.length}/180 ký tự · Nên khoảng 50–65 ký tự. URL bài viết giữ nguyên để không gãy liên kết cũ.</p>
+            <label className="block text-sm font-bold text-[#234568]" htmlFor="article-description">Mô tả SEO</label>
+            <textarea id="article-description" value={metaDescription} onChange={(event) => { setMetaDescription(event.target.value); setSaved(false); }} maxLength={300} rows={3} className="-mt-2 w-full resize-y rounded-lg border border-[#cddced] px-3 py-2.5 text-sm outline-none focus:border-[#1261ed]" />
+            <p className="-mt-2 text-xs text-[#6681a7]">{metaDescription.length}/300 ký tự · Nên khoảng 120–160 ký tự, mô tả đúng nội dung bài.</p>
+            <label className="block text-sm font-bold text-[#234568]" htmlFor="article-category">Danh mục</label>
+            <input id="article-category" value={category} onChange={(event) => { setCategory(event.target.value); setSaved(false); }} maxLength={80} className="-mt-2 w-full rounded-lg border border-[#cddced] px-3 py-2.5 text-sm outline-none focus:border-[#1261ed]" />
+          </div>
+          <div>
+            <p className="mb-2 text-sm font-bold text-[#234568]">Ảnh đại diện</p>
+            <div className="aspect-[16/10] overflow-hidden rounded-lg border border-[#dfe9f5] bg-[#f0f5fa]">
+              {coverSrc ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={coverSrc} alt="Ảnh đại diện bài viết" className="h-full w-full object-cover" />
+              ) : <div className="flex h-full items-center justify-center text-sm text-[#6681a7]">Chưa có ảnh</div>}
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-[#cddced] px-3 py-2 text-xs font-bold text-[#234568] hover:bg-[#f4f8fc]">
+                <ImagePlus className="size-4" /> Tải ảnh mới
+                <input type="file" accept="image/*" className="sr-only" onChange={(event) => { void selectCover(event.target.files?.[0]); event.target.value = ""; }} />
+              </label>
+              {imageUrl ? <button type="button" onClick={() => { setImageUrl(""); setSaved(false); }} className="inline-flex items-center gap-1 rounded-lg px-2 py-2 text-xs font-bold text-red-700 hover:bg-red-50"><Trash2 className="size-4" /> Xóa ảnh</button> : null}
+            </div>
+            <p className="mt-2 text-xs leading-5 text-[#6681a7]">Ảnh tự nén thành JPEG; dùng ở trang Tin tức và ảnh chia sẻ. Ảnh trong nội dung bài viết chỉnh riêng bên dưới.</p>
+          </div>
+        </div>
+        <div className="min-w-0 rounded-lg bg-[#f4f8fc] p-3 text-sm">
+          <p className="truncate text-[#1261ed]">winwinback.com/bai-viet/{slug}</p>
+          <p className="mt-1 line-clamp-2 font-bold text-[#11335e]">{title || "Tiêu đề bài viết"}</p>
+          <p className="mt-1 line-clamp-2 text-[#58749a]">{metaDescription || "Mô tả hiển thị trên kết quả tìm kiếm…"}</p>
+        </div>
+      </section>
+      <h2 className="text-lg font-black text-[#11335e]">Nội dung bài viết</h2>
       <div className="rounded-xl border border-[#dfe9f5] bg-white [&_.ql-container]:min-h-[55vh] [&_.ql-container]:text-[15px] [&_.ql-editor]:leading-7">
         <ReactQuill
           ref={quillRef as never}

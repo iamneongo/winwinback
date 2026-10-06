@@ -5,20 +5,21 @@ import { ArrowRight } from 'lucide-react';
 import { BrandLogo } from '@/components/BrandLogo';
 import { Button } from '@/components/ui/button';
 
-export function NavBar() {
+export function NavBar({ variant = 'overlay' }: { variant?: 'overlay' | 'solid' }) {
+  const onLanding = variant === 'overlay';
   const scrollTo = (id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
   };
 
   return (
-    <header className="hero-nav absolute inset-x-0 top-0 z-30">
+    <header className={onLanding ? 'hero-nav absolute inset-x-0 top-0 z-30' : 'relative z-30 bg-[#0d315d]'}>
       {/* gradient overlay */}
-      <div className="ww-nav-gradient absolute inset-0 pointer-events-none" />
+      {onLanding ? <div className="ww-nav-gradient absolute inset-0 pointer-events-none" /> : null}
       <div className="relative mx-auto max-w-screen-xl px-6 flex items-center justify-between h-[73px]">
         {/* Logo */}
-        <a href="#top" className="flex items-center gap-2">
+        <Link href={onLanding ? '#top' : '/'} className="flex items-center gap-2">
           <BrandLogo light />
-        </a>
+        </Link>
         {/* Nav links */}
         <nav className="hidden lg:flex items-center gap-7" aria-label="Điều hướng chính">
           {[
@@ -26,13 +27,11 @@ export function NavBar() {
             { label: 'Đối tác', id: 'doi-tac' },
             { label: 'Giải đáp', id: 'giai-dap' },
           ].map(({ label, id }) => (
-            <button
-              key={id}
-              onClick={() => scrollTo(id)}
-              className="text-sm font-semibold text-white/80 transition-colors hover:text-white"
-            >
-              {label}
-            </button>
+            onLanding ? (
+              <button key={id} onClick={() => scrollTo(id)} className="text-sm font-semibold text-white/80 transition-colors hover:text-white">{label}</button>
+            ) : (
+              <Link key={id} href={`/#${id}`} className="text-sm font-semibold text-white/80 transition-colors hover:text-white">{label}</Link>
+            )
           ))}
           <Link
             href="/bai-viet"

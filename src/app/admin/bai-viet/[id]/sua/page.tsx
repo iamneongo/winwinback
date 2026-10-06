@@ -30,7 +30,15 @@ export default async function EditArticlePage({
         Sửa bài viết
       </h1>
       <p className="mb-5 mt-1 text-sm text-[#58749a]">{a.title}</p>
-      <ArticleEditor id={a.id} slug={a.slug} initialHtml={articleContentHtml(a)} />
+      <ArticleEditor
+        id={a.id}
+        slug={a.slug}
+        initialHtml={articleContentHtml(a)}
+        initialTitle={a.title}
+        initialDescription={a.metaDescription ?? ""}
+        initialCategory={a.category ?? ""}
+        initialImageUrl={a.imageUrl ?? ""}
+      />
     </main>
   );
 }

@@ -72,13 +72,13 @@ function GoogleIcon() {
 }
 
 /** "Đăng nhập với Google" — starts the Better Auth Google OAuth flow. */
-function GoogleButton({ label = "Đăng nhập với Google" }: { label?: string }) {
+function GoogleButton({ label = "Đăng nhập với Google", returnTo = "/dashboard" }: { label?: string; returnTo?: string }) {
   const [loading, setLoading] = useState(false);
   async function go() {
     setLoading(true);
     // On success the browser navigates to Google; control usually leaves the
     // page. Reset loading if the call returns without redirecting (e.g. error).
-    await authClient.signIn.social({ provider: "google", callbackURL: "/dashboard" });
+    await authClient.signIn.social({ provider: "google", callbackURL: returnTo });
     setLoading(false);
   }
   return (
@@ -105,7 +105,7 @@ function OrDivider() {
   );
 }
 
-export function LoginForm({ googleEnabled = false }: { googleEnabled?: boolean }) {
+export function LoginForm({ googleEnabled = false, returnTo = "/dashboard" }: { googleEnabled?: boolean; returnTo?: string }) {
   const router = useRouter();
   const [error, setError] = useState<string>();
   const [loading, setLoading] = useState(false);
@@ -137,7 +137,7 @@ export function LoginForm({ googleEnabled = false }: { googleEnabled?: boolean }
     }
     // Admins land on the admin panel; everyone else on the customer dashboard.
     const role = (data?.user as { role?: string } | undefined)?.role;
-    router.push(role === "admin" ? "/admin" : "/dashboard");
+    router.push(role === "admin" ? "/admin" : returnTo);
     router.refresh();
   }
 
@@ -145,7 +145,7 @@ export function LoginForm({ googleEnabled = false }: { googleEnabled?: boolean }
     if (!unverifiedEmail) return;
     await authClient.sendVerificationEmail({
       email: unverifiedEmail,
-      callbackURL: "/dashboard",
+      callbackURL: returnTo,
     });
     setResent(true);
   }
@@ -193,19 +193,19 @@ export function LoginForm({ googleEnabled = false }: { googleEnabled?: boolean }
         <>
           <OrDivider />
           <div className="mt-4">
-            <GoogleButton />
+            <GoogleButton returnTo={returnTo} />
           </div>
         </>
       )}
       <p className="mt-5 text-center text-sm text-[#6681a7]">
         Chưa có tài khoản?{" "}
-        <Link href="/register" className="font-bold text-[#1766e7] hover:underline">Đăng ký ngay</Link>
+        <Link href={returnTo === "/dashboard" ? "/register" : `/register?next=${encodeURIComponent(returnTo)}`} className="font-bold text-[#1766e7] hover:underline">Đăng ký ngay</Link>
       </p>
     </div>
   );
 }
 
-export function RegisterForm({ googleEnabled = false }: { googleEnabled?: boolean }) {
+export function RegisterForm({ googleEnabled = false, returnTo = "/dashboard" }: { googleEnabled?: boolean; returnTo?: string }) {
   const [error, setError] = useState<string>();
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
@@ -219,6 +219,7 @@ export function RegisterForm({ googleEnabled = false }: { googleEnabled?: boolea
       name: String(form.get("name")),
       email: String(form.get("email")),
       password: String(form.get("password")),
+      callbackURL: returnTo,
     });
     setLoading(false);
     if (error) {
@@ -238,7 +239,7 @@ export function RegisterForm({ googleEnabled = false }: { googleEnabled?: boolea
         <p className="mt-2 text-center text-sm text-[#6681a7]">
           Chúng tôi đã gửi liên kết xác thực tới email bạn vừa đăng ký. Nhấn vào liên kết đó để kích hoạt tài khoản, sau đó đăng nhập.
         </p>
-        <Link href="/login" className="mt-5 block text-center text-sm font-bold text-[#1766e7] hover:underline">
+        <Link href={returnTo === "/dashboard" ? "/login" : `/login?next=${encodeURIComponent(returnTo)}`} className="mt-5 block text-center text-sm font-bold text-[#1766e7] hover:underline">
           Về trang đăng nhập
         </Link>
       </div>
@@ -272,13 +273,13 @@ export function RegisterForm({ googleEnabled = false }: { googleEnabled?: boolea
         <>
           <OrDivider />
           <div className="mt-4">
-            <GoogleButton label="Đăng ký với Google" />
+            <GoogleButton label="Đăng ký với Google" returnTo={returnTo} />
           </div>
         </>
       )}
       <p className="mt-5 text-center text-sm text-[#6681a7]">
         Đã có tài khoản?{" "}
-        <Link href="/login" className="font-bold text-[#1766e7] hover:underline">Đăng nhập</Link>
+        <Link href={returnTo === "/dashboard" ? "/login" : `/login?next=${encodeURIComponent(returnTo)}`} className="font-bold text-[#1766e7] hover:underline">Đăng nhập</Link>
       </p>
     </div>
   );

@@ -76,9 +76,9 @@ function PlatformMark({ platform }: { platform: "shopee" | "tiktok" }) {
   );
 }
 
-export default async function OverviewPage({ searchParams }: { searchParams: Promise<{ url?: string; linkPage?: string }> }) {
+export default async function OverviewPage({ searchParams }: { searchParams: Promise<{ url?: string; intent?: string; linkPage?: string }> }) {
+  const { url: prefillUrl, intent, linkPage: requestedLinkPage } = await searchParams;
   const user = await requireUser();
-  const { url: prefillUrl, linkPage: requestedLinkPage } = await searchParams;
   const [linkSummary, orderRows] = await Promise.all([
     db
       .select({
@@ -155,7 +155,7 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
             </span>
           </div>
           <div id="tao-link" className="mt-3 max-w-[44rem] scroll-mt-6">
-            <CreateLinkForm defaultUrl={prefillUrl} />
+            <CreateLinkForm defaultUrl={prefillUrl} autoIntent={intent} />
           </div>
           <p className="mt-2 text-xs text-white/65">
             Hướng dẫn: Dán link → Mua hàng → Nhận hoàn tiền vào ví

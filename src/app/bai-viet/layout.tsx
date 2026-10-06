@@ -1,10 +1,9 @@
-import { SiteHeader } from "@/components/sections/SiteHeader";
+import { NavBar } from "@/components/sections/NavBar";
 import { Footer } from "@/components/sections/Footer";
 
 /**
- * Public article pages get a solid site header + the landing footer. (The root
- * layout only provides <html>/<body>; the landing NavBar is a hero-only overlay,
- * so content pages use SiteHeader instead.)
+ * Public articles share the landing navigation and footer. The solid variant
+ * keeps the same links and sizing legible above article content.
  */
 export default function ArticleLayout({
   children,
@@ -13,7 +12,7 @@ export default function ArticleLayout({
 }) {
   return (
     <div className="winwin-root flex min-h-screen flex-col">
-      <SiteHeader />
+      <NavBar variant="solid" />
       <div className="flex-1 bg-[#f4f7fc]">{children}</div>
       <Footer />
     </div>

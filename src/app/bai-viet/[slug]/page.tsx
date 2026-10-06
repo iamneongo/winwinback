@@ -10,7 +10,7 @@ import {
   peekPublishedArticle,
   articleContentHtml,
   listRelatedArticles,
-  proxiedImageUrl,
+  articleCoverUrl,
 } from "@/lib/articles/service";
 import { formatVnd } from "@/lib/config";
 import { platformLabel } from "@/lib/labels";
@@ -29,14 +29,26 @@ export async function generateMetadata({
     a.metaDescription ??
     a.intro ??
     `${a.productName} — đánh giá chi tiết và cách mua được hoàn tiền qua Win-Win Back.`;
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://winwinback.com";
+  const canonical = new URL(`/bai-viet/${encodeURIComponent(a.slug)}`, siteUrl).toString();
+  const cover = articleCoverUrl(a);
+  const image = cover ? new URL(cover, siteUrl).toString() : undefined;
   return {
     title: `${a.title} | Win-Win Back`,
     description,
+    alternates: { canonical },
     openGraph: {
       title: a.title,
       description,
-      images: a.imageUrl ? [{ url: a.imageUrl }] : undefined,
+      url: canonical,
+      images: image ? [{ url: image, alt: a.title }] : undefined,
       type: "article",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: a.title,
+      description,
+      images: image ? [image] : undefined,
     },
   };
 }
@@ -157,7 +169,7 @@ export default async function ArticlePage({
 }
 
 function RelatedCard({ a }: { a: Article }) {
-  const src = proxiedImageUrl(a.imageUrl);
+  const src = articleCoverUrl(a);
   return (
     <Link href={`/bai-viet/${a.slug}`} className="group flex min-w-0 flex-col overflow-hidden rounded-xl bg-white transition-colors hover:bg-[#fdfefe]">
       {src ? (

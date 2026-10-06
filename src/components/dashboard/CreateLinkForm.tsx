@@ -32,12 +32,13 @@ function SubmitButton() {
   );
 }
 
-export function CreateLinkForm({ defaultUrl }: { defaultUrl?: string }) {
+export function CreateLinkForm({ defaultUrl, autoIntent }: { defaultUrl?: string; autoIntent?: string }) {
   const [state, action] = useActionState<ActionState, FormData>(
     createLinkAction,
     undefined,
   );
   const formRef = useRef<HTMLFormElement>(null);
+  const autoSubmitted = useRef(false);
   // Track the last dismissed action-state by identity. Each submit produces a
   // new state object, so a dialog auto-reopens on a *new* result without an
   // effect. One flag covers both the success and the "not eligible" dialogs.
@@ -52,6 +53,23 @@ export function CreateLinkForm({ defaultUrl }: { defaultUrl?: string }) {
   useEffect(() => {
     if (state?.success) formRef.current?.reset();
   }, [state]);
+
+  useEffect(() => {
+    if (!defaultUrl || !autoIntent || autoSubmitted.current || !/^[\da-f-]{36}$/i.test(autoIntent)) return;
+    autoSubmitted.current = true;
+    const key = `winwin-link-intent:${autoIntent}`;
+    try {
+      if (sessionStorage.getItem(key)) return;
+      sessionStorage.setItem(key, "used");
+    } catch {
+      // Storage can be unavailable in private browsing; the in-memory guard remains.
+    }
+    // A refresh must not create the same affiliate link again.
+    const nextUrl = new URL(window.location.href);
+    nextUrl.searchParams.delete("intent");
+    window.history.replaceState(window.history.state, "", `${nextUrl.pathname}${nextUrl.search}${nextUrl.hash}`);
+    formRef.current?.requestSubmit();
+  }, [autoIntent, defaultUrl]);
 
   function close() {
     setDismissed(state);
@@ -106,7 +124,7 @@ export function CreateLinkForm({ defaultUrl }: { defaultUrl?: string }) {
           </div>
         </div>
         {state?.error && (
-          <p className="flex items-center gap-1.5 text-sm text-red-600">
+          <p role="alert" className="flex items-center gap-1.5 text-sm text-red-600">
             <AlertCircle className="h-4 w-4 shrink-0" />
             {state.error}
           </p>
