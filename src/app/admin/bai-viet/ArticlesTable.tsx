@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -48,30 +49,34 @@ const columns: ColumnDef<ArticleTableRow>[] = [
           <Ellipsis className="size-4" />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="min-w-44">
-          <DropdownMenuLabel>Thao tác</DropdownMenuLabel>
-          <DropdownMenuItem render={<Link href={`/admin/bai-viet/${article.id}/sua`} />}>
-            <Pencil /> Sửa bài viết
-          </DropdownMenuItem>
-          <form action={regenerateArticleAction}>
-            <input type="hidden" name="id" value={article.id} />
-            <DropdownMenuItem render={<button type="submit" className="w-full" />}>
-              <RefreshCw /> Tạo lại nội dung
+          <DropdownMenuGroup>
+            <DropdownMenuLabel>Thao tác</DropdownMenuLabel>
+            <DropdownMenuItem render={<Link href={`/admin/bai-viet/${article.id}/sua`} />}>
+              <Pencil /> Sửa bài viết
             </DropdownMenuItem>
-          </form>
-          <form action={toggleArticleAction}>
-            <input type="hidden" name="id" value={article.id} />
-            <input type="hidden" name="status" value={article.status === "published" ? "hidden" : "published"} />
-            <DropdownMenuItem render={<button type="submit" className="w-full" />}>
-              {article.status === "published" ? <><EyeOff /> Ẩn bài viết</> : <><Eye /> Hiện bài viết</>}
-            </DropdownMenuItem>
-          </form>
+            <form action={regenerateArticleAction}>
+              <input type="hidden" name="id" value={article.id} />
+              <DropdownMenuItem render={<button type="submit" className="w-full" />}>
+                <RefreshCw /> Tạo lại nội dung
+              </DropdownMenuItem>
+            </form>
+            <form action={toggleArticleAction}>
+              <input type="hidden" name="id" value={article.id} />
+              <input type="hidden" name="status" value={article.status === "published" ? "hidden" : "published"} />
+              <DropdownMenuItem render={<button type="submit" className="w-full" />}>
+                {article.status === "published" ? <><EyeOff /> Ẩn bài viết</> : <><Eye /> Hiện bài viết</>}
+              </DropdownMenuItem>
+            </form>
+          </DropdownMenuGroup>
           <DropdownMenuSeparator />
-          <form action={deleteArticleAction}>
-            <input type="hidden" name="id" value={article.id} />
-            <DropdownMenuItem variant="destructive" render={<button type="submit" className="w-full" />}>
-              <Trash2 /> Xóa bài viết
-            </DropdownMenuItem>
-          </form>
+          <DropdownMenuGroup>
+            <form action={deleteArticleAction}>
+              <input type="hidden" name="id" value={article.id} />
+              <DropdownMenuItem variant="destructive" render={<button type="submit" className="w-full" />}>
+                <Trash2 /> Xóa bài viết
+              </DropdownMenuItem>
+            </form>
+          </DropdownMenuGroup>
         </DropdownMenuContent>
       </DropdownMenu>
     );

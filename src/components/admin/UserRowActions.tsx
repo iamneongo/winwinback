@@ -22,6 +22,7 @@ import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -195,13 +196,17 @@ export function UserRowActions({
           <MoreHorizontal className="size-4" />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="min-w-52">
-          <DropdownMenuLabel>Thao tác</DropdownMenuLabel>
-          <RoleItem userId={userId} role={role} />
-          <NotificationsItem userId={userId} notificationsOn={notificationsOn} />
+          <DropdownMenuGroup>
+            <DropdownMenuLabel>Thao tác</DropdownMenuLabel>
+            <RoleItem userId={userId} role={role} />
+            <NotificationsItem userId={userId} notificationsOn={notificationsOn} />
+          </DropdownMenuGroup>
           {!emailVerified && (
             <>
               <DropdownMenuSeparator />
-              <ResendItem userId={userId} />
+              <DropdownMenuGroup>
+                <ResendItem userId={userId} />
+              </DropdownMenuGroup>
             </>
           )}
         </DropdownMenuContent>
