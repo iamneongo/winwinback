@@ -1,19 +1,31 @@
 "use client";
 
 import { useActionState } from "react";
+import type { ColumnDef } from "@tanstack/react-table";
 import {
   fetchTikTokOrdersAction,
   type OrdersState,
 } from "@/app/admin/integrations/actions";
 import { SubmitButton } from "@/components/forms/SubmitButton";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { AdminDataTable } from "@/components/admin/AdminDataTable";
+
+type SyncedOrder = {
+  orderId: string;
+  productId: string;
+  productName: string;
+  price: string;
+  status: string;
+  createdAt: string | null;
+};
+
+const columns: ColumnDef<SyncedOrder>[] = [
+  { accessorKey: "orderId", header: "Order ID", size: 170, cell: ({ row }) => <span className="break-all font-mono">{row.original.orderId}</span> },
+  { accessorKey: "productId", header: "Product ID", size: 160, cell: ({ row }) => <span className="break-all font-mono">{row.original.productId}</span> },
+  { accessorKey: "productName", header: "Sản phẩm", size: 230, cell: ({ row }) => <span className="line-clamp-2">{row.original.productName}</span> },
+  { accessorKey: "price", header: "Giá", size: 120 },
+  { accessorKey: "status", header: "Trạng thái", size: 140 },
+  { accessorKey: "createdAt", header: "Thời gian", size: 150, cell: ({ row }) => row.original.createdAt ?? "—" },
+];
 
 /** Live TikTok Shop affiliate order-data sync (moved to its own admin page). */
 export function TikTokOrdersPanel() {
@@ -45,40 +57,7 @@ export function TikTokOrdersPanel() {
           <p className="text-xs text-[#6681a7]">
             Đã đồng bộ {state.rows.length} dòng lúc {state.fetchedAt}.
           </p>
-          {state.rows.length === 0 ? (
-            <p className="text-sm text-[#6681a7]">
-              Chưa có đơn hàng affiliate nào cho creator này.
-            </p>
-          ) : (
-            <Table className="text-xs text-[#49688f]">
-              <TableHeader className="text-[#536f98]">
-                <TableRow className="hover:bg-transparent">
-                  <TableHead className="py-2 pr-3">Order ID</TableHead>
-                  <TableHead className="py-2 pr-3">Product ID</TableHead>
-                  <TableHead className="py-2 pr-3">Sản phẩm</TableHead>
-                  <TableHead className="py-2 pr-3">Giá</TableHead>
-                  <TableHead className="py-2 pr-3">Trạng thái</TableHead>
-                  <TableHead className="py-2">Thời gian</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {state.rows.map((row, i) => (
-                  <TableRow key={`${row.orderId}-${i}`}>
-                    <TableCell className="py-2 pr-3 font-mono">
-                      {row.orderId}
-                    </TableCell>
-                    <TableCell className="py-2 pr-3 font-mono">
-                      {row.productId}
-                    </TableCell>
-                    <TableCell className="py-2 pr-3">{row.productName}</TableCell>
-                    <TableCell className="py-2 pr-3">{row.price}</TableCell>
-                    <TableCell className="py-2 pr-3">{row.status}</TableCell>
-                    <TableCell className="py-2">{row.createdAt ?? "—"}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
+          <AdminDataTable key={state.fetchedAt} mode="client" data={state.rows} columns={columns} totalRows={state.rows.length} page={1} pageSize={10} ariaLabel="Đơn hàng đồng bộ TikTok" searchPlaceholder="Tìm đơn hàng TikTok..." minWidth="1000px" emptyMessage="Chưa có đơn hàng affiliate nào cho creator này." />
         </>
       )}
     </div>

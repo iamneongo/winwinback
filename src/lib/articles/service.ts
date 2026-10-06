@@ -1,6 +1,6 @@
 import "server-only";
 import sanitizeHtml from "sanitize-html";
-import { and, desc, eq, isNull, ne, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, isNull, ne, or, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { articles, type Article } from "@/db/schema";
 import type { Platform } from "@/lib/affiliate/types";
@@ -484,6 +484,37 @@ export async function listArticles(opts: { limit: number; offset: number }): Pro
     .orderBy(desc(articles.createdAt), desc(articles.id))
     .limit(opts.limit)
     .offset(opts.offset);
+}
+
+export type AdminArticleQuery = {
+  q?: string;
+  status?: "published" | "hidden";
+  platform?: Platform;
+  sort?: "title" | "price" | "views" | "createdAt";
+  dir?: "asc" | "desc";
+  limit: number;
+  offset: number;
+};
+
+/** Server-side filtering/sorting keeps pagination accurate across all articles. */
+export async function listAdminArticles(opts: AdminArticleQuery): Promise<{ rows: Article[]; total: number }> {
+  const conditions = [];
+  if (opts.q?.trim()) conditions.push(ilike(articles.title, `%${opts.q.trim().slice(0, 150)}%`));
+  if (opts.status) conditions.push(eq(articles.status, opts.status));
+  if (opts.platform) conditions.push(eq(articles.platform, opts.platform));
+  const where = conditions.length ? and(...conditions) : undefined;
+  const sortColumn = {
+    title: articles.title,
+    price: articles.price,
+    views: articles.views,
+    createdAt: articles.createdAt,
+  }[opts.sort ?? "createdAt"];
+  const order = opts.dir === "asc" ? asc(sortColumn) : desc(sortColumn);
+  const [[count], rows] = await Promise.all([
+    db.select({ total: sql<number>`count(*)::int` }).from(articles).where(where),
+    db.select().from(articles).where(where).orderBy(order, desc(articles.id)).limit(opts.limit).offset(opts.offset),
+  ]);
+  return { rows, total: count?.total ?? 0 };
 }
 
 /** Counts all articles, not only the currently visible page. */

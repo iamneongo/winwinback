@@ -7,6 +7,7 @@ import { HeaderMenus } from "@/components/dashboard/HeaderMenus";
 import { BrandLogo } from "@/components/BrandLogo";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { AdminHeaderTitle } from "@/components/admin/AdminHeaderTitle";
 import { AdminSearchInput } from "@/components/admin/AdminFilters";
 import { HeaderDateRange } from "@/components/admin/HeaderDateRange";
@@ -22,8 +23,9 @@ export default async function AdminLayout({
   const bell = await getBellData(admin.id);
 
   return (
-    <TooltipProvider>
-      <SidebarProvider
+    <NuqsAdapter>
+      <TooltipProvider>
+        <SidebarProvider
         className="winwin-root overflow-x-hidden bg-[#f5f8fc] text-[#0d315d]"
         style={{ "--sidebar-width-icon": "3.5rem" } as React.CSSProperties}
       >
@@ -60,7 +62,8 @@ export default async function AdminLayout({
           <Dock variant="admin" />
           {children}
         </div>
-      </SidebarProvider>
-    </TooltipProvider>
+        </SidebarProvider>
+      </TooltipProvider>
+    </NuqsAdapter>
   );
 }

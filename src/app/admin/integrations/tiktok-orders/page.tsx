@@ -16,7 +16,7 @@ export default async function TikTokOrdersPage() {
   const connected = Boolean(stored);
 
   return (
-    <main className="mx-auto w-full max-w-[1200px] px-4 py-5 sm:px-6 lg:px-5 lg:pt-6">
+    <main className="mx-auto w-full min-w-0 max-w-[1200px] px-4 py-5 sm:px-6 lg:px-5 lg:pt-6">
       <Link
         href="/admin/integrations"
         className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#1766e7] hover:underline"
