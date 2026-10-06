@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { RefreshCw, Unplug } from "lucide-react";
 import {
   refreshTikTokAction,
   disconnectTikTokAction,
@@ -21,7 +22,13 @@ function RefreshButton() {
   );
   return (
     <form action={action} className="inline-flex items-center gap-3">
-      <SubmitButton variant="ghost">Làm mới token</SubmitButton>
+      <SubmitButton
+        variant="ghost"
+        className="border-[#b7e961] bg-white/80 text-[#315c13] shadow-sm hover:border-[#8ed438] hover:bg-[#f3fbe9] hover:text-[#24480d]"
+      >
+        <RefreshCw className="size-4" />
+        Làm mới token
+      </SubmitButton>
       {state?.error && <span className="text-sm text-red-600">{state.error}</span>}
       {state?.success && (
         <span className="text-sm font-medium text-[#2f7a1c]">{state.success}</span>
@@ -37,7 +44,13 @@ function DisconnectButton() {
   );
   return (
     <form action={action} className="inline">
-      <SubmitButton variant="danger">Ngắt kết nối</SubmitButton>
+      <SubmitButton
+        variant="danger"
+        className="bg-white/80 shadow-sm hover:bg-[#fff0f0]"
+      >
+        <Unplug className="size-4" />
+        Ngắt kết nối
+      </SubmitButton>
     </form>
   );
 }

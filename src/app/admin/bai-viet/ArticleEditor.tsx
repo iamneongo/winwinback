@@ -1,50 +1,13 @@
 "use client";
 
-import {
-  forwardRef,
-  useCallback,
-  useMemo,
-  useRef,
-  useState,
-  useTransition,
-} from "react";
-import dynamic from "next/dynamic";
+import { useState, useTransition } from "react";
 import Link from "next/link";
 import { Check, ExternalLink, ImagePlus, Loader2, Save, Trash2 } from "lucide-react";
-import "react-quill-new/dist/quill.snow.css";
 import { saveArticleContentAction } from "./actions";
+import { ArticleRichTextEditor } from "./ArticleRichTextEditor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-
-// react-quill-new touches `document`, so it must be client-only. Wrap it in a
-// forwardRef so we can reach the Quill instance for the image handler.
-const ReactQuill = dynamic(
-  async () => {
-    const { default: RQ } = await import("react-quill-new");
-    const Wrapped = forwardRef<
-      InstanceType<typeof RQ>,
-      React.ComponentProps<typeof RQ>
-    >(function Wrapped(props, ref) {
-      return <RQ ref={ref} {...props} />;
-    });
-    return Wrapped;
-  },
-  {
-    ssr: false,
-    loading: () => (
-      <div className="p-6 text-sm text-[#6681a7]">Đang tải trình soạn thảo…</div>
-    ),
-  },
-);
-
-interface QuillLike {
-  getSelection: (focus?: boolean) => { index: number } | null;
-  insertEmbed: (index: number, type: string, value: string, source?: string) => void;
-}
-interface QuillHost {
-  getEditor: () => QuillLike;
-}
 
 /**
  * Downscale + compress an image to a JPEG data URL so pasted/large photos don't
@@ -118,54 +81,13 @@ export function ArticleEditor({
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
   const [pending, startTransition] = useTransition();
-  const quillRef = useRef<QuillHost | null>(null);
-
-  const imageHandler = useCallback(() => {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = "image/*";
-    input.onchange = async () => {
-      const file = input.files?.[0];
-      if (!file) return;
-      try {
-        const url = await compressImageToDataUrl(file);
-        const editor = quillRef.current?.getEditor();
-        if (!editor) return;
-        const range = editor.getSelection(true);
-        editor.insertEmbed(range ? range.index : 0, "image", url, "user");
-      } catch {
-        window.alert(
-          "Không xử lý được ảnh này (ảnh lỗi hoặc quá lớn kể cả sau khi nén). Vui lòng thử ảnh khác hoặc ảnh nhẹ hơn.",
-        );
-      }
-    };
-    input.click();
-  }, []);
-
-  const modules = useMemo(
-    () => ({
-      toolbar: {
-        container: [
-          [{ header: [1, 2, 3, 4, false] }],
-          [{ size: ["small", false, "large", "huge"] }],
-          ["bold", "italic", "underline", "strike"],
-          [{ color: [] }, { background: [] }],
-          [{ script: "sub" }, { script: "super" }],
-          [{ list: "ordered" }, { list: "bullet" }],
-          [{ indent: "-1" }, { indent: "+1" }],
-          [{ align: [] }],
-          ["blockquote", "code-block"],
-          ["link", "image", "video"],
-          ["clean"],
-        ],
-        handlers: { image: imageHandler },
-      },
-    }),
-    [imageHandler],
-  );
 
   function save() {
     setError("");
+    if (html.length > 600_000) {
+      setError("Nội dung quá dài để lưu. Hãy giảm bớt ảnh hoặc nội dung trong bài viết.");
+      return;
+    }
     startTransition(async () => {
       try {
         const result = await saveArticleContentAction(id, {
@@ -271,15 +193,7 @@ export function ArticleEditor({
         </div>
       </section>
       <h2 className="text-lg font-black text-[#11335e]">Nội dung bài viết</h2>
-      <div className="rounded-xl border border-[#dfe9f5] bg-white [&_.ql-container]:min-h-[55vh] [&_.ql-container]:text-[15px] [&_.ql-editor]:leading-7">
-        <ReactQuill
-          ref={quillRef as never}
-          theme="snow"
-          value={html}
-          onChange={setHtml}
-          modules={modules}
-        />
-      </div>
+      <ArticleRichTextEditor initialHtml={initialHtml} onChange={(nextHtml) => { setHtml(nextHtml); setSaved(false); }} />
       <p className="mt-2 text-xs text-[#7790b1]">
         Ảnh chèn vào sẽ được tự động nén để không làm bài viết quá nặng.
       </p>

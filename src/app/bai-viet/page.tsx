@@ -67,7 +67,7 @@ export default async function NewsIndexPage({
     <>
       {/* Hero band */}
       <section className="ww-hero-bg">
-        <div className="mx-auto max-w-screen-xl px-5 py-12 sm:py-16">
+        <div className="mx-auto max-w-screen-xl px-6 pb-12 pt-32 sm:pb-16 sm:pt-36">
           <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-bold text-[#cfe6a4]">
             <Newspaper className="h-3.5 w-3.5" /> Tin tức &amp; Review
           </div>
@@ -82,7 +82,7 @@ export default async function NewsIndexPage({
         </div>
       </section>
 
-      <main className="mx-auto w-full max-w-screen-xl px-5 py-8 sm:py-10">
+      <main className="mx-auto w-full max-w-screen-xl px-6 py-8 sm:py-10">
         {/* Category filter */}
         <nav aria-label="Danh mục tin tức" className="mb-6 flex gap-2 overflow-x-auto pb-2 sm:mb-8 sm:flex-wrap sm:overflow-visible sm:pb-0">
           <CategoryChip label="Tất cả" href="/bai-viet" active={!activeCat} count={total} />

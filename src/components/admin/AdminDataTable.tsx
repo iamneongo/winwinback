@@ -16,6 +16,8 @@ import { parseAsInteger, parseAsString, useQueryStates } from "nuqs";
 import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, ChevronRight, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ScrollArea, ScrollAreaContent, ScrollAreaCorner, ScrollAreaViewport, ScrollBar } from "@/components/ui/scroll-area";
 import {
   Select,
   SelectContent,
@@ -112,6 +114,7 @@ export function AdminDataTable<TData>({
   const currentPage = mode === "client" ? localPage : page;
   const visibleTotal = mode === "client" ? table.getFilteredRowModel().rows.length : totalRows;
   const visiblePageCount = mode === "client" ? Math.max(1, table.getPageCount()) : pageCount;
+  const isLoading = mode === "server" && (pending || draft.trim() !== query.q);
   const pageNumbers = Array.from(new Set([1, currentPage - 1, currentPage, currentPage + 1, visiblePageCount]))
     .filter((number) => number >= 1 && number <= visiblePageCount)
     .sort((a, b) => a - b);
@@ -133,27 +136,34 @@ export function AdminDataTable<TData>({
             className="h-10 pl-9 text-sm"
           />
         </div>
-        {filters.map((filter) => (
-          <Select
-            key={filter.key}
-            value={(mode === "client" ? String(localFilters.find((item) => item.id === filter.key)?.value ?? "") : query[filter.key]) || ALL_FILTERS}
-            onValueChange={(selected) => {
-              const value = selected === ALL_FILTERS ? "" : selected ?? "";
-              if (mode === "client") {
-                setLocalFilters((current) => [...current.filter((item) => item.id !== filter.key), ...(value ? [{ id: filter.key, value }] : [])]);
-                setLocalPage(1);
-              } else void setQuery({ [filter.key]: value, trang: 1 });
-            }}
-          >
-            <SelectTrigger aria-label={filter.label} className="h-10 w-40 border-[#dbe6f3] text-sm font-medium text-[#34527d]">
-              <SelectValue placeholder={filter.label} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ALL_FILTERS}>{filter.label}</SelectItem>
-              {filter.options.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        ))}
+        {filters.map((filter) => {
+          const selectedValue = (mode === "client" ? String(localFilters.find((item) => item.id === filter.key)?.value ?? "") : query[filter.key]) || ALL_FILTERS;
+          const selectedLabel = selectedValue === ALL_FILTERS
+            ? filter.label
+            : filter.options.find((option) => option.value === selectedValue)?.label ?? filter.label;
+
+          return (
+            <Select
+              key={filter.key}
+              value={selectedValue}
+              onValueChange={(selected) => {
+                const value = selected === ALL_FILTERS ? "" : selected ?? "";
+                if (mode === "client") {
+                  setLocalFilters((current) => [...current.filter((item) => item.id !== filter.key), ...(value ? [{ id: filter.key, value }] : [])]);
+                  setLocalPage(1);
+                } else void setQuery({ [filter.key]: value, trang: 1 });
+              }}
+            >
+              <SelectTrigger aria-label={filter.label} className="h-10 w-40 border-[#dbe6f3] text-sm font-medium text-[#34527d]">
+                <SelectValue placeholder={filter.label}>{selectedLabel}</SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ALL_FILTERS}>{filter.label}</SelectItem>
+                {filter.options.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          );
+        })}
         {(draft || activeFilters || sorting.length) ? (
           <Button variant="ghost" size="lg" onClick={() => { setDraft(""); if (mode === "client") { setLocalFilters([]); setLocalSorting([]); setLocalPage(1); } else void setQuery({ q: "", status: "", platform: "", role: "", sort: "", dir: "desc", trang: 1 }); }} className="text-[#49688f]">
             <X className="size-4" /> Xóa lọc
@@ -161,7 +171,10 @@ export function AdminDataTable<TData>({
         ) : null}
       </div>
 
-      <Table containerClassName="max-h-[65vh] overflow-auto overscroll-contain lg:max-h-[720px]" className="table-fixed text-xs text-[#35537c]" style={{ minWidth }}>
+      <ScrollArea className="max-h-[65vh] lg:max-h-[720px]" aria-busy={isLoading}>
+        <ScrollAreaViewport className="max-h-[65vh] overscroll-contain lg:max-h-[720px]">
+          <ScrollAreaContent>
+          <Table containerClassName="overflow-visible" className="table-fixed text-xs text-[#35537c]" style={{ minWidth }}>
         <TableHeader className="sticky top-0 z-10 bg-[#f8fbff] text-[#234168]">
           {table.getHeaderGroups().map((group) => (
             <TableRow key={group.id} className="hover:bg-transparent">
@@ -192,7 +205,15 @@ export function AdminDataTable<TData>({
           ))}
         </TableHeader>
         <TableBody>
-          {table.getRowModel().rows.length ? table.getRowModel().rows.map((row) => (
+          {isLoading ? Array.from({ length: Math.min(pageSize, 8) }, (_, rowIndex) => (
+            <TableRow key={`loading-${rowIndex}`} aria-hidden="true">
+              {columns.map((column, cellIndex) => (
+                <TableCell key={`loading-${rowIndex}-${cellIndex}`} className="px-3 py-3">
+                  <Skeleton className={`h-4 ${cellIndex === 0 ? "w-3/4" : cellIndex === columns.length - 1 ? "w-1/3" : "w-1/2"}`} />
+                </TableCell>
+              ))}
+            </TableRow>
+          )) : table.getRowModel().rows.length ? table.getRowModel().rows.map((row) => (
             <TableRow key={row.id}>
               {row.getVisibleCells().map((cell) => (
                 <TableCell key={cell.id} className="min-w-0 px-3 py-3 align-top whitespace-normal">
@@ -204,7 +225,13 @@ export function AdminDataTable<TData>({
             <TableRow><TableCell colSpan={columns.length} className="h-28 text-center text-sm text-[#587298]">{emptyMessage}</TableCell></TableRow>
           )}
         </TableBody>
-      </Table>
+          </Table>
+          </ScrollAreaContent>
+        </ScrollAreaViewport>
+        <ScrollBar orientation="vertical" />
+        <ScrollBar orientation="horizontal" />
+        <ScrollAreaCorner />
+      </ScrollArea>
 
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#e8eef6] px-3 py-3 text-sm text-[#49688f] sm:px-4">
         <p aria-live="polite">{visibleTotal ? `${(currentPage - 1) * pageSize + 1}–${Math.min(currentPage * pageSize, visibleTotal)} / ${visibleTotal}` : "0 kết quả"}{pending && mode === "server" ? " · Đang tải..." : ""}</p>

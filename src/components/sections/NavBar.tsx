@@ -5,16 +5,17 @@ import { ArrowRight } from 'lucide-react';
 import { BrandLogo } from '@/components/BrandLogo';
 import { Button } from '@/components/ui/button';
 
-export function NavBar({ variant = 'overlay' }: { variant?: 'overlay' | 'solid' }) {
+export function NavBar({ variant = 'overlay' }: { variant?: 'overlay' | 'news-overlay' | 'solid' }) {
   const onLanding = variant === 'overlay';
+  const isOverlay = variant !== 'solid';
   const scrollTo = (id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
   };
 
   return (
-    <header className={onLanding ? 'hero-nav absolute inset-x-0 top-0 z-30' : 'relative z-30 bg-[#0d315d]'}>
+    <header className={isOverlay ? 'hero-nav absolute inset-x-0 top-0 z-30' : 'relative z-30 bg-[#0d315d]'}>
       {/* gradient overlay */}
-      {onLanding ? <div className="ww-nav-gradient absolute inset-0 pointer-events-none" /> : null}
+      {isOverlay ? <div className="ww-nav-gradient absolute inset-0 pointer-events-none" /> : null}
       <div className="relative mx-auto max-w-screen-xl px-6 flex items-center justify-between h-[73px]">
         {/* Logo */}
         <Link href={onLanding ? '#top' : '/'} className="flex items-center gap-2">
