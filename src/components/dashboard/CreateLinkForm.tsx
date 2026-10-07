@@ -131,8 +131,8 @@ export function CreateLinkForm({ defaultUrl, autoIntent }: { defaultUrl?: string
           </p>
         )}
       </form>
-      <Link href="/cai-dat-ung-dung" className="mt-3 inline-flex min-h-11 items-center gap-2 text-sm font-medium text-[#315c13] underline underline-offset-4">
-        <Share2 className="size-4 shrink-0" />Nhận link trực tiếp từ Shopee / TikTok
+      <Link href="/cai-dat-ung-dung" className="mt-2 inline-flex min-h-9 max-w-full items-center gap-2 rounded-lg bg-white/10 px-3 py-1.5 text-xs font-bold leading-5 text-white ring-1 ring-white/25 transition-colors hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
+        <Share2 className="size-3.5 shrink-0" />Nhận link từ Shopee / TikTok <ArrowRight className="size-3.5 shrink-0" />
       </Link>
 
       <Dialog.Root
