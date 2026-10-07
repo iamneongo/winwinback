@@ -30,9 +30,9 @@ export function PageHeader({
   );
 }
 
-export function Empty({ text }: { text: string }) {
+export function Empty({ text, compact = false }: { text: string; compact?: boolean }) {
   return (
-    <p className="rounded-xl border border-dashed border-[#cbd9ec] bg-[#f8fbff] py-10 text-center text-sm text-[#6681a7]">
+    <p className={`rounded-xl border border-dashed border-[#cbd9ec] bg-[#f8fbff] px-3 text-center text-sm text-[#6681a7] ${compact ? "py-5" : "py-10"}`}>
       {text}
     </p>
   );

@@ -23,7 +23,7 @@ const stageLabel: Record<string, string> = {
   unavailable: "Bài viết hiện không công khai",
 };
 
-export function ArticleProgress({ code, initial, allowRetry = false, showFullArticle = false }: { code: string; initial?: Progress; allowRetry?: boolean; showFullArticle?: boolean }) {
+export function ArticleProgress({ code, initial, allowRetry = false, showFullArticle = false, compact = false }: { code: string; initial?: Progress; allowRetry?: boolean; showFullArticle?: boolean; compact?: boolean }) {
   const [progress, setProgress] = useState<Progress>(initial ?? {
     status: "queued",
     preview: null,
@@ -67,6 +67,20 @@ export function ArticleProgress({ code, initial, allowRetry = false, showFullArt
     progress.status !== "unavailable" &&
     progress.updatedAt &&
     Date.now() - new Date(progress.updatedAt).getTime() > 4 * 60_000;
+
+  if (compact) return (
+    <div className="min-w-0 space-y-2 text-left">
+      <span aria-live="polite" className={`inline-flex max-w-full items-center gap-1.5 rounded-md px-2 py-1 text-xs font-semibold ${progress.status === "published" ? "bg-[#eaf9df] text-[#28711a]" : progress.status === "failed" || progress.status === "unavailable" || stalled ? "bg-[#fff1e9] text-[#9a4b12]" : "bg-[#eef6ff] text-[#215eaa]"}`}>
+        {progress.status === "published" ? <Check className="size-3.5 shrink-0" /> : progress.status === "failed" || progress.status === "unavailable" || stalled ? <Sparkles className="size-3.5 shrink-0" /> : <LoaderCircle className="size-3.5 shrink-0 animate-spin motion-reduce:animate-none" />}
+        <span className="truncate">{stalled ? "Bài viết đang bị gián đoạn" : stageLabel[progress.status ?? ""] ?? "AI đang chuẩn bị bài viết…"}</span>
+      </span>
+      {articlePath && progress.status === "published" ? <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+        <Link href={articlePath} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 font-semibold text-[#1261ed] hover:underline"><ExternalLink className="size-3.5" /> Xem bài</Link>
+        <button type="button" onClick={async () => { await navigator.clipboard.writeText(`${window.location.origin}${articlePath}`); setCopied(true); setTimeout(() => setCopied(false), 1800); }} className="inline-flex items-center gap-1 font-semibold text-[#315a90] hover:underline">{copied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}{copied ? "Đã sao chép" : "Chia sẻ"}</button>
+      </div> : null}
+      {allowRetry && (progress.status === "failed" || stalled) ? <form action={retryArticleAction}><input type="hidden" name="code" value={code} /><button type="submit" className="font-semibold text-[#1261ed] hover:underline">Thử viết lại</button></form> : null}
+    </div>
+  );
 
   return (
     <section className="mt-5 border-t border-[#e5edf6] pt-5 text-left">

@@ -24,6 +24,7 @@ export const metadata = { title: "Tổng quan — Win-Win Back" };
 export const dynamic = "force-dynamic";
 
 const LINKS_PER_PAGE = 8;
+const recentPanelClass = "overflow-hidden rounded-xl border border-[#e1eaf6] bg-white shadow-[0_5px_14px_rgba(26,73,124,0.04)]";
 
 type MetricProps = {
   label: string;
@@ -194,9 +195,9 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
         />
       </section>
 
-      <section className="mt-5 grid gap-4 xl:grid-cols-[minmax(0,1.9fr)_minmax(19rem,1fr)]">
-        <div className={`${cardClass} overflow-hidden p-0`}>
-          <div className="flex items-center justify-between border-b border-[#e8eef6] px-4 py-4 sm:px-5">
+      <section className="mt-5 grid items-start gap-4 xl:grid-cols-[minmax(0,1.9fr)_minmax(19rem,1fr)]">
+        <div className={recentPanelClass}>
+          <div className="flex items-center justify-between border-b border-[#e8eef6] px-4 py-3 sm:px-5">
             <h2 className={sectionTitleClass}>Đơn hàng gần đây</h2>
             <Link
               href="/dashboard/don-hang"
@@ -206,8 +207,8 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
             </Link>
           </div>
           {recentOrders.length === 0 ? (
-            <div className="p-5">
-              <Empty text="Chưa có đơn hàng nào. Hãy tạo link hoàn tiền để bắt đầu." />
+            <div className="p-3 sm:p-4">
+              <Empty compact text="Chưa có đơn hàng nào. Hãy tạo link hoàn tiền để bắt đầu." />
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -257,8 +258,8 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
             </div>
           )}
         </div>
-        <aside className={cardClass}>
-          <div className="flex items-center justify-between">
+        <aside className={recentPanelClass}>
+          <div className="flex items-center justify-between border-b border-[#e8eef6] px-4 py-3 sm:px-5">
             <h2 className={sectionTitleClass}>Giao dịch gần đây</h2>
             <Link
               href="/dashboard/vi"
@@ -268,11 +269,11 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
             </Link>
           </div>
           {recentOrders.length === 0 ? (
-            <div className="mt-4">
-              <Empty text="Các giao dịch hoàn tiền sẽ hiển thị tại đây." />
+            <div className="p-3 sm:p-4">
+              <Empty compact text="Các giao dịch hoàn tiền sẽ hiển thị tại đây." />
             </div>
           ) : (
-            <div className="mt-3 divide-y divide-[#edf1f7]">
+            <div className="divide-y divide-[#edf1f7] px-4 sm:px-5">
               {recentOrders.map((order) => (
                 <div key={order.id} className="flex items-center gap-3 py-3">
                   <PlatformMark platform={order.platform} />
