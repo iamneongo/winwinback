@@ -23,8 +23,8 @@ function RefreshButton() {
   return (
     <form action={action} className="inline-flex items-center gap-3">
       <SubmitButton
-        variant="ghost"
-        className="border-[#b7e961] bg-white/80 text-[#315c13] shadow-sm hover:border-[#8ed438] hover:bg-[#f3fbe9] hover:text-[#24480d]"
+        variant="primary"
+        className="px-4 text-[#173b5e] shadow-[0_3px_8px_rgba(183,233,97,0.3)] hover:brightness-105"
       >
         <RefreshCw className="size-4" />
         Làm mới token
@@ -46,7 +46,7 @@ function DisconnectButton() {
     <form action={action} className="inline">
       <SubmitButton
         variant="danger"
-        className="bg-white/80 shadow-sm hover:bg-[#fff0f0]"
+        className="border-red-200 bg-white text-red-700 shadow-sm transition-colors hover:border-red-300 hover:bg-red-50 hover:text-red-800"
       >
         <Unplug className="size-4" />
         Ngắt kết nối

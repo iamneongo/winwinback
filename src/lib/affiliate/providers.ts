@@ -152,13 +152,21 @@ class ShopeeAffProvider implements AffiliateProvider {
       // Best-effort projected product info (same worker) — preview cashback +
       // feed the SEO article.
       const info = await getShopeeProductInfo(url);
+      const workerProductId =
+        info?.itemId == null ? undefined : String(info.itemId).trim();
+      const productIdFromWorker =
+        workerProductId && /^[1-9]\d*$/.test(workerProductId)
+          ? workerProductId
+          : undefined;
       const estimatedCommission =
         info?.commission && info.commission > 0
           ? Math.round(info.commission)
           : undefined;
       return {
         affiliateUrl,
-        productId: extractShopeeItemId(url) ?? undefined,
+        // Keep parsing full product URLs first. For shortened URLs, use the
+        // item id resolved by the worker so article generation can be queued.
+        productId: extractShopeeItemId(url) ?? productIdFromWorker,
         title: info?.name || undefined,
         price: info?.price && info.price > 0 ? Math.round(info.price) : undefined,
         imageUrl: info?.image || undefined,
