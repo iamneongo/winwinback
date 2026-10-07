@@ -6,7 +6,6 @@ import { Link2, ArrowRight, LoaderCircle } from 'lucide-react';
 import { TikTokIcon, ShopeeIcon } from './BrandIcons';
 import { Button } from '@/components/ui/button';
 import { detectPlatform } from '@/lib/affiliate/platform';
-import Link from 'next/link';
 
 type Platform = 'tiktok' | 'shopee';
 
@@ -114,7 +113,6 @@ export function HeroLinkForm() {
       </form>
       {error ? <p role="alert" className="mt-2 px-1 text-sm font-medium text-red-700">{error}</p> : null}
       <p aria-live="polite" className="sr-only">{navigating ? 'Đang mở trang kiểm tra link' : ''}</p>
-      <Link href="/cai-dat-ung-dung" className="mt-3 block px-1 text-sm font-medium text-[#315c13] underline underline-offset-4">Nhận link trực tiếp từ nút Chia sẻ trên điện thoại</Link>
     </div>
   );
 }
