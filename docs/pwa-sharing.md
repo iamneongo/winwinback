@@ -4,7 +4,8 @@
 - iOS: follow `/cai-dat-ung-dung#iphone` to create a share-sheet Shortcut. Text from Shortcut Input → URL Encode → Text containing `https://winwinback.com/share-target?text=` followed by the encoded variable → Open URLs. This opens Safari; it does not promise to open the installed PWA.
 - The receiver validates and extracts a single supported URL, then redirects to existing `/start`. Existing login preservation and affiliate providers remain responsible for attribution and generation. No new env or DB migration is required.
 - Invalid/multiple/oversized input returns to setup with a readable error. Other origins and credentials in URLs are rejected. Never fetch arbitrary shared URLs in this receiver.
-- `public/sw.js` only provides a network-failure page for GET navigations. It never caches account data, affiliate redirects, API responses or HTML bundles. Refresh the original URL when connectivity returns. No background retries of purchases or Server Actions.
+- `public/sw.js` manages installation/activation only; it does not intercept requests. Android share launches, auth redirects and affiliate redirects use native browser navigation. A rejected fetch must not be replaced with an inaccurate offline page. No caching of account data and no background retries of purchases or Server Actions.
+- Existing installations update the worker at the same `/sw.js` URL with `skipWaiting` and `clients.claim`. After deployment, open the site in Chrome while online, reload, then close/reopen the PWA before retrying a share. No clearing site data or signing out is required. This does not provide offline cashback functionality; real connection failures use the browser's network error UI.
 - App icons are generated from the existing favicon by `node scripts/generate-pwa-icons.mjs` (Sharp bundled through Next).
 
 ## Verification
