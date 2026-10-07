@@ -16,6 +16,7 @@ import {
 import { createLinkAction, type ActionState } from "@/app/dashboard/actions";
 import { Button } from "@/components/ui/button";
 import { ArticleProgress } from "@/components/dashboard/ArticleProgress";
+import Link from "next/link";
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -130,6 +131,9 @@ export function CreateLinkForm({ defaultUrl, autoIntent }: { defaultUrl?: string
           </p>
         )}
       </form>
+      <Link href="/cai-dat-ung-dung" className="mt-3 inline-flex min-h-11 items-center gap-2 text-sm font-medium text-[#315c13] underline underline-offset-4">
+        <Share2 className="size-4 shrink-0" />Nhận link trực tiếp từ Shopee / TikTok
+      </Link>
 
       <Dialog.Root
         open={showSuccess}

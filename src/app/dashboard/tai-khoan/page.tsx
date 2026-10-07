@@ -11,6 +11,7 @@ export const dynamic = "force-dynamic";
 
 
 const supportLinks: { href: string; icon: LucideIcon; tone: string; title: string; desc: string }[] = [
+  { href: "/cai-dat-ung-dung", icon: HelpCircle, tone: "bg-[#eafbe0] text-[#315c13]", title: "Cài app & chia sẻ link nhanh", desc: "Android PWA · Phím tắt iPhone" },
   { href: "/dashboard/chinh-sach-hoat-dong", icon: FileText, tone: "bg-[#e8f1ff] text-[#287be5]", title: "Chính sách hoạt động", desc: "Tỷ lệ hoa hồng, mốc T+, rút tiền, referral" },
   { href: "/dashboard/dieu-khoan", icon: ScrollText, tone: "bg-[#fff2df] text-[#ed9a0b]", title: "Điều khoản sử dụng", desc: "Quy định khi sử dụng dịch vụ" },
   { href: "/dashboard/chinh-sach-bao-mat", icon: Lock, tone: "bg-[#eafbe0] text-[#3f8a2e]", title: "Chính sách bảo mật", desc: "Cách chúng tôi bảo vệ dữ liệu của bạn" },

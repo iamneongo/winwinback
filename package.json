@@ -12,6 +12,8 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
+    "test:share": "tsx --test tests/shared-link.test.ts",
+    "test:pwa": "node --test tests/pwa-http.test.mjs",
     "check": "npm run lint && npm run typecheck && npm run build",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
@@ -62,6 +64,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.3.0",
     "tailwindcss": "^4",
+    "tsx": "^4.23.15",
     "typescript": "^5"
   }
 }

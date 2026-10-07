@@ -1,4 +1,5 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
+import { PwaProvider } from "@/components/pwa/PwaProvider";
 import "./globals.css";
 import { ScrollReveal } from "@/components/ScrollReveal";
 
@@ -8,6 +9,8 @@ const seoDescription =
   "Win-Win Back | ứng dụng cashback hoàn tiền khi mua Shopee, TikTok Shop. Voucher, sale, mã giảm giá mỗi ngày | Shopee back | Tiktok back";
 
 export const metadata: Metadata = {
+  appleWebApp: { capable: true, title: "Win-Win Back", statusBarStyle: "default" },
+  icons: { apple: "/icons/pwa-180.png" },
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://winwinback.com"),
   title: seoTitle,
   description: seoDescription,
@@ -33,6 +36,8 @@ export const metadata: Metadata = {
   },
 };
 
+export const viewport: Viewport = { themeColor: "#082b4b" };
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -52,7 +57,7 @@ export default function RootLayout({
       </head>
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
         <ScrollReveal />
-        {children}
+        <PwaProvider>{children}</PwaProvider>
       </body>
     </html>
   );
