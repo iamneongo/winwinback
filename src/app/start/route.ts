@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getCurrentUser } from "@/lib/auth/session";
+import { getBaseUrl } from "@/lib/baseUrl";
 
 export const dynamic = "force-dynamic";
 
@@ -13,5 +14,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const destination = user
     ? target
     : `/login?next=${encodeURIComponent(target)}`;
-  return NextResponse.redirect(new URL(destination, request.url));
+  // `request.url` can contain the internal container address (0.0.0.0:3000)
+  // behind Dokploy. Redirect against the public proxy origin instead.
+  return NextResponse.redirect(new URL(destination, getBaseUrl(request)));
 }
