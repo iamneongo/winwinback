@@ -10,6 +10,7 @@ import { HeaderMenus } from "@/components/dashboard/HeaderMenus";
 import { BrandLogo } from "@/components/BrandLogo";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -77,7 +78,7 @@ export default async function DashboardLayout({
             </div>
           </header>
           <Dock showAdminLink={isAdmin} />
-          {children}
+          <NuqsAdapter>{children}</NuqsAdapter>
         </div>
       </SidebarProvider>
     </TooltipProvider>
