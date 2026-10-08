@@ -13,6 +13,7 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "test:share": "tsx --test tests/shared-link.test.ts",
+    "test:missions": "tsx --test tests/missions.test.ts",
     "test:sw": "node --test tests/service-worker.test.mjs",
     "test:pwa": "node --test tests/pwa-http.test.mjs",
     "check": "npm run lint && npm run typecheck && npm run build",
@@ -20,6 +21,7 @@
     "db:studio": "drizzle-kit studio",
     "db:migrate-articles-category": "node scripts/migrate-articles-category.mjs",
     "db:migrate-article-progress": "node scripts/migrate-article-progress.mjs",
+    "db:migrate-missions": "node scripts/migrate-missions.mjs",
     "set-role": "node --env-file=.env.local scripts/set-role.mjs"
   },
   "dependencies": {

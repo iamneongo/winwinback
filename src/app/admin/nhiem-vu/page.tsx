@@ -8,21 +8,29 @@ import { ClipboardCheck } from "lucide-react";
 export const metadata = { title: "Duyệt nhiệm vụ — Win-Win Back" };
 export const dynamic = "force-dynamic";
 
+function safeProofHref(proof: string): string | null {
+  try {
+    const url = new URL(proof);
+    return url.protocol === "https:" || url.protocol === "http:" ? url.href : null;
+  } catch {
+    return null;
+  }
+}
+
 export default async function AdminMissionsPage() {
   await requireAdmin();
   const claims = await listPendingClaims();
 
   return (
-    <main className="mx-auto w-full max-w-[1440px] px-4 py-5 sm:px-7 sm:py-7 lg:px-6 lg:pb-8 lg:pt-6">
-      <div className="mb-5">
-        <h1 className="flex items-center gap-2 text-xl font-black tracking-tight text-[#0d315d] sm:text-2xl">
+    <main className="mx-auto w-full max-w-[1440px] px-4 py-5 sm:px-7 lg:px-6">
+      <header className="mb-5">
+        <h1 className="flex items-center gap-2 text-xl font-black tracking-tight text-[#0d315d] lg:hidden">
           <ClipboardCheck className="h-6 w-6 text-[#1766e7]" /> Duyệt nhiệm vụ
         </h1>
         <p className="mt-1 text-sm text-[#6681a7]">
-          Nhiệm vụ mạng xã hội cần bằng chứng. Duyệt để cộng thưởng vào ví người
-          dùng, hoặc từ chối kèm lý do.
+          Duyệt bằng chứng cho các nhiệm vụ cố định trước khi cộng thưởng.
         </p>
-      </div>
+      </header>
 
       <div className={`${cardClass} overflow-hidden p-0`}>
         <div className="flex items-center justify-between border-b border-[#e8eef6] px-4 py-4 sm:px-5">
@@ -55,9 +63,9 @@ export default async function AdminMissionsPage() {
                     +{formatVnd(c.reward)}
                   </span>
                 </div>
-                {c.proof && (
+                {c.proof && safeProofHref(c.proof) && (
                   <a
-                    href={c.proof}
+                    href={safeProofHref(c.proof) ?? undefined}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="w-fit max-w-full truncate rounded-lg bg-[#f4f8ff] px-3 py-1.5 text-xs font-medium text-[#1766e7] hover:underline"
@@ -65,6 +73,13 @@ export default async function AdminMissionsPage() {
                     Xem bằng chứng: {c.proof}
                   </a>
                 )}
+                {c.proof && !safeProofHref(c.proof) && <p className="break-all text-xs text-[#58749a]">Bằng chứng: {c.proof}</p>}
+                {c.hasImage && <a
+                  href={`/api/mission-proof/${c.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-fit rounded-lg bg-[#f4f8ff] px-3 py-1.5 text-xs font-medium text-[#1766e7] hover:underline"
+                >Xem ảnh bằng chứng</a>}
                 <MissionClaimControls claimId={c.id} />
               </li>
             ))}

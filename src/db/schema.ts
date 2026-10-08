@@ -73,6 +73,7 @@ export const users = pgTable("users", {
   // attribution for the "mời bạn" missions; no FK to keep deletes simple).
   referralCode: text("referral_code").unique(),
   referredBy: uuid("referred_by"),
+  referredAt: timestamp("referred_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
@@ -343,13 +344,11 @@ export const notifications = pgTable(
 );
 
 // ---------------------------------------------------------------------------
-// Mission claims (gamified rewards: "nhiệm vụ nhận quà")
+// Customer missions and their reward history
 // ---------------------------------------------------------------------------
-//
-// Missions themselves are defined in code (src/lib/missions/catalog.ts). One
-// row here per (user, mission) once the user acts. Auto + referral missions go
-// straight to "approved" (credited); manual/social missions start "submitted"
-// (proof attached) and an admin moves them to "approved" or "rejected".
+
+// One row per customer and one-time mission. Keep historical claims and wallet
+// entries even when the fixed catalog changes in a future release.
 
 export const missionClaims = pgTable(
   "mission_claims",
@@ -358,7 +357,7 @@ export const missionClaims = pgTable(
     userId: uuid("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
-    // Mission catalog key, e.g. "first_link" | "invite_5" | "share_social".
+    // Stable mission definition key; old keys remain in historical claims.
     missionKey: text("mission_key").notNull(),
     // submitted | approved | rejected
     status: text("status").notNull(),
@@ -366,6 +365,9 @@ export const missionClaims = pgTable(
     reward: bigint("reward", { mode: "number" }).notNull().default(0),
     // Proof link/screenshot URL for manual (social) missions.
     proof: text("proof"),
+    // Optional screenshot kept private; served only to admins by a route handler.
+    proofImageData: text("proof_image_data"),
+    proofImageMime: text("proof_image_mime"),
     adminNote: text("admin_note"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
@@ -536,6 +538,29 @@ export const articles = pgTable(
     ),
   ],
 );
+
+// A referred customer can earn one invitation bonus for each side, once their
+// qualifying order is completed; unique referred_user_id is the payout guard.
+export const referralRewards = pgTable("referral_rewards", {
+  referredUserId: uuid("referred_user_id")
+    .primaryKey()
+    .references(() => users.id, { onDelete: "cascade" }),
+  referrerUserId: uuid("referrer_user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  orderId: uuid("order_id")
+    .notNull()
+    .references(() => orders.id, { onDelete: "cascade" }),
+  missionKey: text("mission_key").notNull(),
+  rewardEach: bigint("reward_each", { mode: "number" }).notNull(),
+  reversedAt: timestamp("reversed_at", { withTimezone: true }),
+  referrerUnrecovered: bigint("referrer_unrecovered", { mode: "number" }).notNull().default(0),
+  referredUnrecovered: bigint("referred_unrecovered", { mode: "number" }).notNull().default(0),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  index("referral_rewards_referrer_idx").on(t.referrerUserId),
+  index("referral_rewards_order_idx").on(t.orderId),
+]);
 
 export type MissionClaim = typeof missionClaims.$inferSelect;
 export type PrizeFund = typeof prizeFund.$inferSelect;

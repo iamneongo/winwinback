@@ -4,6 +4,9 @@ const nextConfig: NextConfig = {
   // Server runtime (not static export) — required for the database-backed
   // dashboard, auth, affiliate redirects and webhooks.
   output: "standalone",
+  experimental: {
+    serverActions: { bodySizeLimit: "3mb" },
+  },
   async headers() {
     return [{ source: "/sw.js", headers: [
       { key: "Cache-Control", value: "no-cache, no-store, must-revalidate" },

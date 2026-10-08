@@ -1,103 +1,108 @@
-/**
- * Mission catalog — the fixed set of "nhiệm vụ nhận quà" offered to customers.
- *
- * Rewards are credited to the wallet in VND. Missions come in three kinds:
- *  - "auto":     the system can verify completion itself (e.g. created a link).
- *  - "referral": completion depends on how many friends the user invited.
- *  - "manual":   social actions we cannot verify automatically; the user
- *                submits a proof (link/screenshot) and an admin approves.
- *
- * To add or retune a mission, edit this file — no DB migration needed.
- */
+/** Fixed customer missions from the NHVU worksheet. Changes require a code
+ * release; stable keys preserve existing claims and wallet history. */
 
-export type MissionKind = "auto" | "referral" | "manual";
-
-/** What an "auto" mission checks against the user's activity. */
-export type AutoCheck = "hasLink" | "hasOrder";
+export type MissionKind = "auto" | "manual" | "referral";
+export type AutoCheck = "firstOrderT3" | "hasLink";
 
 export type Mission = {
   key: string;
   title: string;
   description: string;
-  /** Lucide icon name resolved on the client. */
   icon: string;
-  /** Reward credited to the wallet in VND on completion. */
   reward: number;
   kind: MissionKind;
-  /** For kind "auto": which activity signal marks it complete. */
   check?: AutoCheck;
-  /** For kind "referral": number of invited (verified) friends required. */
-  target?: number;
-  /** For kind "manual": hint shown in the proof dialog. */
   proofHint?: string;
+  sortOrder: number;
+  active: boolean;
 };
 
-export const MISSIONS: Mission[] = [
-  {
-    key: "first_link",
-    title: "Tạo link hoàn tiền đầu tiên",
-    description: "Dán link sản phẩm Shopee/TikTok và tạo link hoàn tiền đầu tiên của bạn.",
-    icon: "Link2",
-    reward: 5000,
-    kind: "auto",
-    check: "hasLink",
-  },
+export const DEFAULT_MISSIONS: Mission[] = [
   {
     key: "first_order",
-    title: "Đơn hàng đầu tiên",
-    description: "Có đơn hàng đầu tiên được ghi nhận qua link của bạn.",
+    title: "Mua đơn hàng đầu tiên",
+    description: "Nhận thưởng khi đơn đầu tiên hoàn tất, được đối soát và qua mốc T+3.",
     icon: "ShoppingBag",
-    reward: 10000,
+    reward: 5_000,
     kind: "auto",
-    check: "hasOrder",
-  },
-  {
-    key: "share_social",
-    title: "Chia sẻ Win-Win Back lên mạng xã hội",
-    description: "Đăng bài giới thiệu Win-Win Back lên Facebook/Zalo/TikTok và gửi link bài viết.",
-    icon: "Share2",
-    reward: 5000,
-    kind: "manual",
-    proofHint: "Dán link bài đăng công khai của bạn.",
+    check: "firstOrderT3",
+    sortOrder: 10,
+    active: true,
   },
   {
     key: "join_group",
-    title: "Tham gia & đăng bài trong nhóm",
-    description: "Vào nhóm cộng đồng Win-Win Back và đăng một bài chia sẻ.",
+    title: "Tham gia nhóm Facebook",
+    description: "Tham gia nhóm cộng đồng và đăng một bài trong nhóm để nhận thưởng.",
     icon: "Users",
-    reward: 5000,
+    reward: 5_000,
     kind: "manual",
-    proofHint: "Dán link bài đăng trong nhóm (để công khai).",
+    proofHint: "Gửi link bài đăng trong nhóm hoặc ảnh chụp bài đăng để quản trị viên duyệt.",
+    sortOrder: 20,
+    active: true,
   },
   {
-    key: "review_5star",
-    title: "Đánh giá 5 sao",
-    description: "Đánh giá 5 sao cho Win-Win Back và gửi ảnh chụp màn hình.",
-    icon: "Star",
-    reward: 10000,
+    key: "video_1000",
+    title: "Video trải nghiệm đạt 1.000 lượt xem",
+    description: "Chia sẻ video trải nghiệm Win-Win Back và đạt ít nhất 1.000 lượt xem.",
+    icon: "Video",
+    reward: 10_000,
     kind: "manual",
-    proofHint: "Dán link/ảnh chụp màn hình đánh giá của bạn.",
+    proofHint: "Gửi link video công khai và ảnh chụp số lượt xem.",
+    sortOrder: 30,
+    active: true,
   },
   {
-    key: "invite_5",
-    title: "Mời 5 người bạn",
-    description: "Mời 5 bạn đăng ký Win-Win Back qua link giới thiệu của bạn.",
+    key: "video_5000",
+    title: "Video đạt 5.000 lượt xem",
+    description: "Thưởng thêm khi video trải nghiệm đạt ít nhất 5.000 lượt xem.",
+    icon: "Video",
+    reward: 10_000,
+    kind: "manual",
+    proofHint: "Gửi link video và ảnh chụp từ 5.000 lượt xem.",
+    sortOrder: 40,
+    active: true,
+  },
+  {
+    key: "video_10000",
+    title: "Video đạt 10.000 lượt xem",
+    description: "Thưởng thêm khi video trải nghiệm đạt ít nhất 10.000 lượt xem.",
+    icon: "Video",
+    reward: 30_000,
+    kind: "manual",
+    proofHint: "Gửi link video và ảnh chụp từ 10.000 lượt xem.",
+    sortOrder: 50,
+    active: true,
+  },
+  {
+    key: "video_50000",
+    title: "Video đạt 50.000 lượt xem",
+    description: "Thưởng thêm khi video trải nghiệm đạt ít nhất 50.000 lượt xem.",
+    icon: "Video",
+    reward: 50_000,
+    kind: "manual",
+    proofHint: "Gửi link video và ảnh chụp từ 50.000 lượt xem.",
+    sortOrder: 60,
+    active: true,
+  },
+  {
+    key: "video_200000",
+    title: "Video đạt 200.000 lượt xem",
+    description: "Thưởng thêm khi video trải nghiệm đạt ít nhất 200.000 lượt xem.",
+    icon: "Video",
+    reward: 100_000,
+    kind: "manual",
+    proofHint: "Gửi link video và ảnh chụp từ 200.000 lượt xem.",
+    sortOrder: 70,
+    active: true,
+  },
+  {
+    key: "invite_qualified",
+    title: "Mời bạn (không giới hạn)",
+    description: "Mỗi bạn được mời có đơn hợp lệ trong 60 ngày: bạn và người được mời đều nhận mức thưởng hiển thị.",
     icon: "UserPlus",
-    reward: 20000,
+    reward: 20_000,
     kind: "referral",
-    target: 5,
-  },
-  {
-    key: "invite_10",
-    title: "Mời 10 người bạn",
-    description: "Mời 10 bạn đăng ký Win-Win Back qua link giới thiệu của bạn.",
-    icon: "UsersRound",
-    reward: 50000,
-    kind: "referral",
-    target: 10,
+    sortOrder: 80,
+    active: true,
   },
 ];
-
-export const missionByKey: Record<string, Mission> = Object.fromEntries(
-  MISSIONS.map((m) => [m.key, m]),
-);

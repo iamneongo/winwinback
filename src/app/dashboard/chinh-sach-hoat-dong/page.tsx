@@ -1,18 +1,17 @@
 import { PolicyShell, PolicySection } from "@/components/policy/PolicyShell";
 import { cashbackRate, minWithdrawal, formatVnd } from "@/lib/config";
-import { missionByKey } from "@/lib/missions/catalog";
+import { listMissions } from "@/lib/missions/definitions";
 
 export const metadata = { title: "Chính sách hoạt động — Win-Win Back" };
 // Render at runtime so CASHBACK_RATE / MIN_WITHDRAWAL reflect production env
 // (Docker build stage has no env → static prerender would bake the defaults).
 export const dynamic = "force-dynamic";
 
-export default function ActivityPolicyPage() {
+export default async function ActivityPolicyPage() {
   const ratePct = Math.round(cashbackRate * 100);
-  const invite5 = missionByKey["invite_5"]?.reward ?? 0;
-  const invite10 = missionByKey["invite_10"]?.reward ?? 0;
-  const firstLink = missionByKey["first_link"]?.reward ?? 0;
-  const firstOrder = missionByKey["first_order"]?.reward ?? 0;
+  const missions = await listMissions();
+  const firstOrder = missions.find((mission) => mission.key === "first_order");
+  const invite = missions.find((mission) => mission.kind === "referral");
 
   return (
     <PolicyShell
@@ -49,20 +48,18 @@ export default function ActivityPolicyPage() {
       </PolicySection>
 
       <PolicySection heading="Giới thiệu bạn bè (referral) & nhiệm vụ">
-        <p>
-          Chia sẻ link giới thiệu của bạn (mục <b>Nhiệm vụ nhận quà</b>). Bạn được
-          mời phải đăng ký và xác minh email mới được tính. Phần thưởng cộng thẳng
-          vào ví:
-        </p>
+        {invite ? <p>
+          Chia sẻ link giới thiệu của bạn trong mục <b>Nhiệm vụ nhận quà</b>.
+          Nếu người được mời phát sinh đơn hợp lệ trong 60 ngày sau khi tham gia,
+          phần thưởng được cộng vào ví của cả hai người:
+        </p> : <p>Chương trình mời bạn nhận thưởng hiện chưa mở. Các nhiệm vụ đang hoạt động được hiển thị trong mục <b>Nhiệm vụ nhận quà</b>.</p>}
         <ul className="ml-5 list-disc space-y-1">
-          <li>Mời 5 bạn: <b>+{formatVnd(invite5)}</b></li>
-          <li>Mời 10 bạn: <b>+{formatVnd(invite10)}</b></li>
-          <li>Tạo link hoàn tiền đầu tiên: <b>+{formatVnd(firstLink)}</b></li>
-          <li>Đơn hàng đầu tiên: <b>+{formatVnd(firstOrder)}</b></li>
+          {invite && <li>Mỗi bạn đủ điều kiện: <b>+{formatVnd(invite.reward)}</b> cho mỗi bên, không giới hạn số bạn.</li>}
+          {firstOrder && <li>Đơn đầu tiên hoàn tất và qua T+3: <b>+{formatVnd(firstOrder.reward)}</b>.</li>}
         </ul>
         <p className="text-xs text-[#8298b6]">
-          Các nhiệm vụ mạng xã hội (chia sẻ, đăng nhóm, đánh giá) cần gửi bằng
-          chứng và được quản trị viên duyệt trước khi cộng thưởng.
+          Các nhiệm vụ cần bằng chứng (như bài đăng nhóm và video) chỉ được cộng
+          thưởng sau khi quản trị viên kiểm tra và duyệt.
         </p>
       </PolicySection>
 

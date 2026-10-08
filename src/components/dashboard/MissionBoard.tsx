@@ -11,6 +11,7 @@ import {
   Star,
   UserPlus,
   UsersRound,
+  Video,
   Gift,
   Check,
   Copy,
@@ -35,6 +36,7 @@ const icons: Record<string, LucideIcon> = {
   Star,
   UserPlus,
   UsersRound,
+  Video,
 };
 
 type Msg = { key: string; error?: string; success?: string } | null;
@@ -54,6 +56,8 @@ export function MissionBoard({
   const [copied, setCopied] = useState(false);
   const [proofFor, setProofFor] = useState<MissionView | null>(null);
   const [proof, setProof] = useState("");
+  const [proofImage, setProofImage] = useState<File | null>(null);
+  const hasReferralMission = missions.some((mission) => mission.kind === "referral");
 
   function claim(key: string) {
     startTransition(async () => {
@@ -66,11 +70,15 @@ export function MissionBoard({
   function sendProof() {
     if (!proofFor) return;
     const key = proofFor.key;
+    const evidence = new FormData();
+    evidence.set("proof", proof);
+    if (proofImage) evidence.set("image", proofImage);
     startTransition(async () => {
-      const res = await submitProofAction(key, proof);
+      const res = await submitProofAction(key, evidence);
       if (res.success) {
         setProofFor(null);
         setProof("");
+        setProofImage(null);
         router.refresh();
       }
       setMsg({ key, ...res });
@@ -101,15 +109,15 @@ export function MissionBoard({
   return (
     <div className="space-y-5">
       {/* Referral / invite card */}
-      <section className="ww-dashboard-link-banner relative overflow-hidden rounded-xl px-5 py-6 text-white shadow-[0_8px_24px_rgba(9,54,95,0.14)] sm:px-7">
+      {hasReferralMission && <section className="ww-dashboard-link-banner relative overflow-hidden rounded-xl px-5 py-6 text-white shadow-[0_8px_24px_rgba(9,54,95,0.14)] sm:px-7">
         <div className="relative z-10 max-w-[42rem]">
           <h2 className="flex items-center gap-2 text-lg font-black tracking-tight">
             <Gift className="h-5 w-5 text-[#d7fb76]" /> Mời bạn — nhận thưởng
           </h2>
           <p className="mt-1 text-sm text-white/75">
-            Chia sẻ link giới thiệu của bạn. Mỗi bạn đăng ký giúp bạn tiến gần
-            hơn tới phần thưởng. Bạn đã mời được{" "}
-            <b className="text-[#d7fb76]">{referralCount}</b> người.
+            Chia sẻ link giới thiệu của bạn. Bạn và người được mời sẽ nhận thưởng
+            sau đơn hợp lệ. Đã có{" "}
+            <b className="text-[#d7fb76]">{referralCount}</b> người được mời có đơn hợp lệ.
           </p>
           <div className="mt-3 flex flex-col gap-2 sm:flex-row">
             <input
@@ -135,9 +143,10 @@ export function MissionBoard({
             </Button>
           </div>
         </div>
-      </section>
+      </section>}
 
       {/* Mission grid */}
+      {missions.length === 0 && <p className="rounded-xl border border-dashed border-[#cbd9ec] bg-white px-4 py-8 text-center text-sm text-[#58749a]">Hiện chưa có nhiệm vụ nào. Vui lòng quay lại sau.</p>}
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {missions.map((m) => {
           const Icon = icons[m.icon] ?? Gift;
@@ -209,24 +218,35 @@ export function MissionBoard({
           if (!next) {
             setProofFor(null);
             setProof("");
+            setProofImage(null);
           }
         }}
       >
         <Dialog.Portal>
           <Dialog.Backdrop className="fixed inset-0 z-50 bg-black/45 backdrop-blur-[2px]" />
-          <Dialog.Popup className="fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-6 shadow-[0_24px_60px_rgba(9,54,95,0.28)]">
+          <Dialog.Popup className="fixed left-1/2 top-1/2 z-50 max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl bg-white p-6 shadow-[0_24px_60px_rgba(9,54,95,0.28)]">
             <Dialog.Title className="text-lg font-black tracking-tight text-[#0d315d]">
               {proofFor?.title}
             </Dialog.Title>
             <Dialog.Description className="mt-1.5 text-sm leading-6 text-[#6681a7]">
-              {proofFor?.proofHint ?? "Dán link/bằng chứng để admin duyệt."}
+              {proofFor?.proofHint ?? "Dán link hoặc tải ảnh bằng chứng để admin duyệt."}
             </Dialog.Description>
             <input
               value={proof}
               onChange={(e) => setProof(e.target.value)}
-              placeholder="https://..."
+              aria-label="Link bài đăng hoặc video bằng chứng"
+              placeholder="Link bài đăng/video (nếu có)"
               className="mt-4 w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm text-gray-700 outline-none focus:border-[#9ddd5d]"
             />
+            <label className="mt-3 grid gap-1.5 text-xs font-semibold text-[#31527d]">
+              Hoặc tải ảnh chụp bằng chứng (tối đa 2 MB)
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                onChange={(event) => setProofImage(event.target.files?.[0] ?? null)}
+                className="w-full rounded-lg border border-[#d7e3f2] bg-white px-3 py-2 text-xs text-[#31527d] file:mr-3 file:rounded-md file:border-0 file:bg-[#eafbe0] file:px-2 file:py-1 file:font-bold file:text-[#2f7a1c]"
+              />
+            </label>
             <div className="mt-5 flex flex-col gap-2">
               <Button
                 variant="cta"
@@ -293,7 +313,7 @@ function renderAction(
     case "in_progress":
       return (
         <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#6681a7]">
-          Mời thêm bạn để mở khoá thưởng
+          Tự động cộng thưởng khi người được mời có đơn hợp lệ
         </span>
       );
     case "available":

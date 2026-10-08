@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { syncTikTokOrders } from "@/lib/affiliate/tiktok/sync";
 import { reconcile as reconcileShopeeOrders } from "@/lib/affiliate/shopee/sync";
+import { reconcileReferralRewards, reconcileReferralReversals } from "@/lib/missions/referral";
 
 export const dynamic = "force-dynamic";
 
@@ -24,6 +25,8 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       syncTikTokOrders({ sinceDays: 30 }),
       reconcileShopeeOrders({ sinceDays: 30 }),
     ]);
+    const referrals = await reconcileReferralRewards().catch((error: unknown) => ({ error: String(error) }));
+    const referralReversals = await reconcileReferralReversals().catch((error: unknown) => ({ error: String(error) }));
     return NextResponse.json({
       ok: true,
       tiktok:
@@ -34,6 +37,8 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         shopee.status === "fulfilled"
           ? shopee.value
           : { error: String(shopee.reason) },
+      referrals,
+      referralReversals,
     });
   } catch (e) {
     return NextResponse.json(

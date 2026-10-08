@@ -109,6 +109,14 @@ export async function settleOrderCashback(orderId: string): Promise<boolean> {
 
   if (!credited) return false;
 
+  // Invitation bonuses are independent from cashback settlement. A failure
+  // here must never undo or block the customer's earned order cashback; cron
+  // reconciliation retries eligible orders.
+  const { settleReferralReward } = await import("@/lib/missions/referral");
+  await settleReferralReward(orderId).catch((error: unknown) => {
+    console.error("Referral reward settlement failed", error);
+  });
+
   // Best-effort notification; never block or fail the settlement.
   void notifyCashbackCredited(credited).catch(() => {});
   return true;
@@ -172,6 +180,12 @@ export async function reverseOrderCashback(orderId: string): Promise<boolean> {
     });
     return true;
   });
+  if (reversed) {
+    const { reverseReferralReward } = await import("@/lib/missions/referral");
+    await reverseReferralReward(orderId).catch((error: unknown) => {
+      console.error("Referral reward reversal failed", error);
+    });
+  }
   return reversed;
 }
 
