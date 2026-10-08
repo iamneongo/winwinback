@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 export function SiteHeader() {
   return (
     <header className="bg-[#0d315d]">
-      <div className="mx-auto flex h-16 max-w-screen-xl items-center justify-between px-5">
+      <div className="mx-auto flex h-16 max-w-screen-xl items-center justify-between gap-2 px-4 sm:px-5">
         <Link href="/" className="flex items-center gap-2">
           <BrandLogo light />
         </Link>
@@ -24,10 +24,10 @@ export function SiteHeader() {
         <Button
           variant="cta"
           nativeButton={false}
-          className="h-auto gap-1.5 rounded-full px-4 py-2 text-sm font-bold"
+          className="h-auto min-h-11 gap-1.5 rounded-full px-3 py-2 text-xs font-bold sm:px-4 sm:text-sm"
           render={<a href="/login" />}
         >
-          Đăng nhập <ArrowRight className="h-3.5 w-3.5" />
+          Đăng nhập <ArrowRight className="hidden h-3.5 w-3.5 sm:block" />
         </Button>
       </div>
     </header>

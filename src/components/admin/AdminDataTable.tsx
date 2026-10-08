@@ -74,6 +74,7 @@ export function AdminDataTable<TData>({
   }, { shallow: false, history: "push", scroll: false, startTransition });
   const [draft, setDraft] = useState(query.q);
   const [localPage, setLocalPage] = useState(1);
+  const [requestedPage, setRequestedPage] = useState<{ from: number; to: number } | null>(null);
   const [localSorting, setLocalSorting] = useState<SortingState>([]);
   const [localFilters, setLocalFilters] = useState<ColumnFiltersState>([]);
 
@@ -111,16 +112,22 @@ export function AdminDataTable<TData>({
     state: { sorting, globalFilter: mode === "client" ? draft : "", columnFilters: localFilters, pagination: { pageIndex: (mode === "client" ? localPage : page) - 1, pageSize } },
   });
   const activeFilters = filters.some((filter) => mode === "client" ? localFilters.some((item) => item.id === filter.key && item.value) : Boolean(query[filter.key]));
-  const currentPage = mode === "client" ? localPage : page;
+  // nuqs updates its query state immediately, while the server still renders
+  // the previous page. Show the destination and skeleton from the click onward.
+  const waitingForPage = mode === "server" && requestedPage?.from === page && requestedPage.to !== page && query.trang === requestedPage.to;
+  const currentPage = mode === "client" ? localPage : waitingForPage ? requestedPage.to : page;
   const visibleTotal = mode === "client" ? table.getFilteredRowModel().rows.length : totalRows;
   const visiblePageCount = mode === "client" ? Math.max(1, table.getPageCount()) : pageCount;
-  const isLoading = mode === "server" && (pending || draft.trim() !== query.q);
+  const isLoading = mode === "server" && (pending || draft.trim() !== query.q || waitingForPage);
   const pageNumbers = Array.from(new Set([1, currentPage - 1, currentPage, currentPage + 1, visiblePageCount]))
     .filter((number) => number >= 1 && number <= visiblePageCount)
     .sort((a, b) => a - b);
   const goToPage = (target: number) => {
     if (mode === "client") setLocalPage(target);
-    else void setQuery({ trang: target });
+    else {
+      setRequestedPage({ from: page, to: target });
+      void setQuery({ trang: target }).catch(() => setRequestedPage(null));
+    }
   };
 
   return (
@@ -234,14 +241,14 @@ export function AdminDataTable<TData>({
       </ScrollArea>
 
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#e8eef6] px-3 py-3 text-sm text-[#49688f] sm:px-4">
-        <p aria-live="polite">{visibleTotal ? `${(currentPage - 1) * pageSize + 1}–${Math.min(currentPage * pageSize, visibleTotal)} / ${visibleTotal}` : "0 kết quả"}{pending && mode === "server" ? " · Đang tải..." : ""}</p>
+        <p aria-live="polite">{isLoading ? `Đang tải trang ${currentPage}...` : visibleTotal ? `${(currentPage - 1) * pageSize + 1}–${Math.min(currentPage * pageSize, visibleTotal)} / ${visibleTotal}` : "0 kết quả"}</p>
         <div className="flex items-center gap-1.5" role="navigation" aria-label={`Phân trang ${ariaLabel}`}>
-          <Button variant="outline" size="icon-lg" aria-label="Trang trước" disabled={currentPage <= 1 || pending} onClick={() => goToPage(currentPage - 1)}><ChevronLeft className="size-4" /></Button>
+          <Button variant="outline" size="icon-lg" aria-label="Trang trước" disabled={currentPage <= 1 || isLoading} onClick={() => goToPage(currentPage - 1)}><ChevronLeft className="size-4" /></Button>
           {pageNumbers.map((number, index) => <span key={number} className="contents">
             {index > 0 && number - pageNumbers[index - 1] > 1 ? <span className="hidden px-1 text-[#8aa0bd] sm:inline" aria-hidden="true">…</span> : null}
-            <Button variant={number === currentPage ? "default" : "outline"} size="icon-lg" aria-label={`Trang ${number}`} aria-current={number === currentPage ? "page" : undefined} disabled={pending} className={number !== currentPage && number !== 1 && number !== visiblePageCount ? "hidden sm:inline-flex" : undefined} onClick={() => goToPage(number)}>{number}</Button>
+            <Button variant={number === currentPage ? "default" : "outline"} size="icon-lg" aria-label={`Trang ${number}`} aria-current={number === currentPage ? "page" : undefined} disabled={isLoading} className={number !== currentPage && number !== 1 && number !== visiblePageCount ? "hidden sm:inline-flex" : undefined} onClick={() => goToPage(number)}>{number}</Button>
           </span>)}
-          <Button variant="outline" size="icon-lg" aria-label="Trang sau" disabled={currentPage >= visiblePageCount || pending} onClick={() => goToPage(currentPage + 1)}><ChevronRight className="size-4" /></Button>
+          <Button variant="outline" size="icon-lg" aria-label="Trang sau" disabled={currentPage >= visiblePageCount || isLoading} onClick={() => goToPage(currentPage + 1)}><ChevronRight className="size-4" /></Button>
         </div>
       </div>
     </section>
