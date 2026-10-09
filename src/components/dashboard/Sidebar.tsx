@@ -87,10 +87,11 @@ export function Sidebar({
             );
           })}
         </SidebarMenu>
-        {/* Promo lives in the scrollable content, pinned to the bottom via
-            mt-auto, so it scrolls into view on short screens instead of the
-            old height-based display:none. Hidden only in the icon rail. */}
-        <div className="ww-sidebar-promo relative mt-auto h-56 shrink-0 overflow-hidden rounded-2xl bg-[#062c52] p-4 transition-opacity duration-200 group-data-[collapsible=icon]:pointer-events-none group-data-[collapsible=icon]:opacity-0">
+      </SidebarContent>
+      <SidebarFooter className="gap-3 overflow-hidden px-3 pt-0 pb-5">
+        {/* Keep the promo outside the scrollable navigation so it stays pinned
+            above the account action while only the menu scrolls. */}
+        <div className="ww-sidebar-promo relative h-56 shrink-0 overflow-hidden rounded-2xl bg-[#062c52] p-4 group-data-[collapsible=icon]:hidden">
           <Image
             src="/images/dashboard-sidebar-mascot-v2.png"
             alt=""
@@ -104,8 +105,6 @@ export function Sidebar({
             <p className="mt-0.5 font-bold text-[#d9fb89]">Hoàn tiền thật</p>
           </div>
         </div>
-      </SidebarContent>
-      <SidebarFooter className="overflow-hidden px-3 pt-0 pb-5">
         <div className="ww-sidebar-logout shrink-0">
           <button
             type="button"
