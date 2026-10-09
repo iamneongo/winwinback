@@ -278,6 +278,28 @@ export const withdrawals = pgTable(
   (t) => [index("withdrawals_user_idx").on(t.userId)],
 );
 
+// The user's saved default bank account. Withdrawal rows keep their own
+// snapshots so later account edits never change an existing payout request.
+export const bankAccounts = pgTable(
+  "bank_accounts",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    bankName: text("bank_name").notNull(),
+    bankAccount: text("bank_account").notNull(),
+    accountHolder: text("account_holder").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [uniqueIndex("bank_accounts_user_id_idx").on(t.userId)],
+);
+
 // ---------------------------------------------------------------------------
 // Link clicks (attribution log)
 // ---------------------------------------------------------------------------

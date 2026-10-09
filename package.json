@@ -22,6 +22,7 @@
     "db:migrate-articles-category": "node scripts/migrate-articles-category.mjs",
     "db:migrate-article-progress": "node scripts/migrate-article-progress.mjs",
     "db:migrate-missions": "node scripts/migrate-missions.mjs",
+    "db:migrate-bank-accounts": "node scripts/migrate-bank-accounts.mjs",
     "set-role": "node --env-file=.env.local scripts/set-role.mjs"
   },
   "dependencies": {

@@ -14,9 +14,11 @@ const inputClass =
 export function WithdrawalForm({
   balance,
   minWithdrawal,
+  bankAccount,
 }: {
   balance: number;
   minWithdrawal: number;
+  bankAccount?: { bankName: string; bankAccount: string; accountHolder: string } | null;
 }) {
   const [state, action] = useActionState<ActionState, FormData>(
     requestWithdrawalAction,
@@ -44,6 +46,7 @@ export function WithdrawalForm({
           name="bankName"
           type="text"
           required
+          defaultValue={bankAccount?.bankName ?? ""}
           placeholder="Ngân hàng (VD: Vietcombank)"
           className={inputClass}
         />
@@ -51,6 +54,7 @@ export function WithdrawalForm({
           name="bankAccount"
           type="text"
           required
+          defaultValue={bankAccount?.bankAccount ?? ""}
           placeholder="Số tài khoản"
           className={inputClass}
         />
@@ -58,6 +62,7 @@ export function WithdrawalForm({
           name="accountHolder"
           type="text"
           required
+          defaultValue={bankAccount?.accountHolder ?? ""}
           placeholder="Tên chủ tài khoản"
           className={inputClass}
         />

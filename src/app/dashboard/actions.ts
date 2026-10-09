@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { after } from "next/server";
 import { z } from "zod";
 import { db } from "@/db";
-import { affiliateLinks, users, withdrawals } from "@/db/schema";
+import { affiliateLinks, bankAccounts, users, withdrawals } from "@/db/schema";
 import { and, eq, lt, ne, or } from "drizzle-orm";
 import { requireUser } from "@/lib/auth/guards";
 import { detectPlatform } from "@/lib/affiliate/platform";
@@ -214,6 +214,40 @@ const withdrawalSchema = z.object({
   bankAccount: z.string().trim().min(4, "Nhập số tài khoản").max(40),
   accountHolder: z.string().trim().min(1, "Nhập tên chủ tài khoản").max(80),
 });
+
+const bankAccountSchema = z.object({
+  bankName: z.string().trim().min(1, "Nhập tên ngân hàng").max(80),
+  bankAccount: z.string().trim().min(4, "Nhập số tài khoản").max(40),
+  accountHolder: z.string().trim().min(1, "Nhập tên chủ tài khoản").max(80),
+});
+
+export async function saveBankAccountAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const user = await requireUser();
+  const parsed = bankAccountSchema.safeParse({
+    bankName: formData.get("bankName"),
+    bankAccount: formData.get("bankAccount"),
+    accountHolder: formData.get("accountHolder"),
+  });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Thông tin ngân hàng chưa hợp lệ" };
+  }
+
+  try {
+    await db.insert(bankAccounts).values({ userId: user.id, ...parsed.data }).onConflictDoUpdate({
+      target: bankAccounts.userId,
+      set: { ...parsed.data, updatedAt: new Date() },
+    });
+  } catch {
+    return { error: "Không lưu được tài khoản ngân hàng. Vui lòng thử lại." };
+  }
+
+  revalidatePath("/dashboard/tai-khoan");
+  revalidatePath("/dashboard/vi");
+  return { success: "Đã lưu tài khoản ngân hàng." };
+}
 
 export async function requestWithdrawalAction(
   _prev: ActionState,
