@@ -19,7 +19,7 @@ type MyArticleRow = {
 };
 
 const columns: ColumnDef<MyArticleRow>[] = [
-  { accessorKey: "title", header: "Sản phẩm", size: 320, cell: ({ row }) => <span className="line-clamp-2 break-words font-semibold text-[#173861]">{row.original.title?.trim() || `Sản phẩm trên ${platformLabel[row.original.platform] ?? "sàn"}`}</span> },
+  { accessorKey: "title", header: "Sản phẩm", size: 320, cell: ({ row }) => <Link href={`/dashboard/bai-viet/${row.original.shortCode}`} className="line-clamp-2 break-words font-semibold text-[#1261ed] hover:underline">{row.original.title?.trim() || `Sản phẩm trên ${platformLabel[row.original.platform] ?? "sàn"}`}</Link> },
   { accessorKey: "platform", header: "Sàn", size: 105, enableSorting: false, cell: ({ row }) => platformLabel[row.original.platform] ?? row.original.platform },
   { accessorKey: "articleStatus", header: "Bài viết", size: 285, cell: ({ row }) => <ArticleProgress code={row.original.shortCode} initial={{ status: row.original.articleStatus, preview: null, slug: row.original.articleSlug, updatedAt: row.original.articleUpdatedAt }} allowRetry compact /> },
   { accessorKey: "createdAt", header: "Ngày tạo", size: 110, cell: ({ row }) => new Date(row.original.createdAt).toLocaleDateString("vi-VN") },
@@ -45,5 +45,6 @@ export function MyArticlesTable({ rows, total, page }: { rows: MyArticleRow[]; t
     ]}
     emptyMessage="Không có bài viết phù hợp. Thử đổi từ khóa hoặc bộ lọc."
     minWidth="950px"
+    getRowHref={(row) => `/dashboard/bai-viet/${row.shortCode}`}
   />;
 }

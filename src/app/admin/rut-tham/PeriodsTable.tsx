@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Dices } from "lucide-react";
 import { AdminDataTable } from "@/components/admin/AdminDataTable";
@@ -23,7 +24,7 @@ export type PeriodTableRow = {
 
 const fmtDate = (value: string) => new Date(value).toLocaleString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
 const columns: ColumnDef<PeriodTableRow>[] = [
-  { accessorKey: "name", header: "Kỳ", size: 165, cell: ({ row }) => <b className="text-[#244a7c]">{row.original.name}</b> },
+  { accessorKey: "name", header: "Kỳ", size: 165, cell: ({ row }) => <Link href={`/admin/rut-tham/${row.original.id}`} className="font-bold text-[#1261ed] hover:underline">{row.original.name}</Link> },
   { accessorKey: "startAt", header: "Khoảng thời gian", size: 220, cell: ({ row }) => <span className="leading-5">{fmtDate(row.original.startAt)}<br />→ {fmtDate(row.original.endAt)}</span> },
   { accessorKey: "status", header: "Trạng thái", size: 115, cell: ({ row }) => <Badge variant={row.original.status === "drawn" ? "info" : "success"}>{row.original.status === "drawn" ? "Đã quay" : "Đang mở"}</Badge> },
   { id: "tickets", header: "Phiếu", size: 100, enableSorting: false, cell: ({ row }) => row.original.status === "drawn" ? "—" : `${row.original.eligibleTickets} phiếu` },
@@ -33,5 +34,5 @@ const columns: ColumnDef<PeriodTableRow>[] = [
 ];
 
 export function PeriodsTable({ rows, total, page }: { rows: PeriodTableRow[]; total: number; page: number }) {
-  return <AdminDataTable data={rows} columns={columns} totalRows={total} page={page} pageSize={20} ariaLabel="Danh sách kỳ rút thăm" searchPlaceholder="Tìm tên kỳ rút thăm..." filters={[{ key: "status", label: "Mọi trạng thái", options: [{ value: "open", label: "Đang mở" }, { value: "drawn", label: "Đã quay" }] }]} minWidth="1100px" emptyMessage="Không có kỳ rút thăm phù hợp." />;
+  return <AdminDataTable data={rows} columns={columns} totalRows={total} page={page} pageSize={20} ariaLabel="Danh sách kỳ rút thăm" searchPlaceholder="Tìm tên kỳ rút thăm..." filters={[{ key: "status", label: "Mọi trạng thái", options: [{ value: "open", label: "Đang mở" }, { value: "drawn", label: "Đã quay" }] }]} minWidth="1100px" emptyMessage="Không có kỳ rút thăm phù hợp." getRowHref={(row) => `/admin/rut-tham/${row.id}`} />;
 }

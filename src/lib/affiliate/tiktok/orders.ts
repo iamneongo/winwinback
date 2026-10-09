@@ -53,6 +53,21 @@ export async function fetchConnectedCreatorOrders(): Promise<TikTokOrderRow[]> {
   return flattenOrders(orders);
 }
 
+/** Look up a clicked live-table order across recent API pages for its detail page. */
+export async function fetchConnectedCreatorOrder(orderId: string): Promise<AffiliateOrder | null> {
+  const accessToken = await getValidTikTokAccessToken();
+  if (!accessToken) throw new Error("Chưa kết nối tài khoản Creator TikTok.");
+  let pageToken: string | undefined;
+  for (let page = 0; page < 20; page++) {
+    const result = await searchAffiliateOrders(accessToken, { pageSize: 50, pageToken });
+    const found = result.orders.find((order) => order.id === orderId);
+    if (found) return found;
+    if (!result.nextPageToken) break;
+    pageToken = result.nextPageToken;
+  }
+  return null;
+}
+
 /** Persisted verdict for orders.tiktokVerifiedStatus. */
 export type TikTokVerifiedStatus =
   | "settled"

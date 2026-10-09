@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import type { ColumnDef } from "@tanstack/react-table";
 import { AdminDataTable } from "@/components/admin/AdminDataTable";
 import { OrderStatusControl } from "@/components/admin/OrderStatusControl";
@@ -23,7 +24,7 @@ export type OrderTableRow = {
 
 const statusVariant = { pending: "warning", confirmed: "default", completed: "success", cancelled: "destructive" } as const;
 const columns: ColumnDef<OrderTableRow>[] = [
-  { accessorKey: "externalOrderId", header: "Mã đơn", size: 165, cell: ({ row }) => <b className="break-all text-[#365780]">{row.original.externalOrderId}</b> },
+  { accessorKey: "externalOrderId", header: "Mã đơn", size: 165, cell: ({ row }) => <Link href={`/admin/don-hang/${row.original.id}`} className="break-all font-bold text-[#1261ed] hover:underline">{row.original.externalOrderId}</Link> },
   { id: "user", header: "Người dùng", size: 180, enableSorting: false, cell: ({ row }) => <span><b className="block text-[#2f4f78]">{row.original.name}</b><small className="break-all text-[#8aa0bd]">{row.original.email}</small></span> },
   { accessorKey: "productName", header: "Sản phẩm", size: 220, cell: ({ row }) => <span className="line-clamp-2">{row.original.productName}</span> },
   { accessorKey: "platform", header: "Sàn", size: 105, cell: ({ row }) => platformLabel[row.original.platform] },
@@ -39,5 +40,5 @@ export function OrdersTable({ rows, total, page }: { rows: OrderTableRow[]; tota
   return <AdminDataTable data={rows} columns={columns} totalRows={total} page={page} pageSize={25} ariaLabel="Danh sách đơn hàng" searchPlaceholder="Tìm mã đơn, sản phẩm, người dùng..." filters={[
     { key: "status", label: "Tất cả trạng thái", options: [{ value: "pending", label: "Chờ duyệt" }, { value: "confirmed", label: "Đã xác nhận" }, { value: "completed", label: "Hoàn tất" }, { value: "cancelled", label: "Đã hủy" }] },
     { key: "platform", label: "Tất cả sàn", options: [{ value: "shopee", label: "Shopee" }, { value: "tiktok", label: "TikTok Shop" }] },
-  ]} minWidth="1400px" emptyMessage="Không tìm thấy đơn hàng phù hợp." />;
+  ]} minWidth="1400px" emptyMessage="Không tìm thấy đơn hàng phù hợp." getRowHref={(row) => `/admin/don-hang/${row.id}`} />;
 }

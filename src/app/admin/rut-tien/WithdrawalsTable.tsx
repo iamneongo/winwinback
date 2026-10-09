@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import type { ColumnDef } from "@tanstack/react-table";
 import { AdminDataTable } from "@/components/admin/AdminDataTable";
 import { WithdrawalControls } from "@/components/admin/WithdrawalControls";
@@ -22,7 +23,7 @@ export type WithdrawalTableRow = {
 
 const statusVariant = { pending: "warning", approved: "default", rejected: "destructive", paid: "success" } as const;
 const columns: ColumnDef<WithdrawalTableRow>[] = [
-  { id: "code", header: "Mã YC", size: 115, enableSorting: false, cell: ({ row }) => <b className="text-[#365780]">RT{row.original.id.slice(0, 8).toUpperCase()}</b> },
+  { id: "code", header: "Mã YC", size: 115, enableSorting: false, cell: ({ row }) => <Link href={`/admin/rut-tien/${row.original.id}`} className="font-bold text-[#1261ed] hover:underline">RT{row.original.id.slice(0, 8).toUpperCase()}</Link> },
   { id: "user", header: "Người dùng", size: 190, enableSorting: false, cell: ({ row }) => <span><b className="block text-[#2f4f78]">{row.original.name}</b><small className="break-all text-[#8aa0bd]">{row.original.email}</small></span> },
   { accessorKey: "amount", header: "Số tiền", size: 120, cell: ({ row }) => <b className="text-[#c0392b]">{formatVnd(row.original.amount)}</b> },
   { accessorKey: "bankName", header: "Ngân hàng", size: 200, cell: ({ row }) => <span><b className="block text-[#35557e]">{row.original.bankName}</b><small className="text-[#8aa0bd]">**** {row.original.bankAccountLast4} · {row.original.accountHolder}</small></span> },
@@ -33,5 +34,5 @@ const columns: ColumnDef<WithdrawalTableRow>[] = [
 ];
 
 export function WithdrawalsTable({ rows, total, page }: { rows: WithdrawalTableRow[]; total: number; page: number }) {
-  return <AdminDataTable data={rows} columns={columns} totalRows={total} page={page} pageSize={25} ariaLabel="Danh sách yêu cầu rút tiền" searchPlaceholder="Tìm người dùng, chủ tài khoản..." filters={[{ key: "status", label: "Tất cả trạng thái", options: [{ value: "pending", label: "Chờ xử lý" }, { value: "approved", label: "Đã duyệt" }, { value: "paid", label: "Đã chi" }, { value: "rejected", label: "Từ chối" }] }]} minWidth="1200px" emptyMessage="Không tìm thấy yêu cầu rút tiền phù hợp." />;
+  return <AdminDataTable data={rows} columns={columns} totalRows={total} page={page} pageSize={25} ariaLabel="Danh sách yêu cầu rút tiền" searchPlaceholder="Tìm người dùng, chủ tài khoản..." filters={[{ key: "status", label: "Tất cả trạng thái", options: [{ value: "pending", label: "Chờ xử lý" }, { value: "approved", label: "Đã duyệt" }, { value: "paid", label: "Đã chi" }, { value: "rejected", label: "Từ chối" }] }]} minWidth="1200px" emptyMessage="Không tìm thấy yêu cầu rút tiền phù hợp." getRowHref={(row) => `/admin/rut-tien/${row.id}`} />;
 }

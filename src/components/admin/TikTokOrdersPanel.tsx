@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import {
@@ -19,7 +20,7 @@ type SyncedOrder = {
 };
 
 const columns: ColumnDef<SyncedOrder>[] = [
-  { accessorKey: "orderId", header: "Order ID", size: 170, cell: ({ row }) => <span className="break-all font-mono">{row.original.orderId}</span> },
+  { accessorKey: "orderId", header: "Order ID", size: 170, cell: ({ row }) => <Link href={`/admin/integrations/tiktok-orders/${encodeURIComponent(row.original.orderId)}`} className="break-all font-mono text-[#1261ed] hover:underline">{row.original.orderId}</Link> },
   { accessorKey: "productId", header: "Product ID", size: 160, cell: ({ row }) => <span className="break-all font-mono">{row.original.productId}</span> },
   { accessorKey: "productName", header: "Sản phẩm", size: 230, cell: ({ row }) => <span className="line-clamp-2">{row.original.productName}</span> },
   { accessorKey: "price", header: "Giá", size: 120 },
@@ -57,7 +58,7 @@ export function TikTokOrdersPanel() {
           <p className="text-xs text-[#6681a7]">
             Đã đồng bộ {state.rows.length} dòng lúc {state.fetchedAt}.
           </p>
-          <AdminDataTable key={state.fetchedAt} mode="client" data={state.rows} columns={columns} totalRows={state.rows.length} page={1} pageSize={10} ariaLabel="Đơn hàng đồng bộ TikTok" searchPlaceholder="Tìm đơn hàng TikTok..." minWidth="1000px" emptyMessage="Chưa có đơn hàng affiliate nào cho creator này." />
+          <AdminDataTable key={state.fetchedAt} mode="client" data={state.rows} columns={columns} totalRows={state.rows.length} page={1} pageSize={10} ariaLabel="Đơn hàng đồng bộ TikTok" searchPlaceholder="Tìm đơn hàng TikTok..." minWidth="1000px" emptyMessage="Chưa có đơn hàng affiliate nào cho creator này." getRowHref={(row) => `/admin/integrations/tiktok-orders/${encodeURIComponent(row.orderId)}`} />
         </>
       )}
     </div>

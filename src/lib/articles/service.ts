@@ -1,6 +1,6 @@
 import "server-only";
 import sanitizeHtml from "sanitize-html";
-import { and, asc, desc, eq, ilike, isNull, ne, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, inArray, isNull, ne, or, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { articles, type Article } from "@/db/schema";
 import type { Platform } from "@/lib/affiliate/types";
@@ -10,6 +10,7 @@ import { formatVnd, cashbackRate } from "@/lib/config";
 import { getShopeeProductInfo } from "@/lib/affiliate/shopee/automation-client";
 import { getOpenCollaborationProductsByIds } from "@/lib/affiliate/tiktok/client";
 import { getValidTikTokAccessToken } from "@/lib/affiliate/tiktok/tokens";
+import { normalizeArticleCategory, UNCATEGORIZED } from "@/lib/articles/categories";
 
 export interface ArticleSection {
   q: string;
@@ -26,13 +27,6 @@ function slugify(input: string): string {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 70);
-}
-
-/** Top-level category from a marketplace chain ("A › B › C" -> "A"). */
-export function topCategory(chain?: string | null): string | null {
-  if (!chain) return null;
-  const first = chain.split(/[›>]/)[0]?.trim();
-  return first && first.length ? first.slice(0, 80) : null;
 }
 
 /** Extract the first balanced JSON object from a model response. */
@@ -319,7 +313,7 @@ async function buildArticle(
       sections,
     }),
     productName: name,
-    category: topCategory(data?.category),
+    category: normalizeArticleCategory(data?.category),
     price: data?.price ?? null,
     imageUrl: data?.imageUrl ?? null,
     estimatedCashback: estimatedCashback ?? null,
@@ -490,6 +484,7 @@ export type AdminArticleQuery = {
   q?: string;
   status?: "published" | "hidden";
   platform?: Platform;
+  category?: string;
   sort?: "title" | "price" | "views" | "createdAt";
   dir?: "asc" | "desc";
   limit: number;
@@ -502,6 +497,7 @@ export async function listAdminArticles(opts: AdminArticleQuery): Promise<{ rows
   if (opts.q?.trim()) conditions.push(ilike(articles.title, `%${opts.q.trim().slice(0, 150)}%`));
   if (opts.status) conditions.push(eq(articles.status, opts.status));
   if (opts.platform) conditions.push(eq(articles.platform, opts.platform));
+  if (opts.category) conditions.push(await categoryCondition(opts.category));
   const where = conditions.length ? and(...conditions) : undefined;
   const sortColumn = {
     title: articles.title,
@@ -529,26 +525,27 @@ export async function getArticleAdminStats(): Promise<{ total: number; published
   return row ?? { total: 0, published: 0, hidden: 0 };
 }
 
-export const UNCATEGORIZED = "Khác";
+export { UNCATEGORIZED } from "@/lib/articles/categories";
 
-/** Public: published articles, optionally filtered by top-level category. */
+/** Match old raw marketplace labels and new canonical labels without a DB migration. */
+async function categoryCondition(category: string) {
+  const rawRows = await db.select({ raw: articles.category }).from(articles).groupBy(articles.category);
+  const matches = rawRows.map(({ raw }) => raw).filter((raw) => normalizeArticleCategory(raw) === category);
+  const names = matches.filter((raw): raw is string => raw !== null);
+  const clauses = [];
+  if (names.length) clauses.push(inArray(articles.category, names));
+  if (matches.includes(null)) clauses.push(isNull(articles.category));
+  return or(...clauses) ?? sql`false`;
+}
+
+/** Public: published articles, optionally filtered by normalized category. */
 export async function listPublishedArticles(opts?: {
   category?: string;
   limit?: number;
   offset?: number;
 }): Promise<Article[]> {
   const conds = [eq(articles.status, "published")];
-  if (opts?.category) {
-    if (opts.category === UNCATEGORIZED) {
-      const uncategorized = or(
-        isNull(articles.category),
-        eq(articles.category, ""),
-      );
-      if (uncategorized) conds.push(uncategorized);
-    } else {
-      conds.push(eq(articles.category, opts.category));
-    }
-  }
+  if (opts?.category) conds.push(await categoryCondition(opts.category));
   return db
     .select()
     .from(articles)
@@ -563,18 +560,22 @@ export interface CategoryCount {
   count: number;
 }
 
-/** Public: distinct top-level categories (published) with article counts. */
+/** Public: compact category counts, including articles created before normalization. */
 export async function listArticleCategories(): Promise<CategoryCount[]> {
   const rows = await db
     .select({
-      name: sql<string>`coalesce(nullif(${articles.category}, ''), ${UNCATEGORIZED})`,
+      raw: articles.category,
       count: sql<number>`count(*)::int`,
     })
     .from(articles)
     .where(eq(articles.status, "published"))
-    .groupBy(sql`1`)
-    .orderBy(desc(sql`count(*)`));
-  return rows.map((r) => ({ name: r.name, count: Number(r.count) }));
+    .groupBy(articles.category);
+  const counts = new Map<string, number>();
+  for (const row of rows) {
+    const name = normalizeArticleCategory(row.raw);
+    counts.set(name, (counts.get(name) ?? 0) + Number(row.count));
+  }
+  return [...counts].map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count);
 }
 
 /** Public: prioritize category, then platform; fill remaining slots with recent articles. */
@@ -582,12 +583,14 @@ export async function listRelatedArticles(
   current: Article,
   limit = 4,
 ): Promise<Article[]> {
+  const category = normalizeArticleCategory(current.category);
+  const sameCategory = category === UNCATEGORIZED ? sql`false` : await categoryCondition(category);
   return db
     .select()
     .from(articles)
     .where(and(eq(articles.status, "published"), ne(articles.id, current.id)))
     .orderBy(
-      sql`case when ${articles.category} = ${current.category} then 0 when ${articles.platform} = ${current.platform} then 1 else 2 end`,
+      sql`case when ${sameCategory} then 0 when ${articles.platform} = ${current.platform} then 1 else 2 end`,
       desc(articles.createdAt),
     )
     .limit(limit);
@@ -647,7 +650,7 @@ export async function updateArticleContent(
       contentHtml: sanitizeArticleHtml(input.html),
       title: input.title,
       metaDescription: input.metaDescription || null,
-      category: input.category || null,
+      category: normalizeArticleCategory(input.category),
       imageUrl: input.imageUrl || null,
     })
     .where(eq(articles.id, id));

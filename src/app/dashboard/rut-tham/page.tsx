@@ -5,6 +5,7 @@ import { luckyDrawPeriods, luckyDrawTickets } from "@/db/schema";
 import { requireUser } from "@/lib/auth/guards";
 import { formatVnd } from "@/lib/config";
 import { getFundBalance } from "@/lib/lucky-draw/service";
+import { DashboardPageHeader } from "@/components/dashboard/ui";
 
 export const metadata = { title: "Rút thăm may mắn — Win-Win Back" };
 export const dynamic = "force-dynamic";
@@ -38,10 +39,7 @@ export default async function LuckyDrawPage() {
 
   return (
     <main className="mx-auto w-full max-w-[1100px] px-4 py-6 sm:px-7 lg:px-8 lg:py-7">
-      <header className="mb-6">
-        <h1 className="text-[28px] font-black leading-tight tracking-tight text-[#11335e]">Rút thăm may mắn</h1>
-        <p className="mt-1 text-sm text-[#58749a]">Mỗi đơn mua hoàn tất bạn nhận 1 phiếu dự thưởng — số phiếu là 4 số cuối mã đơn hàng. Cuối kỳ hệ thống quay 1 số: trùng là lãnh trọn quỹ!</p>
-      </header>
+      <DashboardPageHeader title="Rút thăm may mắn" description="Mỗi đơn mua hoàn tất bạn nhận 1 phiếu dự thưởng — số phiếu là 4 số cuối mã đơn hàng. Cuối kỳ hệ thống quay 1 số: trùng là lãnh trọn quỹ!" />
 
       <section className="relative overflow-hidden rounded-2xl border border-[#e6d4fb] bg-gradient-to-br from-[#faf3ff] to-[#eef5ff] p-6">
         <div className="flex items-center gap-4">

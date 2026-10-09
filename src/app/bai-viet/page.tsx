@@ -9,6 +9,7 @@ import {
 } from "@/lib/articles/service";
 import { formatVnd } from "@/lib/config";
 import { platformLabel } from "@/lib/labels";
+import { normalizeArticleCategory } from "@/lib/articles/categories";
 
 export const dynamic = "force-dynamic";
 
@@ -32,7 +33,7 @@ export default async function NewsIndexPage({
   searchParams: Promise<{ "danh-muc"?: string; trang?: string }>;
 }) {
   const { "danh-muc": rawCat, trang: rawPage } = await searchParams;
-  const activeCat = rawCat?.trim() || null;
+  const activeCat = rawCat?.trim() ? normalizeArticleCategory(rawCat) : null;
   const categories = await listArticleCategories();
   const total = categories.reduce((s, c) => s + c.count, 0);
   const matchingTotal = activeCat
@@ -185,7 +186,7 @@ function CatTag({ platform, category }: { platform: string; category: string | n
       </span>
       {category ? (
         <span className="inline-flex items-center gap-1 rounded-md bg-[#f3fbe9] px-2 py-1 text-[#4a7d1e]">
-          <Tag className="h-3 w-3" /> {category}
+          <Tag className="h-3 w-3" /> {normalizeArticleCategory(category)}
         </span>
       ) : null}
     </div>

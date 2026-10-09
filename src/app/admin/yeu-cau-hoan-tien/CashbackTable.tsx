@@ -36,5 +36,5 @@ export function CashbackTable({ rows, total, page }: { rows: CashbackTableRow[];
   return <AdminDataTable data={rows} columns={columns} totalRows={total} page={page} pageSize={20} ariaLabel="Danh sách yêu cầu hoàn tiền" searchPlaceholder="Tìm mã đơn, người dùng..." filters={[
     { key: "status", label: "Tất cả trạng thái", options: [{ value: "pending", label: "Chờ duyệt" }, { value: "confirmed", label: "Đã duyệt" }, { value: "completed", label: "Hoàn tất" }, { value: "cancelled", label: "Từ chối" }] },
     { key: "platform", label: "Tất cả sàn", options: [{ value: "shopee", label: "Shopee" }, { value: "tiktok", label: "TikTok Shop" }] },
-  ]} minWidth="1150px" emptyMessage="Không tìm thấy yêu cầu phù hợp." />;
+  ]} minWidth="1150px" emptyMessage="Không tìm thấy yêu cầu phù hợp." getRowHref={(row) => `/admin/yeu-cau-hoan-tien/${row.id}`} />;
 }

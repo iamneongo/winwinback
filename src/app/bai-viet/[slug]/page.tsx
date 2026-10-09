@@ -14,6 +14,7 @@ import {
 } from "@/lib/articles/service";
 import { formatVnd } from "@/lib/config";
 import { platformLabel } from "@/lib/labels";
+import { normalizeArticleCategory } from "@/lib/articles/categories";
 
 export const dynamic = "force-dynamic";
 
@@ -75,9 +76,8 @@ export default async function ArticlePage({
   const buyHref = sharedLink?.shortCode
     ? `/go/${sharedLink.shortCode}`
     : a.affiliateShortCode ? `/go/${a.affiliateShortCode}` : a.productUrl;
-  const catHref = a.category
-    ? `/bai-viet?danh-muc=${encodeURIComponent(a.category)}`
-    : "/bai-viet";
+  const category = normalizeArticleCategory(a.category);
+  const catHref = `/bai-viet?danh-muc=${encodeURIComponent(category)}`;
   const platform = platformLabel[a.platform] ?? a.platform;
 
   return (
@@ -86,23 +86,17 @@ export default async function ArticlePage({
         <Link href="/" className="hover:text-[#1261ed]">Trang chủ</Link>
         <ChevronRight className="size-3.5 text-[#9db0ca]" aria-hidden="true" />
         <Link href="/bai-viet" className="hover:text-[#1261ed]">Tin tức</Link>
-        {a.category ? (
-          <>
-            <ChevronRight className="size-3.5 text-[#9db0ca]" aria-hidden="true" />
-            <Link href={catHref} className="min-w-0 truncate hover:text-[#1261ed]">{a.category}</Link>
-          </>
-        ) : null}
+        <ChevronRight className="size-3.5 text-[#9db0ca]" aria-hidden="true" />
+        <Link href={catHref} className="min-w-0 truncate hover:text-[#1261ed]">{category}</Link>
       </nav>
 
       <div className="mx-auto max-w-4xl">
         <header>
           <div className="flex flex-wrap items-center gap-2 text-xs font-bold">
             <span className="rounded-md bg-[#e4effd] px-2.5 py-1 text-[#1764c6]">{platform}</span>
-            {a.category ? (
-              <Link href={catHref} className="inline-flex items-center gap-1 rounded-md bg-[#eaf4df] px-2.5 py-1 text-[#3f7122] hover:underline">
-                <Tag className="size-3.5" aria-hidden="true" /> {a.category}
-              </Link>
-            ) : null}
+            <Link href={catHref} className="inline-flex items-center gap-1 rounded-md bg-[#eaf4df] px-2.5 py-1 text-[#3f7122] hover:underline">
+              <Tag className="size-3.5" aria-hidden="true" /> {category}
+            </Link>
           </div>
           <h1 className="mt-5 text-balance text-[clamp(1.75rem,3.2vw,2.625rem)] font-black leading-[1.18] tracking-[-0.025em] text-[#11335e]">
             {a.title}
@@ -179,7 +173,7 @@ function RelatedCard({ a }: { a: Article }) {
         <div className="flex aspect-[16/10] w-full items-center justify-center bg-[#e8eff8]"><Newspaper className="size-9 text-[#9cb4d2]" aria-hidden="true" /></div>
       )}
       <div className="flex flex-1 flex-col gap-2 p-4">
-        <span className="text-xs font-bold text-[#287be5]">{platformLabel[a.platform] ?? a.platform}{a.category ? ` · ${a.category}` : ""}</span>
+        <span className="text-xs font-bold text-[#287be5]">{platformLabel[a.platform] ?? a.platform} · {normalizeArticleCategory(a.category)}</span>
         <h3 className="line-clamp-3 text-base font-black leading-snug text-[#11335e] group-hover:text-[#1261ed]">{a.title}</h3>
         {a.estimatedCashback && a.estimatedCashback > 0 ? <span className="mt-auto pt-1 text-xs font-bold text-[#32721d]">Hoàn tiền dự kiến ~{formatVnd(a.estimatedCashback)}</span> : null}
       </div>

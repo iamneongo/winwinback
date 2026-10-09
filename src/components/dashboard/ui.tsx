@@ -6,6 +6,16 @@ export const cardClass =
 
 export const sectionTitleClass = "text-base font-bold tracking-tight text-[#0d315d]";
 
+/** Consistent heading for customer dashboard pages (the overview uses a hero instead). */
+export function DashboardPageHeader({ title, description }: { title: string; description: string }) {
+  return (
+    <header className="mb-6">
+      <h1 className="text-[28px] font-black leading-tight tracking-tight text-[#11335e] sm:text-[30px]">{title}</h1>
+      <p className="mt-1 text-sm leading-6 text-[#58749a]">{description}</p>
+    </header>
+  );
+}
+
 export function PageHeader({
   icon: Icon,
   title,

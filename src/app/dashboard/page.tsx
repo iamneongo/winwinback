@@ -16,8 +16,9 @@ import { CopyLink } from "@/components/dashboard/CopyLink";
 import { Empty, cardClass, sectionTitleClass } from "@/components/dashboard/ui";
 import { formatVnd } from "@/lib/config";
 import { getRequestBaseUrl } from "@/lib/baseUrl";
-import { orderStatusLabel, platformLabel } from "@/lib/labels";
+import { platformLabel } from "@/lib/labels";
 import { MetricIcon, StepIcon } from "@/components/dashboard/MetricIcon";
+import { RecentOrdersTable } from "@/components/dashboard/RecentOrdersTable";
 import { ShopeeIcon, TikTokIcon } from "@/components/sections/BrandIcons";
 
 export const metadata = { title: "Tổng quan — Win-Win Back" };
@@ -33,13 +34,6 @@ type MetricProps = {
   action: string;
   tone: "green" | "blue" | "gold" | "purple";
 };
-const orderStateTone: Record<string, string> = {
-  pending: "bg-[#fff5df] text-[#d88700]",
-  confirmed: "bg-[#e7f7ef] text-[#168146]",
-  completed: "bg-[#e7f7ef] text-[#168146]",
-  cancelled: "bg-[#fee9e8] text-[#d34843]",
-};
-
 function Metric({ label, value, href, action, tone }: MetricProps) {
   return (
     <div className={`${cardClass} min-h-[8.5rem]`}>
@@ -211,51 +205,15 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
               <Empty compact text="Chưa có đơn hàng nào. Hãy tạo link hoàn tiền để bắt đầu." />
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-[680px] w-full text-left text-sm">
-                <thead className="bg-[#f7faff] text-xs text-[#536f98]">
-                  <tr>
-                    <th className="px-5 py-3 font-semibold">Sàn</th>
-                    <th className="px-4 py-3 font-semibold">Mã đơn hàng</th>
-                    <th className="px-4 py-3 font-semibold">Ngày mua</th>
-                    <th className="px-4 py-3 font-semibold">Giá trị đơn</th>
-                    <th className="px-4 py-3 font-semibold">Hoàn tiền</th>
-                    <th className="px-4 py-3 font-semibold">Trạng thái</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#edf1f7]">
-                  {recentOrders.map((order) => (
-                    <tr key={order.id}>
-                      <td className="px-5 py-3.5">
-                        <span className="inline-flex items-center gap-2 text-xs font-bold text-[#244a7c]">
-                          <PlatformMark platform={order.platform} />
-                          {platformLabel[order.platform]}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3.5 font-medium text-[#49688f]">
-                        #{order.externalOrderId}
-                      </td>
-                      <td className="px-4 py-3.5 whitespace-nowrap text-[#58759c]">
-                        {order.orderedAt.toLocaleDateString("vi-VN")}
-                      </td>
-                      <td className="px-4 py-3.5 font-semibold text-[#173861]">
-                        {formatVnd(order.orderAmount)}
-                      </td>
-                      <td className="px-4 py-3.5 font-bold text-[#168146]">
-                        {formatVnd(order.cashbackAmount)}
-                      </td>
-                      <td className="px-4 py-3.5">
-                        <span
-                          className={`rounded-full px-2.5 py-1 text-xs font-semibold ${orderStateTone[order.status]}`}
-                        >
-                          {orderStatusLabel[order.status]}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <RecentOrdersTable rows={recentOrders.map((order) => ({
+              id: order.id,
+              platform: order.platform,
+              externalOrderId: order.externalOrderId,
+              orderedAt: order.orderedAt.toISOString(),
+              orderAmount: order.orderAmount,
+              cashbackAmount: order.cashbackAmount,
+              status: order.status,
+            }))} />
           )}
         </div>
         <aside className={recentPanelClass}>
@@ -275,7 +233,7 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
           ) : (
             <div className="divide-y divide-[#edf1f7] px-4 sm:px-5">
               {recentOrders.map((order) => (
-                <div key={order.id} className="flex items-center gap-3 py-3">
+                <Link key={order.id} href={`/dashboard/don-hang/${order.id}`} className="flex items-center gap-3 py-3 hover:bg-[#f6faff]">
                   <PlatformMark platform={order.platform} />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-xs font-bold text-[#244a7c]">
@@ -288,7 +246,7 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
                   <span className="text-xs font-black text-[#168146]">
                     + {formatVnd(order.cashbackAmount)}
                   </span>
-                </div>
+                </Link>
               ))}
             </div>
           )}
@@ -318,9 +276,9 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
                 >
                   <PlatformMark platform={link.platform} />
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-bold text-[#244a7c]">
+                    <Link href={`/dashboard/link/${link.shortCode}`} className="block truncate text-sm font-bold text-[#244a7c] hover:text-[#1261ed] hover:underline">
                       {link.title ?? link.originalUrl}
-                    </p>
+                    </Link>
                     <p className="mt-0.5 flex items-center gap-2 text-[11px] text-[#6681a7]">
                       <span>{platformLabel[link.platform]}</span>
                       <span aria-hidden>•</span>

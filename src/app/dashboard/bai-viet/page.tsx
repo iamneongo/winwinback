@@ -5,6 +5,7 @@ import { db } from "@/db";
 import { affiliateLinks } from "@/db/schema";
 import { requireUser } from "@/lib/auth/guards";
 import { MyArticlesTable } from "./MyArticlesTable";
+import { DashboardPageHeader } from "@/components/dashboard/ui";
 
 export const metadata = { title: "Bài viết của bạn — Win-Win Back" };
 export const dynamic = "force-dynamic";
@@ -47,10 +48,7 @@ export default async function MyArticlesPage({
   }).from(affiliateLinks).where(filter).orderBy(one("dir") === "asc" ? asc(sortColumn) : desc(sortColumn), desc(affiliateLinks.createdAt)).limit(PAGE_SIZE).offset((page - 1) * PAGE_SIZE);
 
   return <main className="mx-auto w-full min-w-0 max-w-[1400px] px-4 py-6 sm:px-7 lg:py-8">
-    <header className="mb-6">
-      <h1 className="text-[28px] font-black tracking-tight text-[#11335e] sm:text-[30px]">Bài viết của bạn</h1>
-      <p className="mt-1 text-sm leading-6 text-[#58749a]">Theo dõi bài AI đang viết, xem lại và chia sẻ bài gắn với link hoàn tiền của bạn.</p>
-    </header>
+    <DashboardPageHeader title="Bài viết của bạn" description="Theo dõi bài AI đang viết, xem lại và chia sẻ bài gắn với link hoàn tiền của bạn." />
     {total === 0 && !q && !status && !platform ? <section className="mb-4 rounded-xl border border-[#e1eaf6] bg-white px-5 py-8 text-center">
       <FileText className="mx-auto size-8 text-[#6681a7]" />
       <h2 className="mt-3 text-base font-bold text-[#173861]">Chưa có bài viết nào</h2>

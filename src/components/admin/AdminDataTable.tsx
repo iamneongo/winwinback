@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import {
   flexRender,
   getCoreRowModel,
@@ -28,7 +29,7 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 export type AdminTableFilter = {
-  key: "status" | "platform" | "role";
+  key: "status" | "platform" | "role" | "category";
   label: string;
   options: { value: string; label: string }[];
 };
@@ -47,6 +48,8 @@ type AdminDataTableProps<TData> = {
   emptyMessage?: string;
   minWidth?: string;
   mode?: "server" | "client";
+  variant?: "default" | "preview";
+  getRowHref?: (row: TData) => string;
 };
 
 export function AdminDataTable<TData>({
@@ -61,7 +64,11 @@ export function AdminDataTable<TData>({
   emptyMessage = "Không tìm thấy dữ liệu phù hợp.",
   minWidth = "900px",
   mode = "server",
+  variant = "default",
+  getRowHref,
 }: AdminDataTableProps<TData>) {
+  const router = useRouter();
+  const isPreview = variant === "preview";
   const [pending, startTransition] = useTransition();
   const [query, setQuery] = useQueryStates({
     q: parseAsString.withDefault(""),
@@ -71,8 +78,9 @@ export function AdminDataTable<TData>({
     status: parseAsString.withDefault(""),
     platform: parseAsString.withDefault(""),
     role: parseAsString.withDefault(""),
+    category: parseAsString.withDefault(""),
   }, { shallow: false, history: "push", scroll: false, startTransition });
-  const [draft, setDraft] = useState(query.q);
+  const [draft, setDraft] = useState(isPreview ? "" : query.q);
   const [localPage, setLocalPage] = useState(1);
   const [requestedPage, setRequestedPage] = useState<{ from: number; to: number } | null>(null);
   const [localSorting, setLocalSorting] = useState<SortingState>([]);
@@ -131,8 +139,8 @@ export function AdminDataTable<TData>({
   };
 
   return (
-    <section className="min-w-0 overflow-hidden rounded-xl border border-[#dfe9f5] bg-white" aria-label={ariaLabel}>
-      <div className="flex flex-wrap items-center gap-2 border-b border-[#e8eef6] p-3 sm:p-4">
+    <section className={isPreview ? "min-w-0" : "min-w-0 overflow-hidden rounded-xl border border-[#dfe9f5] bg-white"} aria-label={ariaLabel}>
+      {!isPreview ? <div className="flex flex-wrap items-center gap-2 border-b border-[#e8eef6] p-3 sm:p-4">
         <div className="relative min-w-[180px] flex-1 sm:max-w-sm">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#587298]" aria-hidden="true" />
           <Input
@@ -172,11 +180,11 @@ export function AdminDataTable<TData>({
           );
         })}
         {(draft || activeFilters || sorting.length) ? (
-          <Button variant="ghost" size="lg" onClick={() => { setDraft(""); if (mode === "client") { setLocalFilters([]); setLocalSorting([]); setLocalPage(1); } else void setQuery({ q: "", status: "", platform: "", role: "", sort: "", dir: "desc", trang: 1 }); }} className="text-[#49688f]">
+          <Button variant="ghost" size="lg" onClick={() => { setDraft(""); if (mode === "client") { setLocalFilters([]); setLocalSorting([]); setLocalPage(1); } else void setQuery({ q: "", status: "", platform: "", role: "", category: "", sort: "", dir: "desc", trang: 1 }); }} className="text-[#49688f]">
             <X className="size-4" /> Xóa lọc
           </Button>
         ) : null}
-      </div>
+      </div> : null}
 
       <ScrollArea className="max-h-[65vh] lg:max-h-[720px]" aria-busy={isLoading}>
         <ScrollAreaViewport className="max-h-[65vh] overscroll-contain lg:max-h-[720px]">
@@ -189,7 +197,7 @@ export function AdminDataTable<TData>({
                 const direction = header.column.getIsSorted();
                 return (
                   <TableHead key={header.id} scope="col" style={{ width: header.getSize() }} className="px-3 py-3 text-xs font-bold">
-                    {header.isPlaceholder ? null : header.column.getCanSort() ? (
+                    {header.isPlaceholder ? null : !isPreview && header.column.getCanSort() ? (
                       <Button
                         type="button"
                         variant="ghost"
@@ -221,7 +229,21 @@ export function AdminDataTable<TData>({
               ))}
             </TableRow>
           )) : table.getRowModel().rows.length ? table.getRowModel().rows.map((row) => (
-            <TableRow key={row.id}>
+            <TableRow
+              key={row.id}
+              tabIndex={getRowHref ? 0 : undefined}
+              aria-label={getRowHref ? `Xem chi tiết hàng ${row.index + 1}` : undefined}
+              className={getRowHref ? "cursor-pointer focus-visible:bg-[#eef6ff] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#1261ed]" : undefined}
+              onClick={(event) => {
+                if (!getRowHref || (event.target as HTMLElement).closest("a,button,input,select,textarea,[role='button']")) return;
+                router.push(getRowHref(row.original));
+              }}
+              onKeyDown={(event) => {
+                if (!getRowHref || event.target !== event.currentTarget || (event.key !== "Enter" && event.key !== " ")) return;
+                event.preventDefault();
+                router.push(getRowHref(row.original));
+              }}
+            >
               {row.getVisibleCells().map((cell) => (
                 <TableCell key={cell.id} className="min-w-0 px-3 py-3 align-top whitespace-normal">
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -240,7 +262,7 @@ export function AdminDataTable<TData>({
         <ScrollAreaCorner />
       </ScrollArea>
 
-      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#e8eef6] px-3 py-3 text-sm text-[#49688f] sm:px-4">
+      {!isPreview ? <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#e8eef6] px-3 py-3 text-sm text-[#49688f] sm:px-4">
         <p aria-live="polite">{isLoading ? `Đang tải trang ${currentPage}...` : visibleTotal ? `${(currentPage - 1) * pageSize + 1}–${Math.min(currentPage * pageSize, visibleTotal)} / ${visibleTotal}` : "0 kết quả"}</p>
         <div className="flex items-center gap-1.5" role="navigation" aria-label={`Phân trang ${ariaLabel}`}>
           <Button variant="outline" size="icon-lg" aria-label="Trang trước" disabled={currentPage <= 1 || isLoading} onClick={() => goToPage(currentPage - 1)}><ChevronLeft className="size-4" /></Button>
@@ -250,7 +272,7 @@ export function AdminDataTable<TData>({
           </span>)}
           <Button variant="outline" size="icon-lg" aria-label="Trang sau" disabled={currentPage >= visiblePageCount || isLoading} onClick={() => goToPage(currentPage + 1)}><ChevronRight className="size-4" /></Button>
         </div>
-      </div>
+      </div> : null}
     </section>
   );
 }

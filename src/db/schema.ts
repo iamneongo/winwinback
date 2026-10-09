@@ -514,7 +514,7 @@ export const articles = pgTable(
     // Rich HTML body (admin-editable in the WYSIWYG editor; primary content).
     contentHtml: text("content_html"),
     productName: text("product_name"),
-    // Top-level marketplace category (e.g. "Thực phẩm") — used for the news index.
+    // Cross-marketplace article category; older rows may retain raw marketplace labels.
     category: text("category"),
     price: bigint("price", { mode: "number" }),
     imageUrl: text("image_url"),

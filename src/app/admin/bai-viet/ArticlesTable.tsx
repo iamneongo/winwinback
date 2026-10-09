@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import type { ColumnDef } from "@tanstack/react-table";
-import { Ellipsis, ExternalLink, Eye, EyeOff, Pencil, RefreshCw, Trash2 } from "lucide-react";
+import { Ellipsis, Eye, EyeOff, Pencil, RefreshCw, Trash2 } from "lucide-react";
 import { AdminDataTable } from "@/components/admin/AdminDataTable";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { formatVnd } from "@/lib/config";
 import { platformLabel } from "@/lib/labels";
+import { ARTICLE_CATEGORIES } from "@/lib/articles/categories";
 import { deleteArticleAction, regenerateArticleAction, toggleArticleAction } from "./actions";
 
 export type ArticleTableRow = {
@@ -32,7 +33,7 @@ export type ArticleTableRow = {
 };
 
 const columns: ColumnDef<ArticleTableRow>[] = [
-  { accessorKey: "title", header: "Tiêu đề", size: 320, cell: ({ row }) => <Link href={`/bai-viet/${row.original.slug}`} target="_blank" className="inline-flex items-start gap-1 font-semibold text-[#1261ed] hover:underline"><span className="line-clamp-2 break-words">{row.original.title}</span><ExternalLink className="mt-0.5 size-3.5 shrink-0" /></Link> },
+  { accessorKey: "title", header: "Tiêu đề", size: 320, cell: ({ row }) => <Link href={`/admin/bai-viet/${row.original.id}`} className="line-clamp-2 break-words font-semibold text-[#1261ed] hover:underline">{row.original.title}</Link> },
   { accessorKey: "platform", header: "Sàn", size: 95, enableSorting: false, cell: ({ row }) => platformLabel[row.original.platform] ?? row.original.platform },
   { accessorKey: "category", header: "Danh mục", size: 135, enableSorting: false, cell: ({ row }) => <span className="block truncate" title={row.original.category ?? undefined}>{row.original.category ?? "—"}</span> },
   { accessorKey: "price", header: "Giá", size: 115, cell: ({ row }) => row.original.price ? formatVnd(row.original.price) : "—" },
@@ -95,8 +96,10 @@ export function ArticlesTable({ rows, total, page }: { rows: ArticleTableRow[]; 
     filters={[
       { key: "platform", label: "Tất cả sàn", options: [{ value: "shopee", label: "Shopee" }, { value: "tiktok", label: "TikTok Shop" }] },
       { key: "status", label: "Mọi trạng thái", options: [{ value: "published", label: "Hiển thị" }, { value: "hidden", label: "Đã ẩn" }] },
+      { key: "category", label: "Mọi danh mục", options: ARTICLE_CATEGORIES.map((name) => ({ value: name, label: name })) },
     ]}
     emptyMessage="Không có bài viết phù hợp."
     minWidth="1190px"
+    getRowHref={(row) => `/admin/bai-viet/${row.id}`}
   />;
 }

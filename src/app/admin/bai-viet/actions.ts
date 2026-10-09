@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { ARTICLE_CATEGORIES } from "@/lib/articles/categories";
 import { requireAdmin } from "@/lib/auth/guards";
 import {
   setArticleStatus,
@@ -43,7 +44,7 @@ const articleEditSchema = z.object({
   html: z.string().max(600_000),
   title: z.string().trim().min(1, "Vui lòng nhập tiêu đề.").max(180),
   metaDescription: z.string().trim().max(300),
-  category: z.string().trim().max(80),
+  category: z.enum(ARTICLE_CATEGORIES),
   imageUrl: z.union([
     z.literal(""),
     z.url().refine((value) => value.startsWith("https://"), "Ảnh phải dùng HTTPS."),

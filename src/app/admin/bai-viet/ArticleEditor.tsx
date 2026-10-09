@@ -8,6 +8,8 @@ import { ArticleRichTextEditor } from "./ArticleRichTextEditor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ARTICLE_CATEGORIES, normalizeArticleCategory } from "@/lib/articles/categories";
 
 /**
  * Downscale + compress an image to a JPEG data URL so pasted/large photos don't
@@ -76,7 +78,7 @@ export function ArticleEditor({
   const [html, setHtml] = useState(initialHtml);
   const [title, setTitle] = useState(initialTitle);
   const [metaDescription, setMetaDescription] = useState(initialDescription);
-  const [category, setCategory] = useState(initialCategory);
+  const [category, setCategory] = useState(normalizeArticleCategory(initialCategory));
   const [imageUrl, setImageUrl] = useState(initialImageUrl);
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
@@ -166,7 +168,15 @@ export function ArticleEditor({
             <Textarea id="article-description" value={metaDescription} onChange={(event) => { setMetaDescription(event.target.value); setSaved(false); }} maxLength={300} rows={3} className="-mt-2 min-h-20 resize-y border-[#cddced] text-sm focus-visible:border-[#1261ed]" />
             <p className="-mt-2 text-xs text-[#6681a7]">{metaDescription.length}/300 ký tự · Nên khoảng 120–160 ký tự, mô tả đúng nội dung bài.</p>
             <label className="block text-sm font-bold text-[#234568]" htmlFor="article-category">Danh mục</label>
-            <Input id="article-category" value={category} onChange={(event) => { setCategory(event.target.value); setSaved(false); }} maxLength={80} className="-mt-2 h-10 border-[#cddced] text-sm focus-visible:border-[#1261ed]" />
+            <Select value={category} onValueChange={(value) => { if (value) { setCategory(normalizeArticleCategory(value)); setSaved(false); } }}>
+              <SelectTrigger id="article-category" className="-mt-2 h-10 border-[#cddced] text-sm focus-visible:border-[#1261ed]">
+                <SelectValue>{category}</SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {ARTICLE_CATEGORIES.map((name) => <SelectItem key={name} value={name}>{name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <p className="-mt-2 text-xs text-[#6681a7]">Danh mục chung cho cả Shopee và TikTok; bài AI được tự phân loại và có thể chỉnh tại đây.</p>
           </div>
           <div>
             <p className="mb-2 text-sm font-bold text-[#234568]">Ảnh đại diện</p>
