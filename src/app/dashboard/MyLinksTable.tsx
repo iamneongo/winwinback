@@ -1,13 +1,21 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
-import { ExternalLink } from "lucide-react";
+import { Check, Copy, ExternalLink, MoreHorizontal, ShoppingBag } from "lucide-react";
 import { AdminDataTable } from "@/components/admin/AdminDataTable";
-import { BuyButton } from "@/components/dashboard/BuyButton";
-import { CopyLink } from "@/components/dashboard/CopyLink";
 import { ShopeeIcon, TikTokIcon } from "@/components/sections/BrandIcons";
 import { platformLabel } from "@/lib/labels";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export type MyLinkRow = {
   id: string;
@@ -69,21 +77,50 @@ function createColumns(baseUrl: string): ColumnDef<MyLinkRow>[] {
   {
     id: "actions",
     header: "Thao tác",
-    size: 210,
+    size: 90,
     enableSorting: false,
-    cell: ({ row }) => {
-      return (
-        <div className="flex flex-wrap items-center gap-2">
-          <CopyLink value={`${baseUrl}/go/${row.original.shortCode}`} />
-          <BuyButton href={`/go/${row.original.shortCode}`} platformName={platformLabel[row.original.platform]} />
-          <Link href={`/go/${row.original.shortCode}`} target="_blank" rel="noopener noreferrer" aria-label="Mở link hoàn tiền" className="inline-flex size-9 items-center justify-center rounded-lg border border-[#cbd9ec] text-[#315a90] hover:bg-[#f1f6fc]">
-            <ExternalLink className="size-4" />
-          </Link>
-        </div>
-      );
-    },
+    cell: ({ row }) => <LinkActions row={row.original} baseUrl={baseUrl} />,
   },
   ];
+}
+
+function LinkActions({ row, baseUrl }: { row: MyLinkRow; baseUrl: string }) {
+  const [copied, setCopied] = useState(false);
+  const affiliatePath = `/go/${row.shortCode}`;
+
+  async function copyAffiliateLink() {
+    try {
+      await navigator.clipboard.writeText(`${baseUrl}${affiliatePath}`);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // Clipboard access may be unavailable in an insecure context.
+    }
+  }
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        render={<Button variant="ghost" size="icon" aria-label={`Thao tác link ${row.title || row.shortCode}`} />}
+      >
+        <MoreHorizontal className="size-4" />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="min-w-52">
+        <DropdownMenuLabel>Thao tác link</DropdownMenuLabel>
+        <DropdownMenuItem onClick={() => void copyAffiliateLink()}>
+          {copied ? <Check className="text-[#168146]" /> : <Copy />}
+          {copied ? "Đã sao chép link" : "Sao chép link hoàn tiền"}
+        </DropdownMenuItem>
+        <DropdownMenuItem render={<a href={affiliatePath} target="_blank" rel="noopener noreferrer" />}>
+          <ShoppingBag /> Mua trên {platformLabel[row.platform]}
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem render={<a href={affiliatePath} target="_blank" rel="noopener noreferrer" />}>
+          <ExternalLink /> Mở link hoàn tiền
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
 }
 
 export function MyLinksTable({
