@@ -1,12 +1,13 @@
 "use client";
 
-import { useActionState, useEffect, useRef } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import {
   requestWithdrawalAction,
   type ActionState,
 } from "@/app/dashboard/actions";
 import { SubmitButton } from "@/components/forms/SubmitButton";
 import { formatVnd } from "@/lib/config";
+import { BankSelect } from "@/components/dashboard/BankSelect";
 
 const inputClass =
   "w-full rounded-xl border border-[#d7e3f1] bg-white px-3 py-2.5 text-sm text-[#244a7c] placeholder:text-[#8ba1be] outline-none focus:border-[#8bd949] focus:ring-2 focus:ring-[#b7e961]/25";
@@ -25,6 +26,7 @@ export function WithdrawalForm({
     undefined,
   );
   const formRef = useRef<HTMLFormElement>(null);
+  const [bankName, setBankName] = useState(bankAccount?.bankName ?? "");
 
   useEffect(() => {
     if (state?.success) formRef.current?.reset();
@@ -42,14 +44,7 @@ export function WithdrawalForm({
           placeholder={`Số tiền (tối thiểu ${formatVnd(minWithdrawal)})`}
           className={inputClass}
         />
-        <input
-          name="bankName"
-          type="text"
-          required
-          defaultValue={bankAccount?.bankName ?? ""}
-          placeholder="Ngân hàng (VD: Vietcombank)"
-          className={inputClass}
-        />
+        <BankSelect value={bankName} onValueChange={setBankName} />
         <input
           name="bankAccount"
           type="text"

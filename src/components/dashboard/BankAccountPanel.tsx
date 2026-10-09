@@ -4,6 +4,7 @@ import { useActionState, useState } from "react";
 import { Landmark, Pencil, Plus, X } from "lucide-react";
 import { saveBankAccountAction, type ActionState } from "@/app/dashboard/actions";
 import { SubmitButton } from "@/components/forms/SubmitButton";
+import { BankSelect } from "@/components/dashboard/BankSelect";
 
 type BankAccountDetails = {
   bankName: string;
@@ -16,6 +17,7 @@ const inputClass = "mt-1.5 h-10 w-full rounded-lg border border-[#d9e5f4] bg-whi
 export function BankAccountPanel({ account }: { account: BankAccountDetails | null }) {
   const [state, action] = useActionState<ActionState, FormData>(saveBankAccountAction, undefined);
   const [editing, setEditing] = useState(false);
+  const [bankName, setBankName] = useState(account?.bankName ?? "");
 
   return (
     <section className="rounded-xl border border-[#e0eaf6] bg-white p-5 shadow-[0_5px_14px_rgba(26,73,124,0.04)]">
@@ -49,7 +51,9 @@ export function BankAccountPanel({ account }: { account: BankAccountDetails | nu
         <form action={action} className="mt-4 space-y-3">
           <label className="block text-xs font-semibold text-[#34537a]">
             Ngân hàng
-            <input name="bankName" required maxLength={80} defaultValue={account?.bankName ?? ""} placeholder="Ví dụ: Vietcombank" className={inputClass} />
+            <span className="mt-1.5 block">
+              <BankSelect value={bankName} onValueChange={setBankName} />
+            </span>
           </label>
           <label className="block text-xs font-semibold text-[#34537a]">
             Số tài khoản
