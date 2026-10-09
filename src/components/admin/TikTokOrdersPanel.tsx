@@ -9,6 +9,8 @@ import {
 } from "@/app/admin/integrations/actions";
 import { SubmitButton } from "@/components/forms/SubmitButton";
 import { AdminDataTable } from "@/components/admin/AdminDataTable";
+import { Badge } from "@/components/ui/badge";
+import { tiktokAffiliateStatusLabel } from "@/lib/labels";
 
 type SyncedOrder = {
   orderId: string;
@@ -24,7 +26,11 @@ const columns: ColumnDef<SyncedOrder>[] = [
   { accessorKey: "productId", header: "Product ID", size: 160, cell: ({ row }) => <span className="break-all font-mono">{row.original.productId}</span> },
   { accessorKey: "productName", header: "Sản phẩm", size: 230, cell: ({ row }) => <span className="line-clamp-2">{row.original.productName}</span> },
   { accessorKey: "price", header: "Giá", size: 120 },
-  { accessorKey: "status", header: "Trạng thái", size: 140 },
+  { accessorKey: "status", header: "Trạng thái", size: 140, enableSorting: false, cell: ({ row }) => {
+    const label = tiktokAffiliateStatusLabel(row.original.status);
+    const variant = label === "Hoàn tất" ? "success" : label === "Đã hủy" ? "destructive" : label === "Chưa có" ? "secondary" : label === "Trạng thái khác" ? "outline" : label === "Đã xác nhận" ? "info" : "warning";
+    return <Badge variant={variant} title={`Trạng thái gốc: ${row.original.status}`}>{label}</Badge>;
+  } },
   { accessorKey: "createdAt", header: "Thời gian", size: 150, cell: ({ row }) => row.original.createdAt ?? "—" },
 ];
 

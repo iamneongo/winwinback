@@ -6,6 +6,8 @@ import { orders } from "@/db/schema";
 import { DetailField, DetailSection, RecordDetail } from "@/components/detail/RecordDetail";
 import { fetchConnectedCreatorOrder } from "@/lib/affiliate/tiktok/orders";
 import { requireAdmin } from "@/lib/auth/guards";
+import { tiktokAffiliateStatusLabel } from "@/lib/labels";
+import { Badge } from "@/components/ui/badge";
 
 export const metadata = { title: "Chi tiết đơn TikTok Affiliate — Win-Win Back" };
 export const dynamic = "force-dynamic";
@@ -24,7 +26,7 @@ export default async function TikTokLiveOrderDetailPage({ params }: { params: Pr
   return <RecordDetail backHref="/admin/integrations/tiktok-orders" backLabel="Đơn TikTok Affiliate" title={`Đơn ${order.id}`} description="Dữ liệu trực tiếp từ tài khoản TikTok Shop Creator đã kết nối." actions={localOrder ? <Link href={`/admin/don-hang/${localOrder.id}`} className="rounded-lg bg-[#b7e961] px-4 py-2.5 text-sm font-bold text-[#173b5e] hover:bg-[#a9e75e]">Xem đơn trong hệ thống</Link> : undefined}>
     <DetailSection title="Thông tin đơn TikTok">
       <DetailField label="Mã đơn">{order.id}</DetailField>
-      <DetailField label="Trạng thái từ TikTok">{order.status ?? "Chưa có"}</DetailField>
+      <DetailField label="Trạng thái từ TikTok"><Badge title={order.status ? `Trạng thái gốc: ${order.status}` : undefined}>{tiktokAffiliateStatusLabel(order.status)}</Badge></DetailField>
       <DetailField label="Thời gian tạo">{order.create_time ? new Date(order.create_time * 1000).toLocaleString("vi-VN") : "—"}</DetailField>
       <DetailField label="Thời gian giao">{order.delivery_time ? new Date(order.delivery_time * 1000).toLocaleString("vi-VN") : "—"}</DetailField>
       <DetailField label="Đã ghép với đơn nội bộ">{localOrder ? "Có" : "Chưa"}</DetailField>

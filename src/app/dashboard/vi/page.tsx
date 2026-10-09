@@ -81,7 +81,7 @@ export default async function WalletPage({ searchParams }: { searchParams: Promi
     <section className="grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1fr)_22.8rem]">
       <div className="min-w-0"><div className="grid grid-cols-2 gap-3 max-[359px]:grid-cols-1 2xl:grid-cols-4"><WalletStat icon={Wallet} iconClass="bg-[#e7f9df] text-[#33a91f]" label="Số dư khả dụng" value={formatVnd(user.balance)} action="Rút tiền ngay" href="#rut-tien" /><WalletStat icon={Clock3} iconClass="bg-[#fff1d9] text-[#e99a10]" label="Tiền chờ duyệt" value={formatVnd(waitingAmount)} action="Xem chi tiết" href="#lich-su" /><WalletStat icon={ArrowUpRight} iconClass="bg-[#e8f1ff] text-[#287be5]" label="Tổng đã rút" value={formatVnd(withdrawnAmount)} action="Xem lịch sử rút" href="#lich-su" /><WalletStat icon={Landmark} iconClass="bg-[#f6e9ff] text-[#aa34de]" label="Tài khoản ngân hàng" value={linkedBank ? "Đã liên kết" : "Chưa liên kết"} action="Xem tài khoản" href="#tai-khoan" /></div>
       <section id="lich-su" className="mt-4 min-w-0 overflow-hidden rounded-xl border border-[#e0eaf6] bg-white shadow-[0_5px_14px_rgba(26,73,124,0.04)]">
-        <header className="flex min-w-0 flex-col gap-4 border-b border-[#e5edf7] px-4 py-4 sm:px-5 lg:flex-row lg:items-end lg:justify-between">
+        <header className="flex min-w-0 flex-col gap-4 border-b border-[#e5edf7] px-4 py-4 sm:px-5 xl:flex-row xl:items-end xl:justify-between">
           <div className="min-w-0">
             <h2 className="text-base font-bold text-[#173861] sm:text-lg">Lịch sử giao dịch ví</h2>
             <div className="mt-3 flex flex-wrap gap-1.5 sm:gap-2">
@@ -91,10 +91,10 @@ export default async function WalletPage({ searchParams }: { searchParams: Promi
               })}
             </div>
           </div>
-          <form action="/dashboard/vi" className="grid w-full min-w-0 grid-cols-[minmax(0,1fr)_auto] items-end gap-2 lg:w-auto lg:max-w-[25rem] lg:flex-1">
+          <form action="/dashboard/vi" className="grid w-full min-w-0 grid-cols-[minmax(0,1fr)_auto] items-end gap-2 xl:w-auto xl:max-w-[25rem] xl:flex-1">
             {activeType && <input type="hidden" name="type" value={activeType} />}
-            <DateRangeFilter defaultFrom={query.from} defaultTo={query.to} className="col-span-2 w-full lg:col-span-1" />
-            <div className="col-span-2 flex min-w-0 gap-2 lg:col-span-1">
+            <DateRangeFilter defaultFrom={query.from} defaultTo={query.to} className="col-span-2 w-full sm:col-span-1" />
+            <div className="col-span-2 flex min-w-0 gap-2 sm:col-span-1">
               <button type="submit" className="h-11 min-w-0 flex-1 rounded-lg bg-[#b7e961] px-4 text-xs font-bold text-[#173b5e] transition hover:bg-[#a9e75e] lg:flex-none">Lọc</button>
               {(query.from || query.to) && <Link href={`/dashboard/vi${qs({ type: activeType })}`} className="inline-flex h-11 shrink-0 items-center rounded-lg border border-[#d9e5f4] px-3 text-xs font-bold text-[#34527d] hover:bg-[#f6f9fd]">Xóa</Link>}
             </div>

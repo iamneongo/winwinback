@@ -1,24 +1,18 @@
-import { count, desc, eq, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, ilike, or, sql } from "drizzle-orm";
 import Image from "next/image";
 import Link from "next/link";
-import {
-  ArrowRight,
-  ChevronLeft,
-  ChevronRight,
-  List,
-} from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { db } from "@/db";
 import { affiliateLinks, orders } from "@/db/schema";
 import { requireUser } from "@/lib/auth/guards";
 import { CreateLinkForm } from "@/components/dashboard/CreateLinkForm";
-import { BuyButton } from "@/components/dashboard/BuyButton";
-import { CopyLink } from "@/components/dashboard/CopyLink";
 import { Empty, cardClass, sectionTitleClass } from "@/components/dashboard/ui";
 import { formatVnd } from "@/lib/config";
 import { getRequestBaseUrl } from "@/lib/baseUrl";
 import { platformLabel } from "@/lib/labels";
 import { MetricIcon, StepIcon } from "@/components/dashboard/MetricIcon";
 import { RecentOrdersTable } from "@/components/dashboard/RecentOrdersTable";
+import { MyLinksTable } from "@/app/dashboard/MyLinksTable";
 import { ShopeeIcon, TikTokIcon } from "@/components/sections/BrandIcons";
 
 export const metadata = { title: "Tổng quan — Win-Win Back" };
@@ -71,8 +65,8 @@ function PlatformMark({ platform }: { platform: "shopee" | "tiktok" }) {
   );
 }
 
-export default async function OverviewPage({ searchParams }: { searchParams: Promise<{ url?: string; intent?: string; linkPage?: string }> }) {
-  const { url: prefillUrl, intent, linkPage: requestedLinkPage } = await searchParams;
+export default async function OverviewPage({ searchParams }: { searchParams: Promise<{ url?: string; intent?: string; q?: string; trang?: string; linkPage?: string; sort?: string; dir?: string; platform?: string }> }) {
+  const { url: prefillUrl, intent, q, trang, linkPage: legacyLinkPage, sort, dir, platform } = await searchParams;
   const user = await requireUser();
   const [linkSummary, orderRows] = await Promise.all([
     db
@@ -90,16 +84,39 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
       .limit(20),
   ]);
   const totalLinks = linkSummary[0]?.total ?? 0;
-  const linkPages = Math.max(1, Math.ceil(totalLinks / LINKS_PER_PAGE));
-  const linkPage = Math.min(
-    Math.max(1, Number(requestedLinkPage) || 1),
-    linkPages,
-  );
+  const linkConditions = [eq(affiliateLinks.userId, user.id)];
+  const searchTerm = q?.trim();
+  if (searchTerm) {
+    const pattern = `%${searchTerm}%`;
+    const searchCondition = or(
+      ilike(affiliateLinks.title, pattern),
+      ilike(affiliateLinks.originalUrl, pattern),
+      ilike(affiliateLinks.shortCode, pattern),
+    );
+    if (searchCondition) linkConditions.push(searchCondition);
+  }
+  const selectedPlatform = platform === "shopee" || platform === "tiktok" ? platform : "";
+  if (selectedPlatform) linkConditions.push(eq(affiliateLinks.platform, selectedPlatform));
+  const filteredLinkSummary = await db
+    .select({ total: count() })
+    .from(affiliateLinks)
+    .where(and(...linkConditions));
+  const filteredLinkCount = filteredLinkSummary[0]?.total ?? 0;
+  const linkPages = Math.max(1, Math.ceil(filteredLinkCount / LINKS_PER_PAGE));
+  const linkPage = Math.min(Math.max(1, Number(trang ?? legacyLinkPage) || 1), linkPages);
+  const descending = dir !== "asc";
+  const orderBy = sort === "title"
+    ? [descending ? desc(affiliateLinks.title) : asc(affiliateLinks.title), desc(affiliateLinks.createdAt)]
+    : sort === "platform"
+      ? [descending ? desc(affiliateLinks.platform) : asc(affiliateLinks.platform), desc(affiliateLinks.createdAt)]
+      : sort === "clicks"
+        ? [descending ? desc(affiliateLinks.clicks) : asc(affiliateLinks.clicks), desc(affiliateLinks.createdAt)]
+        : [descending ? desc(affiliateLinks.createdAt) : asc(affiliateLinks.createdAt)];
   const links = await db
     .select()
     .from(affiliateLinks)
-    .where(eq(affiliateLinks.userId, user.id))
-    .orderBy(desc(affiliateLinks.createdAt))
+    .where(and(...linkConditions))
+    .orderBy(...orderBy)
     .limit(LINKS_PER_PAGE)
     .offset((linkPage - 1) * LINKS_PER_PAGE);
   const pending = orderRows
@@ -110,14 +127,6 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
   const clicks = linkSummary[0]?.clicks ?? 0;
   const recentOrders = orderRows.slice(0, 5);
   const baseUrl = await getRequestBaseUrl();
-  const linkPageHref = (page: number) => {
-    const params = new URLSearchParams();
-    if (prefillUrl) params.set("url", prefillUrl);
-    if (page > 1) params.set("linkPage", String(page));
-    const query = params.toString();
-    return `/dashboard${query ? `?${query}` : ""}#link-cua-ban`;
-  };
-
   return (
     <main className="mx-auto w-full max-w-[1440px] px-4 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-7">
       <section className="ww-dashboard-link-banner relative isolate overflow-hidden rounded-xl px-5 py-6 text-white shadow-[0_8px_24px_rgba(9,54,95,0.14)] sm:h-[13.5rem] sm:px-7">
@@ -256,73 +265,30 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
       <section id="link-cua-ban" className="mt-5 scroll-mt-6">
         <div className={`${cardClass} overflow-hidden p-0`}>
           <div className="flex items-center justify-between gap-3 border-b border-[#e8eef6] px-4 py-4 sm:px-5">
-            <h2 className={`${sectionTitleClass} flex items-center gap-2`}>
-              <List className="h-4 w-4 text-[#1766e7]" /> Link của bạn
-            </h2>
+            <h2 className={sectionTitleClass}>Link của bạn</h2>
             <span className="text-xs font-semibold text-[#6681a7]">
               {totalLinks} link
             </span>
           </div>
-          {links.length === 0 ? (
+          {totalLinks === 0 ? (
             <div className="p-5">
               <Empty text="Chưa có link nào. Dán link sản phẩm ở trên để tạo link hoàn tiền." />
             </div>
           ) : (
-            <ul className="max-h-[34rem] divide-y divide-[#edf1f7] overflow-y-auto overscroll-contain [scrollbar-gutter:stable]">
-              {links.map((link) => (
-                <li
-                  key={link.id}
-                  className="flex flex-col gap-3 px-4 py-3.5 sm:flex-row sm:items-center sm:px-5"
-                >
-                  <PlatformMark platform={link.platform} />
-                  <div className="min-w-0 flex-1">
-                    <Link href={`/dashboard/link/${link.shortCode}`} className="block truncate text-sm font-bold text-[#244a7c] hover:text-[#1261ed] hover:underline">
-                      {link.title ?? link.originalUrl}
-                    </Link>
-                    <p className="mt-0.5 flex items-center gap-2 text-[11px] text-[#6681a7]">
-                      <span>{platformLabel[link.platform]}</span>
-                      <span aria-hidden>•</span>
-                      <span className="whitespace-nowrap">
-                        {link.clicks} lượt bấm
-                      </span>
-                    </p>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-2">
-                    <CopyLink value={`${baseUrl}/go/${link.shortCode}`} />
-                    <BuyButton
-                      href={`/go/${link.shortCode}`}
-                      platformName={platformLabel[link.platform]}
-                    />
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-          {totalLinks > LINKS_PER_PAGE && (
-            <footer className="flex flex-col gap-3 border-t border-[#e8eef6] px-4 py-3.5 text-xs text-[#6681a7] sm:flex-row sm:items-center sm:justify-between sm:px-5">
-              <p>
-                Hiển thị {(linkPage - 1) * LINKS_PER_PAGE + 1} – {Math.min(linkPage * LINKS_PER_PAGE, totalLinks)} trong {totalLinks} link
-              </p>
-              <div className="flex items-center gap-2 self-end sm:self-auto">
-                {linkPage > 1 ? (
-                  <Link href={linkPageHref(linkPage - 1)} aria-label="Trang link trước" className="rounded-lg border border-[#dce6f3] p-1.5 transition-colors hover:bg-[#f6f9fd]">
-                    <ChevronLeft className="h-4 w-4" />
-                  </Link>
-                ) : (
-                  <span aria-hidden className="rounded-lg border border-[#eef3f9] p-1.5 text-[#c3d0e0]"><ChevronLeft className="h-4 w-4" /></span>
-                )}
-                <span className="flex h-7 min-w-7 items-center justify-center rounded-md bg-[#eaf9df] px-2 font-bold text-[#28711a] ring-1 ring-inset ring-[#b1eb78]">
-                  {linkPage}/{linkPages}
-                </span>
-                {linkPage < linkPages ? (
-                  <Link href={linkPageHref(linkPage + 1)} aria-label="Trang link sau" className="rounded-lg border border-[#dce6f3] p-1.5 transition-colors hover:bg-[#f6f9fd]">
-                    <ChevronRight className="h-4 w-4" />
-                  </Link>
-                ) : (
-                  <span aria-hidden className="rounded-lg border border-[#eef3f9] p-1.5 text-[#c3d0e0]"><ChevronRight className="h-4 w-4" /></span>
-                )}
-              </div>
-            </footer>
+            <MyLinksTable
+              rows={links.map((link) => ({
+                id: link.id,
+                shortCode: link.shortCode,
+                title: link.title,
+                originalUrl: link.originalUrl,
+                platform: link.platform,
+                clicks: link.clicks,
+                createdAt: link.createdAt.toISOString(),
+              }))}
+              total={filteredLinkCount}
+              page={linkPage}
+              baseUrl={baseUrl}
+            />
           )}
         </div>
       </section>

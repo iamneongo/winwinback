@@ -5,6 +5,19 @@ export const orderStatusLabel: Record<string, string> = {
   cancelled: "Đã huỷ",
 };
 
+/** Localized label for raw order states returned by TikTok's creator API. */
+export function tiktokAffiliateStatusLabel(raw?: string | null): string {
+  if (!raw || raw === "—") return "Chưa có";
+  const status = raw.trim().toUpperCase();
+  if (status === "PENDING" || /(AWAIT|REVIEW)/.test(status)) return "Chờ duyệt";
+  if (/(UNPAID|TO_PAY|PAYMENT)/.test(status)) return "Chờ thanh toán";
+  if (/(SETTLE|COMPLETE|FINISH|PAID|SUCCESS)/.test(status)) return "Hoàn tất";
+  if (/(CANCEL|REFUND|RETURN|INVALID|CLOSED)/.test(status)) return "Đã hủy";
+  if (/(DELIVER|SHIP|COLLECT|CONFIRM|PROCESS)/.test(status)) return "Đã xác nhận";
+  if (/(CREATE|WAIT)/.test(status)) return "Đang chờ xử lý";
+  return "Trạng thái khác";
+}
+
 export const orderStatusClass: Record<string, string> = {
   pending: "bg-amber-400/15 text-amber-200",
   confirmed: "bg-sky-400/15 text-sky-200",
