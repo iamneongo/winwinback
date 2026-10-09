@@ -35,29 +35,40 @@ function toLabel(date?: Date): string {
 export function DateRangeFilter({
   defaultFrom,
   defaultTo,
+  className,
 }: {
   defaultFrom?: string;
   defaultTo?: string;
+  className?: string;
 }) {
   const [range, setRange] = React.useState<DateRange | undefined>(() => {
     const from = parseDate(defaultFrom);
     const to = parseDate(defaultTo);
     return from || to ? { from, to } : undefined;
   });
+  const [isMobile, setIsMobile] = React.useState(false);
+
+  React.useEffect(() => {
+    const media = window.matchMedia("(max-width: 767px)");
+    const update = () => setIsMobile(media.matches);
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
 
   const text = range?.from
     ? `${toLabel(range.from)}${range.to ? ` — ${toLabel(range.to)}` : ""}`
     : "";
 
   return (
-    <label className="grid gap-1.5 text-xs font-bold text-[#213e67]">
+    <label className={`grid min-w-0 gap-1.5 text-xs font-bold text-[#213e67] ${className ?? ""}`}>
       <span>Thời gian</span>
       <Popover>
         <PopoverTrigger
           render={
             <button
               type="button"
-              className="flex h-11 items-center gap-2 rounded-lg border border-[#d9e5f4] bg-white px-3 text-sm font-medium text-[#35537c] outline-none transition focus:border-[#8bd950] focus:ring-2 focus:ring-[#b7e961]/25 aria-expanded:border-[#8bd950] aria-expanded:ring-2 aria-expanded:ring-[#b7e961]/25"
+              className="flex h-11 w-full min-w-0 items-center gap-2 rounded-lg border border-[#d9e5f4] bg-white px-3 text-sm font-medium text-[#35537c] outline-none transition focus:border-[#8bd950] focus:ring-2 focus:ring-[#b7e961]/25 aria-expanded:border-[#8bd950] aria-expanded:ring-2 aria-expanded:ring-[#b7e961]/25"
             />
           }
         >
@@ -70,10 +81,10 @@ export function DateRangeFilter({
             {text || "Chọn khoảng thời gian"}
           </span>
         </PopoverTrigger>
-        <PopoverContent align="start" className="w-auto p-2">
+        <PopoverContent align="start" className="w-auto max-w-[calc(100vw-1rem)] overflow-x-auto p-2">
           <Calendar
             mode="range"
-            numberOfMonths={2}
+            numberOfMonths={isMobile ? 1 : 2}
             weekStartsOn={1}
             defaultMonth={range?.from}
             selected={range}
