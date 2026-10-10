@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -106,18 +107,20 @@ function LinkActions({ row, baseUrl }: { row: MyLinkRow; baseUrl: string }) {
         <MoreHorizontal className="size-4" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-52">
-        <DropdownMenuLabel>Thao tác link</DropdownMenuLabel>
-        <DropdownMenuItem onClick={() => void copyAffiliateLink()}>
-          {copied ? <Check className="text-[#168146]" /> : <Copy />}
-          {copied ? "Đã sao chép link" : "Sao chép link hoàn tiền"}
-        </DropdownMenuItem>
-        <DropdownMenuItem render={<a href={affiliatePath} target="_blank" rel="noopener noreferrer" />}>
-          <ShoppingBag /> Mua trên {platformLabel[row.platform]}
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem render={<a href={affiliatePath} target="_blank" rel="noopener noreferrer" />}>
-          <ExternalLink /> Mở link hoàn tiền
-        </DropdownMenuItem>
+        <DropdownMenuGroup>
+          <DropdownMenuLabel>Thao tác link</DropdownMenuLabel>
+          <DropdownMenuItem onClick={() => void copyAffiliateLink()}>
+            {copied ? <Check className="text-[#168146]" /> : <Copy />}
+            {copied ? "Đã sao chép link" : "Sao chép link hoàn tiền"}
+          </DropdownMenuItem>
+          <DropdownMenuItem render={<a href={affiliatePath} target="_blank" rel="noopener noreferrer" />}>
+            <ShoppingBag /> Mua trên {platformLabel[row.platform]}
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem render={<a href={affiliatePath} target="_blank" rel="noopener noreferrer" />}>
+            <ExternalLink /> Mở link hoàn tiền
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>
   );
