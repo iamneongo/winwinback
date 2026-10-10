@@ -28,7 +28,19 @@ function getDb(): Database {
       connectionString,
       ssl: { rejectUnauthorized: false },
       max: 5,
+      // Keep connections short-lived so stale sockets across provider/network
+      // interruptions are recycled instead of being reused for auth requests.
+      idleTimeoutMillis: 10_000,
+      maxLifetimeSeconds: 300,
+      connectionTimeoutMillis: 8_000,
+      keepAlive: true,
+      keepAliveInitialDelayMillis: 10_000,
     });
+  pool.on("error", () => {
+    // Never print the raw pg error here; it can include query values such as
+    // session cookies when a checked-out connection is interrupted.
+    console.error("[db] An idle database connection was dropped; the pool will replace it");
+  });
   globalForDb.pool = pool;
 
   const instance = drizzle(pool, { schema });

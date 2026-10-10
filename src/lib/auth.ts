@@ -30,6 +30,16 @@ const socialProviders =
 export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL,
   secret: process.env.BETTER_AUTH_SECRET,
+  // Database errors from the adapter can include bound values such as the
+  // opaque session cookie. Keep useful failure signals without logging those
+  // values or the raw database error object.
+  logger: {
+    level: "warn",
+    log(level) {
+      if (level === "error") console.error("[Better Auth] Authentication request failed (details redacted)");
+      else if (level === "warn") console.warn("[Better Auth] Authentication warning (details redacted)");
+    },
+  },
   socialProviders,
   // A Google login whose (verified) email matches an existing email/password
   // account links to that same user instead of creating a duplicate.
