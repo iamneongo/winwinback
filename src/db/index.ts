@@ -26,7 +26,6 @@ function getDb(): Database {
     globalForDb.pool ??
     new Pool({
       connectionString,
-      ssl: { rejectUnauthorized: false },
       max: 5,
       // Keep connections short-lived so stale sockets across provider/network
       // interruptions are recycled instead of being reused for auth requests.
