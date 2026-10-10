@@ -220,7 +220,8 @@ export function DonutChart({
   size?: number;
 }) {
   const [active, setActive] = useState<number | null>(null);
-  const total = segments.reduce((sum, s) => sum + s.value, 0) || 1;
+  const total = segments.reduce((sum, s) => sum + s.value, 0);
+  const safeTotal = total || 1;
 
   const r = 42;
   const c = 50;
@@ -229,8 +230,8 @@ export function DonutChart({
 
   const arcs = segments.map((seg, i) => {
     const prev = segments.slice(0, i).reduce((sum, s) => sum + s.value, 0);
-    const dash = (seg.value / total) * circ;
-    return { seg, dash, gap: circ - dash, offset: -(prev / total) * circ };
+    const dash = (seg.value / safeTotal) * circ;
+    return { seg, dash, gap: circ - dash, offset: -(prev / safeTotal) * circ };
   });
 
   const shown = active !== null ? segments[active] : null;
