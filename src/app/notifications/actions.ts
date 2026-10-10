@@ -1,13 +1,26 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth/guards";
-import { markAllRead } from "@/lib/notifications";
+import { markAllRead, markNotificationRead } from "@/lib/notifications";
 
-/**
- * Mark every unread notification of the current user (customer or admin) as
- * read. Called when the bell dropdown is opened so the red dot clears.
- */
+function revalidateNotificationViews() {
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/thong-bao");
+  revalidatePath("/admin");
+  revalidatePath("/admin/thong-bao");
+}
+
+/** Mark one notification read, scoped to the signed-in account. */
+export async function markNotificationReadAction(notificationId: string): Promise<void> {
+  const user = await requireUser();
+  await markNotificationRead(user.id, notificationId);
+  revalidateNotificationViews();
+}
+
+/** Mark all notifications for the signed-in account read. */
 export async function markNotificationsReadAction(): Promise<void> {
   const user = await requireUser();
   await markAllRead(user.id);
+  revalidateNotificationViews();
 }

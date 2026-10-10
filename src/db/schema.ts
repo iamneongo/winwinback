@@ -356,13 +356,18 @@ export const notifications = pgTable(
     body: text("body").notNull(),
     // Optional in-app destination the item links to.
     href: text("href"),
+    // Stable event key makes webhook/cron retries idempotent per recipient.
+    dedupeKey: text("dedupe_key"),
     // Null until the recipient has seen it.
     readAt: timestamp("read_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
   },
-  (t) => [index("notifications_user_idx").on(t.userId, t.createdAt)],
+  (t) => [
+    index("notifications_user_idx").on(t.userId, t.createdAt),
+    uniqueIndex("notifications_user_dedupe_idx").on(t.userId, t.dedupeKey),
+  ],
 );
 
 // ---------------------------------------------------------------------------

@@ -17,9 +17,8 @@ const ROWS: {
   title: string;
   text: string;
 }[] = [
-  { key: "notifyOrders", icon: ShoppingBag, tone: "bg-[#eff9df] text-[#62a51d]", title: "Thông báo đơn hàng", text: "Email khi trạng thái đơn / rút tiền thay đổi" },
-  { key: "notifyCashback", icon: Wallet, tone: "bg-[#f5e9ff] text-[#a32cdb]", title: "Thông báo hoàn tiền", text: "Email khi có tiền hoàn vào ví" },
-  { key: "notifySystemEmail", icon: Mail, tone: "bg-[#e8f1ff] text-[#287be5]", title: "Email hệ thống", text: "Thông báo quan trọng từ Win-Win Back" },
+  { key: "notifyOrders", icon: ShoppingBag, tone: "bg-[#eff9df] text-[#62a51d]", title: "Email cập nhật rút tiền", text: "Khi yêu cầu được duyệt, từ chối hoặc chi trả" },
+  { key: "notifyCashback", icon: Wallet, tone: "bg-[#f5e9ff] text-[#a32cdb]", title: "Email hoàn tiền", text: "Khi tiền hoàn được cộng vào ví" },
 ];
 
 export function NotificationSettings({ prefs }: { prefs: Prefs }) {
@@ -40,6 +39,7 @@ export function NotificationSettings({ prefs }: { prefs: Prefs }) {
 
   return (
     <div className="mt-2" aria-busy={pending}>
+      <p className="mb-1 text-xs leading-5 text-[#718bad]">Các lựa chọn này chỉ bật/tắt email. Thông báo trong ứng dụng vẫn được lưu tại mục Thông báo.</p>
       {ROWS.map(({ key, icon: Icon, tone, title, text }) => {
         const on = state[key];
         return (

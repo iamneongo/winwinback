@@ -2,7 +2,7 @@ import "server-only";
 import { eq, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { users, orders, walletTransactions } from "@/db/schema";
-import { notifyCashbackCredited } from "@/lib/notify";
+import { notifyCashbackCredited, notifyCashbackReversed } from "@/lib/notify";
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 type WalletTxType = "cashback" | "withdrawal" | "refund" | "adjustment" | "reward" | "prize";
@@ -101,6 +101,7 @@ export async function settleOrderCashback(orderId: string): Promise<boolean> {
     return order.cashbackAmount > 0
       ? {
           userId: order.userId,
+          orderId: order.id,
           externalOrderId: order.externalOrderId,
           amount: order.cashbackAmount,
         }
@@ -118,7 +119,7 @@ export async function settleOrderCashback(orderId: string): Promise<boolean> {
   });
 
   // Best-effort notification; never block or fail the settlement.
-  void notifyCashbackCredited(credited).catch(() => {});
+  await notifyCashbackCredited(credited).catch(() => {});
   return true;
 }
 
@@ -178,15 +179,21 @@ export async function reverseOrderCashback(orderId: string): Promise<boolean> {
       orderId: order.id,
       commissionAmount: order.commissionAmount,
     });
-    return true;
+    return {
+      orderId: order.id,
+      userId: order.userId,
+      externalOrderId: order.externalOrderId,
+      amount: order.cashbackAmount,
+    };
   });
   if (reversed) {
     const { reverseReferralReward } = await import("@/lib/missions/referral");
     await reverseReferralReward(orderId).catch((error: unknown) => {
       console.error("Referral reward reversal failed", error);
     });
+    await notifyCashbackReversed(reversed).catch(() => {});
   }
-  return reversed;
+  return Boolean(reversed);
 }
 
 /**

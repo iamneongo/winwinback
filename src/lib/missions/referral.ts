@@ -59,7 +59,7 @@ export async function settleReferralReward(orderId: string): Promise<boolean> {
       orderId: order.id,
       note: "Thưởng tham gia qua lời mời và hoàn thành đơn đầu tiên",
     });
-    return { referrerId: referred.referredBy, referredId: referred.id, amount: mission.reward };
+    return { orderId: order.id, referrerId: referred.referredBy, referredId: referred.id, amount: mission.reward };
   });
 
   if (!paid) return false;
@@ -70,6 +70,7 @@ export async function settleReferralReward(orderId: string): Promise<boolean> {
       title: "Bạn nhận thưởng mời bạn",
       body: `+${formatVnd(paid.amount)} vì người bạn được mời đã hoàn thành đơn hợp lệ.`,
       href: "/dashboard/vi",
+      dedupeKey: `referral:${paid.orderId}:${paid.referrerId}`,
     }),
     createNotification({
       userId: paid.referredId,
@@ -77,6 +78,7 @@ export async function settleReferralReward(orderId: string): Promise<boolean> {
       title: "Bạn nhận thưởng từ lời mời",
       body: `+${formatVnd(paid.amount)} sau đơn mua hợp lệ đầu tiên.`,
       href: "/dashboard/vi",
+      dedupeKey: `referral:${paid.orderId}:${paid.referredId}`,
     }),
   ]).catch(() => {});
   return true;

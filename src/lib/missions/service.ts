@@ -189,6 +189,7 @@ async function notifyRewarded(userId: string, mission: Mission): Promise<void> {
     title: "Bạn nhận thưởng nhiệm vụ 🎁",
     body: `Nhiệm vụ “${mission.title}” — +${formatVnd(mission.reward)} vào ví.`,
     href: "/dashboard/vi",
+    dedupeKey: `mission:${userId}:${mission.key}:reward`,
   }).catch(() => {});
 }
 
@@ -388,6 +389,7 @@ export async function rejectClaim(
     title: "Nhiệm vụ chưa được duyệt",
     body: `Nhiệm vụ “${mission?.title ?? claim.missionKey}” bị từ chối${note ? `: ${note}` : ""}. Bạn có thể gửi lại.`,
     href: "/dashboard/nhiem-vu",
+    dedupeKey: `mission:${claim.id}:rejected`,
   }).catch(() => {});
   return { ok: true };
 }

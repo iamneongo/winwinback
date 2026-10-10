@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signOut } from "@/lib/auth-client";
@@ -12,6 +12,7 @@ import {
   ShieldCheck,
   Store,
   Coins,
+  RotateCcw,
   Banknote,
   Package,
   Info,
@@ -29,7 +30,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { markNotificationsReadAction } from "@/app/notifications/actions";
 
 export type HeaderNotification = {
   id: string;
@@ -43,6 +43,7 @@ export type HeaderNotification = {
 
 const typeIcon: Record<string, React.ComponentType<{ className?: string }>> = {
   cashback: Coins,
+  cashback_reversed: RotateCcw,
   withdrawal: Banknote,
   withdrawal_request: Banknote,
   order: Package,
@@ -52,6 +53,7 @@ const typeIcon: Record<string, React.ComponentType<{ className?: string }>> = {
 
 const typeTone: Record<string, string> = {
   cashback: "bg-[#e8f8eb] text-[#168146]",
+  cashback_reversed: "bg-[#fff3dc] text-[#b7791f]",
   withdrawal: "bg-[#eef4ff] text-[#1766e7]",
   withdrawal_request: "bg-[#fff3dc] text-[#b7791f]",
   order: "bg-[#f0ecff] text-[#6b4de0]",
@@ -89,59 +91,78 @@ export function HeaderMenus({
 }) {
   const initial = name.trim().charAt(0).toUpperCase();
   const router = useRouter();
-  const [dotVisible, setDotVisible] = useState(unreadCount > 0);
-  const [, startTransition] = useTransition();
+  const notificationsHref = variant === "admin" ? "/admin/thong-bao" : "/dashboard/thong-bao";
+  const [currentNotifications, setCurrentNotifications] = useState(notifications);
+  const [currentUnreadCount, setCurrentUnreadCount] = useState(unreadCount);
 
-  function onBellOpenChange(open: boolean) {
-    if (open && unreadCount > 0) {
-      // Optimistically clear the dot, then persist + refresh server data.
-      setDotVisible(false);
-      startTransition(async () => {
-        await markNotificationsReadAction();
-        router.refresh();
-      });
-    }
-  }
+  useEffect(() => {
+    let mounted = true;
+    const refreshNotifications = async () => {
+      if (document.visibilityState !== "visible") return;
+      try {
+        const response = await fetch("/api/notifications", { cache: "no-store" });
+        if (!response.ok) return;
+        const data = (await response.json()) as {
+          unreadCount: number;
+          items: HeaderNotification[];
+        };
+        if (!mounted) return;
+        setCurrentNotifications(data.items);
+        setCurrentUnreadCount(data.unreadCount);
+      } catch {
+        // Keep the last good snapshot; the next poll will retry.
+      }
+    };
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") void refreshNotifications();
+    };
+    const timer = window.setInterval(refreshNotifications, 45_000);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => {
+      mounted = false;
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
+  }, []);
 
   return (
     <>
-      <Popover onOpenChange={onBellOpenChange}>
+      <Popover>
         <PopoverTrigger
           render={
             <button
               type="button"
-              aria-label="Thông báo"
+              aria-label={currentUnreadCount > 0 ? `Thông báo, ${currentUnreadCount} chưa đọc` : "Thông báo"}
               className="relative flex h-11 w-11 items-center justify-center rounded-full text-[#315a90] transition-colors hover:bg-[#eef4fc]"
             />
           }
         >
           <Bell className="h-5 w-5" />
-          {dotVisible && (
+          {currentUnreadCount > 0 && (
             <span className="absolute right-2.5 top-2.5 h-2 w-2 rounded-full bg-[#ff5c51]" />
           )}
         </PopoverTrigger>
-        <PopoverContent align="end" className="w-[22rem] gap-0 p-0">
+        <PopoverContent align="end" className="w-[min(22rem,calc(100vw-1.5rem))] gap-0 overflow-hidden p-0">
           <div className="flex items-center justify-between border-b border-[#e8eef6] px-4 py-3">
             <span className="text-sm font-bold text-[#0d315d]">Thông báo</span>
-            {unreadCount > 0 && (
+            {currentUnreadCount > 0 && (
               <span className="rounded-full bg-[#ffe9e7] px-2 py-0.5 text-[11px] font-bold text-[#e5484d]">
-                {unreadCount} mới
+                {currentUnreadCount} mới
               </span>
             )}
           </div>
-          {notifications.length === 0 ? (
-            <div className="px-4 py-10 text-center text-sm text-[#6681a7]">
-              Không có thông báo mới
+          {currentNotifications.length === 0 ? (
+            <div className="px-4 py-8 text-center text-sm text-[#6681a7]">
+              Bạn chưa có thông báo nào.
             </div>
           ) : (
             <ul className="max-h-[24rem] divide-y divide-[#f0f4fa] overflow-y-auto">
-              {notifications.map((n) => {
+              {currentNotifications.map((n) => {
                 const Icon = typeIcon[n.type] ?? Info;
                 const tone = typeTone[n.type] ?? typeTone.system;
-                const inner = (
-                  <div
-                    className={`flex gap-3 px-4 py-3 transition-colors ${n.read ? "" : "bg-[#f5faff]"} ${n.href ? "hover:bg-[#eef4fc]" : ""}`}
-                  >
+                return (
+                  <li key={n.id}>
+                    <Link href={`${notificationsHref}/${n.id}`} className={`flex gap-3 px-4 py-3 transition-colors hover:bg-[#eef4fc] ${n.read ? "" : "bg-[#f5faff]"}`}>
                     <span
                       className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${tone}`}
                     >
@@ -151,29 +172,22 @@ export function HeaderMenus({
                       <p className="text-sm font-semibold leading-5 text-[#0d315d]">
                         {n.title}
                       </p>
-                      <p className="mt-0.5 text-xs leading-5 text-[#5c7a9c]">
+                      <p className="mt-0.5 line-clamp-2 text-xs leading-5 text-[#5c7a9c]">
                         {n.body}
                       </p>
                       <p className="mt-1 text-[11px] text-[#93a6c2]">
                         {relativeTime(n.createdAt)}
                       </p>
                     </div>
-                  </div>
-                );
-                return (
-                  <li key={n.id}>
-                    {n.href ? (
-                      <Link href={n.href} className="block">
-                        {inner}
-                      </Link>
-                    ) : (
-                      inner
-                    )}
+                    </Link>
                   </li>
                 );
               })}
             </ul>
           )}
+          <Link href={notificationsHref} className="flex h-11 items-center justify-center gap-2 border-t border-[#e8eef6] text-xs font-bold text-[#1766e7] transition-colors hover:bg-[#f6f9fd]">
+            Xem tất cả thông báo <ChevronDown className="size-3.5 -rotate-90" />
+          </Link>
         </PopoverContent>
       </Popover>
 

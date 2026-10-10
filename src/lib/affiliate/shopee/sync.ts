@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { orders, users } from "@/db/schema";
 import { cashbackRate } from "@/lib/config";
 import { settleOrderCashback, reverseOrderCashback } from "@/lib/wallet";
+import { notifyAdminsForPendingOrder, notifyOrderStatusForOrder } from "@/lib/notify";
 import {
   getShopeeConversions,
   type ShopeeConversion,
@@ -178,6 +179,7 @@ export async function reconcile(
     const current = existingBySn.get(c.orderSn);
     if (current) {
       const pendingPayout = !current.cashbackCreditedAt;
+      const statusChanged = Boolean(status && status !== current.status);
       await db
         .update(orders)
         .set({
@@ -192,6 +194,12 @@ export async function reconcile(
         })
         .where(eq(orders.id, current.id));
       updated++;
+      if (statusChanged && status !== "completed") {
+        await notifyOrderStatusForOrder(current.id, status!).catch(() => {});
+        if (status === "pending") {
+          await notifyAdminsForPendingOrder(current.id).catch(() => {});
+        }
+      }
       if (payable && pendingPayout) toSettle.add(current.id);
       // Credited before, now cancelled/refunded/fraud → claw it back.
       if (current.cashbackCreditedAt && (status === "cancelled" || c.isFraud)) {
@@ -234,6 +242,13 @@ export async function reconcile(
         })
         .returning({ id: orders.id });
       attributed++;
+      const initialStatus = status ?? "pending";
+      if (initialStatus === "pending" || initialStatus === "confirmed" || initialStatus === "cancelled") {
+        await notifyOrderStatusForOrder(inserted[0].id, initialStatus).catch(() => {});
+      }
+      if (initialStatus === "pending") {
+        await notifyAdminsForPendingOrder(inserted[0].id).catch(() => {});
+      }
       if (payable) toSettle.add(inserted[0].id);
     } catch {
       unmatched++;

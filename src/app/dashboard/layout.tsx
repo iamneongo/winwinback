@@ -70,6 +70,7 @@ export default async function DashboardLayout({
                 </span>
               </div>
               <HeaderMenus
+                key={`${bell.unreadCount}:${bell.items[0]?.id ?? ""}`}
                 name={user.name}
                 role={user.role}
                 notifications={bell.items}

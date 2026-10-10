@@ -6,6 +6,7 @@ import { searchAffiliateOrders, type AffiliateOrder } from "./client";
 import { getValidTikTokAccessToken } from "./tokens";
 import { settleOrderCashback } from "@/lib/wallet";
 import { cashbackRate } from "@/lib/config";
+import { notifyAdminsForPendingOrder, notifyOrderStatusForOrder } from "@/lib/notify";
 
 type OrderStatus = "pending" | "confirmed" | "completed" | "cancelled";
 
@@ -175,6 +176,12 @@ export async function syncTikTokOrders(
           })
           .where(eq(orders.id, row.id));
         updated++;
+        if (statusChanged && mapped !== "completed") {
+          await notifyOrderStatusForOrder(row.id, mapped!).catch(() => {});
+          if (mapped === "pending") {
+            await notifyAdminsForPendingOrder(row.id).catch(() => {});
+          }
+        }
       }
       const nextStatus = mapped ?? (row.status as OrderStatus);
       if (nextStatus === "completed" && pendingPayout) toSettle.add(row.id);
@@ -185,6 +192,12 @@ export async function syncTikTokOrders(
     const created = await attributeOrder(o, mapped);
     if (created) {
       attributed++;
+      if (mapped !== "completed") {
+        await notifyOrderStatusForOrder(created, mapped ?? "pending").catch(() => {});
+        if ((mapped ?? "pending") === "pending") {
+          await notifyAdminsForPendingOrder(created).catch(() => {});
+        }
+      }
       if (mapped === "completed") toSettle.add(created);
     } else {
       unmatched++;

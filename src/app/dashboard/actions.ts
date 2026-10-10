@@ -269,8 +269,9 @@ export async function requestWithdrawalAction(
     return { error: `Số tiền rút tối thiểu là ${minWithdrawal.toLocaleString("vi-VN")} ₫` };
   }
 
+  let withdrawalId: string;
   try {
-    await db.transaction(async (tx) => {
+    const createdWithdrawal = await db.transaction(async (tx) => {
       // Hold the funds now: debit the wallet and open a pending request.
       await recordWalletTx(tx, {
         userId: user.id,
@@ -278,14 +279,16 @@ export async function requestWithdrawalAction(
         amount: -amount,
         note: "Yêu cầu rút tiền",
       });
-      await tx.insert(withdrawals).values({
+      const [withdrawal] = await tx.insert(withdrawals).values({
         userId: user.id,
         amount,
         bankName,
         bankAccount,
         accountHolder,
-      });
+      }).returning({ id: withdrawals.id });
+      return withdrawal;
     });
+    withdrawalId = createdWithdrawal.id;
   } catch (e) {
     if (e instanceof Error && e.message === "INSUFFICIENT_BALANCE") {
       return { error: "Số dư không đủ" };
@@ -294,7 +297,9 @@ export async function requestWithdrawalAction(
   }
 
   // Best-effort admin notification; never block the user's request.
-  void notifyNewWithdrawalRequest({
+  await notifyNewWithdrawalRequest({
+    withdrawalId,
+    userId: user.id,
     userName: user.name,
     amount,
   }).catch(() => {});

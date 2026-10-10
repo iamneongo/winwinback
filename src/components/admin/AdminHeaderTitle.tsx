@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 
 const routeTitles = [
+  { href: "/admin/thong-bao", title: "Thông báo" },
   { href: "/admin/nguoi-dung", title: "Quản lý người dùng" },
   { href: "/admin/don-hang", title: "Quản lý đơn hàng" },
   { href: "/admin/yeu-cau-hoan-tien", title: "Quản lý yêu cầu hoàn tiền" },

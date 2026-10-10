@@ -1,4 +1,4 @@
-// Create the in-app notifications table + index. Idempotent (IF NOT EXISTS).
+// Create/update the in-app notifications storage. Safe to run repeatedly.
 // Run: node --env-file=.env.local scripts/create-notifications-table.mjs
 import pg from "pg";
 
@@ -22,10 +22,18 @@ try {
     );
   `);
   await client.query(`
+    ALTER TABLE notifications
+      ADD COLUMN IF NOT EXISTS dedupe_key text;
+  `);
+  await client.query(`
     CREATE INDEX IF NOT EXISTS notifications_user_idx
       ON notifications (user_id, created_at);
   `);
-  console.log("OK: notifications table + index ready");
+  await client.query(`
+    CREATE UNIQUE INDEX IF NOT EXISTS notifications_user_dedupe_idx
+      ON notifications (user_id, dedupe_key);
+  `);
+  console.log("OK: notifications storage + indexes ready");
 } finally {
   await client.end();
 }

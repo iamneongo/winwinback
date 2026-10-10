@@ -51,6 +51,7 @@ export default async function AdminLayout({
               />
               <HeaderDateRange />
               <HeaderMenus
+                key={`${bell.unreadCount}:${bell.items[0]?.id ?? ""}`}
                 name={admin.name}
                 role={admin.role}
                 variant="admin"

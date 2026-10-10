@@ -5,6 +5,7 @@ import { db } from "@/db";
 import { users, affiliateLinks, orders } from "@/db/schema";
 import { settleOrderCashback } from "@/lib/wallet";
 import { cashbackRate } from "@/lib/config";
+import { notifyAdminsForPendingOrder, notifyOrderStatusForOrder } from "@/lib/notify";
 
 export const dynamic = "force-dynamic";
 
@@ -86,14 +87,16 @@ export async function POST(req: Request) {
 
   // Upsert by externalOrderId.
   const existing = await db
-    .select({ id: orders.id })
+    .select({ id: orders.id, status: orders.status })
     .from(orders)
     .where(eq(orders.externalOrderId, p.externalOrderId))
     .limit(1);
 
   let orderId: string;
+  let statusChanged = !existing[0];
   if (existing[0]) {
     orderId = existing[0].id;
+    statusChanged = existing[0].status !== p.status;
     await db
       .update(orders)
       .set({
@@ -124,6 +127,12 @@ export async function POST(req: Request) {
   }
 
   let credited = false;
+  if (statusChanged && p.status !== "completed") {
+    await notifyOrderStatusForOrder(orderId, p.status).catch(() => {});
+  }
+  if (statusChanged && p.status === "pending") {
+    await notifyAdminsForPendingOrder(orderId).catch(() => {});
+  }
   if (p.status === "completed") {
     credited = await settleOrderCashback(orderId);
   }

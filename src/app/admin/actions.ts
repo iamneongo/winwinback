@@ -7,7 +7,7 @@ import { db } from "@/db";
 import { users, orders, withdrawals } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth/guards";
 import { settleOrderCashback, recordWalletTx } from "@/lib/wallet";
-import { notifyWithdrawalStatus } from "@/lib/notify";
+import { notifyOrderStatusForOrder, notifyWithdrawalStatus } from "@/lib/notify";
 import { cashbackRate } from "@/lib/config";
 import { verifyTikTokOrder, type VerifyResult } from "@/lib/affiliate/tiktok/orders";
 import { verifyShopeeOrder } from "@/lib/affiliate/shopee/orders";
@@ -157,6 +157,8 @@ export async function createOrderAction(
 
   if (data.status === "completed") {
     await settleOrderCashback(orderId);
+  } else {
+    await notifyOrderStatusForOrder(orderId, data.status).catch(() => {});
   }
   revalidatePath("/admin");
   return { success: "Đã thêm đơn hàng" };
@@ -185,6 +187,13 @@ async function applyOrderStatus(
     if (gate.error) return gate;
   }
 
+  const existing = await db
+    .select({ status: orders.status })
+    .from(orders)
+    .where(eq(orders.id, orderId))
+    .limit(1);
+  if (!existing[0]) return { error: "Không tìm thấy đơn" };
+
   await db
     .update(orders)
     .set({ status, ...(fields ?? {}) })
@@ -193,6 +202,8 @@ async function applyOrderStatus(
   // Crediting is idempotent and only fires when status === completed.
   if (status === "completed") {
     await settleOrderCashback(orderId);
+  } else if (existing[0].status !== status) {
+    await notifyOrderStatusForOrder(orderId, status).catch(() => {});
   }
   return {};
 }
@@ -326,7 +337,7 @@ export async function processWithdrawalAction(
   if (!parsed.success) return { error: "Dữ liệu không hợp lệ" };
   const { withdrawalId, action } = parsed.data;
 
-  let processed: { userId: string; amount: number; status: "approved" | "rejected" | "paid" };
+  let processed: { withdrawalId: string; userId: string; amount: number; status: "approved" | "rejected" | "paid" };
   try {
     processed = await db.transaction(async (tx) => {
       const rows = await tx
@@ -353,20 +364,20 @@ export async function processWithdrawalAction(
           .update(withdrawals)
           .set({ status: "rejected", processedAt: new Date() })
           .where(eq(withdrawals.id, withdrawalId));
-        return { userId: w.userId, amount: w.amount, status: "rejected" as const };
+        return { withdrawalId: w.id, userId: w.userId, amount: w.amount, status: "rejected" as const };
       } else if (action === "approve") {
         await tx
           .update(withdrawals)
           .set({ status: "approved", processedAt: new Date() })
           .where(eq(withdrawals.id, withdrawalId));
-        return { userId: w.userId, amount: w.amount, status: "approved" as const };
+        return { withdrawalId: w.id, userId: w.userId, amount: w.amount, status: "approved" as const };
       } else {
         // paid
         await tx
           .update(withdrawals)
           .set({ status: "paid", processedAt: new Date() })
           .where(eq(withdrawals.id, withdrawalId));
-        return { userId: w.userId, amount: w.amount, status: "paid" as const };
+        return { withdrawalId: w.id, userId: w.userId, amount: w.amount, status: "paid" as const };
       }
     });
   } catch (e) {
@@ -377,7 +388,7 @@ export async function processWithdrawalAction(
   }
 
   // Best-effort notification; never block the response.
-  void notifyWithdrawalStatus(processed).catch(() => {});
+  await notifyWithdrawalStatus(processed).catch(() => {});
 
   revalidatePath("/admin");
   revalidatePath("/admin/rut-tien");
