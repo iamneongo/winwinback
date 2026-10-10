@@ -29,7 +29,7 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 export type AdminTableFilter = {
-  key: "status" | "platform" | "role" | "category";
+  key: "status" | "platform" | "role" | "category" | "type" | "read";
   label: string;
   options: { value: string; label: string }[];
 };
@@ -79,6 +79,8 @@ export function AdminDataTable<TData>({
     platform: parseAsString.withDefault(""),
     role: parseAsString.withDefault(""),
     category: parseAsString.withDefault(""),
+    type: parseAsString.withDefault(""),
+    read: parseAsString.withDefault(""),
   }, { shallow: false, history: "push", scroll: false, startTransition });
   const [draft, setDraft] = useState(isPreview ? "" : query.q);
   const [localPage, setLocalPage] = useState(1);
@@ -180,7 +182,7 @@ export function AdminDataTable<TData>({
           );
         })}
         {(draft || activeFilters || sorting.length) ? (
-          <Button variant="ghost" size="lg" onClick={() => { setDraft(""); if (mode === "client") { setLocalFilters([]); setLocalSorting([]); setLocalPage(1); } else void setQuery({ q: "", status: "", platform: "", role: "", category: "", sort: "", dir: "desc", trang: 1 }); }} className="text-[#49688f]">
+          <Button variant="ghost" size="lg" onClick={() => { setDraft(""); if (mode === "client") { setLocalFilters([]); setLocalSorting([]); setLocalPage(1); } else void setQuery({ q: "", status: "", platform: "", role: "", category: "", type: "", read: "", sort: "", dir: "desc", trang: 1 }); }} className="text-[#49688f]">
             <X className="size-4" /> Xóa lọc
           </Button>
         ) : null}

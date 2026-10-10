@@ -12,7 +12,6 @@ import {
   Banknote,
   Gift,
   ClipboardCheck,
-  Bell,
   Ticket,
   FileText,
   type LucideIcon,
@@ -30,7 +29,6 @@ export type NavItem = {
 /** Customer dashboard navigation. */
 export const customerNav: NavItem[] = [
   { href: "/dashboard", icon: Home, label: "Tổng quan", exact: true },
-  { href: "/dashboard/thong-bao", icon: Bell, label: "Thông báo", short: "Thông báo" },
   { href: "/dashboard/don-hang", icon: ShoppingBag, label: "Đơn hàng của tôi", short: "Đơn hàng" },
   { href: "/dashboard/bai-viet", icon: FileText, label: "Bài viết của bạn", short: "Bài viết" },
   { href: "/dashboard/vi", icon: Wallet, label: "Ví hoàn tiền", short: "Ví" },
@@ -42,7 +40,6 @@ export const customerNav: NavItem[] = [
 /** Admin navigation. */
 export const adminNav: NavItem[] = [
   { href: "/admin", icon: LayoutDashboard, label: "Tổng quan", exact: true },
-  { href: "/admin/thong-bao", icon: Bell, label: "Thông báo", short: "Thông báo" },
   { href: "/admin/nguoi-dung", icon: UsersRound, label: "Quản lý người dùng", short: "Người dùng" },
   { href: "/admin/yeu-cau-hoan-tien", icon: BadgeDollarSign, label: "Yêu cầu hoàn tiền", short: "Yêu cầu" },
   { href: "/admin/rut-tien", icon: Banknote, label: "Yêu cầu rút tiền", short: "Rút tiền" },

@@ -1,5 +1,5 @@
 import "server-only";
-import { and, count, desc, eq, isNull } from "drizzle-orm";
+import { and, asc, count, desc, eq, ilike, isNotNull, isNull, or } from "drizzle-orm";
 import { db } from "@/db";
 import { notifications, users } from "@/db/schema";
 import type { Notification } from "@/db/schema";
@@ -123,6 +123,58 @@ export async function getNotificationsPage(
     page: currentPage,
     pages,
   };
+}
+
+/** Admin notification table, scoped to this admin's own inbox/read state. */
+export async function getAdminNotificationsPage(
+  userId: string,
+  options: {
+    page: number;
+    search?: string;
+    type?: string;
+    read?: "read" | "unread" | "";
+    sort?: "title" | "type" | "readAt" | "createdAt";
+    direction?: "asc" | "desc";
+  },
+): Promise<{ items: Notification[]; total: number; unreadCount: number; page: number; pages: number }> {
+  const safePage = Math.max(1, Math.floor(options.page));
+  const conditions = [eq(notifications.userId, userId)];
+  const search = options.search?.trim();
+  if (search) {
+    const pattern = `%${search}%`;
+    const searchCondition = or(ilike(notifications.title, pattern), ilike(notifications.body, pattern));
+    if (searchCondition) conditions.push(searchCondition);
+  }
+  if (notificationTypes.includes(options.type as NotificationType)) {
+    conditions.push(eq(notifications.type, options.type as NotificationType));
+  }
+  if (options.read === "unread") conditions.push(isNull(notifications.readAt));
+  else if (options.read === "read") conditions.push(isNotNull(notifications.readAt));
+
+  const where = and(...conditions);
+  const [countRows, unreadRows] = await Promise.all([
+    db.select({ value: count() }).from(notifications).where(where),
+    db.select({ value: count() }).from(notifications).where(and(eq(notifications.userId, userId), isNull(notifications.readAt))),
+  ]);
+  const total = countRows[0]?.value ?? 0;
+  const pages = Math.max(1, Math.ceil(total / NOTIFICATIONS_PAGE_SIZE));
+  const currentPage = Math.min(safePage, pages);
+  const sortColumn = {
+    title: notifications.title,
+    type: notifications.type,
+    readAt: notifications.readAt,
+    createdAt: notifications.createdAt,
+  }[options.sort ?? "createdAt"];
+  const order = options.direction === "asc" ? asc(sortColumn) : desc(sortColumn);
+  const items = await db
+    .select()
+    .from(notifications)
+    .where(where)
+    .orderBy(order, desc(notifications.createdAt), desc(notifications.id))
+    .limit(NOTIFICATIONS_PAGE_SIZE)
+    .offset((currentPage - 1) * NOTIFICATIONS_PAGE_SIZE);
+
+  return { items, total, unreadCount: unreadRows[0]?.value ?? 0, page: currentPage, pages };
 }
 
 /** Look up one notification only when it belongs to the signed-in recipient. */
