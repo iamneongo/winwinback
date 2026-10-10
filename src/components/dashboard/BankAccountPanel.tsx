@@ -23,7 +23,7 @@ export function BankAccountPanel({ account }: { account: BankAccountDetails | nu
     <section className="rounded-xl border border-[#e0eaf6] bg-white p-5 shadow-[0_5px_14px_rgba(26,73,124,0.04)]">
       <div className="flex items-center gap-2">
         <Landmark className="size-5 text-[#315a90]" />
-        <h2 className="font-bold text-[#173861]">Liên kết ngân hàng</h2>
+        <h2 className="font-bold text-[#173861]">Thêm tài khoản ngân hàng</h2>
       </div>
 
       {account && !editing ? (
