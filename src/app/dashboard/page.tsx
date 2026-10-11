@@ -129,7 +129,7 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
   const baseUrl = await getRequestBaseUrl();
   return (
     <main className="mx-auto w-full max-w-[1440px] px-4 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-7">
-      <section className="ww-dashboard-link-banner relative isolate overflow-hidden rounded-xl px-5 py-6 text-white shadow-[0_8px_24px_rgba(9,54,95,0.14)] sm:h-[13.5rem] sm:px-7">
+      <section className="ww-dashboard-link-banner wwb-image-hover-frame relative isolate overflow-hidden rounded-xl px-5 py-6 text-white shadow-[0_8px_24px_rgba(9,54,95,0.14)] sm:h-[13.5rem] sm:px-7">
         <Image
           src="/images/dashboard-overview-banner-v9.png"
           alt=""
@@ -137,7 +137,7 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
           height={1024}
           priority
           sizes="(max-width: 1280px) 0px, 470px"
-          className="pointer-events-none absolute right-8 top-1/2 z-0 hidden h-[15rem] w-auto max-w-none -translate-y-1/2 [mask-image:linear-gradient(90deg,transparent_0%,black_38%)] xl:block"
+          className="wwb-image-hover pointer-events-none absolute right-8 top-1/2 z-0 hidden h-[15rem] w-auto max-w-none -translate-y-1/2 [mask-image:linear-gradient(90deg,transparent_0%,black_38%)] xl:block"
         />
         <div className="relative z-10 max-w-[44rem]">
           <h1 className="flex items-center gap-2 text-xl font-black tracking-tight sm:text-2xl">
@@ -334,13 +334,13 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
             </li>
           </ol>
         </div>
-        <div className="relative min-h-40 overflow-hidden rounded-xl bg-[#062c52] p-5 text-white xl:h-full">
+        <div className="wwb-image-hover-frame relative min-h-40 overflow-hidden rounded-xl bg-[#062c52] p-5 text-white xl:h-full">
           <Image
             src="/images/dashboard-overview-wallet-promo-v4.png"
             alt=""
             fill
             sizes="(max-width: 1280px) 100vw, 25rem"
-            className="object-cover object-center"
+            className="wwb-image-hover object-cover object-center"
           />
           <div className="relative z-10 max-w-[11rem]">
             <p className="text-lg font-black leading-tight">

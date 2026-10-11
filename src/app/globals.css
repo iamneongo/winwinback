@@ -149,6 +149,97 @@
   font-family: inherit;
 }
 
+/* One-shot logo reveal: the growth line draws first, then the arrowhead. */
+.wwb-brand-mark {
+  transform-origin: center;
+  transition: transform 180ms ease-out, filter 180ms ease-out;
+}
+
+.wwb-brand-mark path:first-of-type {
+  stroke-dasharray: 64;
+  stroke-dashoffset: 64;
+  animation: wwb-logo-line-intro 620ms cubic-bezier(0.22, 1, 0.36, 1) 80ms forwards;
+}
+
+.wwb-brand-mark path:last-of-type {
+  stroke-dasharray: 25;
+  stroke-dashoffset: 25;
+  animation: wwb-logo-arrow-intro 360ms cubic-bezier(0.22, 1, 0.36, 1) 430ms forwards;
+}
+
+@keyframes wwb-logo-line-intro {
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes wwb-logo-arrow-intro {
+  to { stroke-dashoffset: 0; }
+}
+
+.wwb-brand-logo:is(:hover, :focus-within) .wwb-brand-mark {
+  transform: translateY(-1px) scale(1.1);
+  filter: drop-shadow(0 2px 3px rgba(183, 233, 97, 0.45));
+}
+
+.wwb-brand-logo:is(:hover, :focus-within) .wwb-brand-mark path {
+  stroke-width: 8.5;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wwb-brand-mark {
+    transition: none;
+  }
+
+  .wwb-brand-mark path:first-of-type,
+  .wwb-brand-mark path:last-of-type {
+    animation: none;
+    stroke-dasharray: none;
+    stroke-dashoffset: 0;
+  }
+
+  .wwb-brand-logo:is(:hover, :focus-within) .wwb-brand-mark {
+    transform: none;
+    filter: none;
+  }
+}
+
+/* Low-amplitude movement for the character and device artwork. */
+.wwb-gentle-float {
+  animation: wwb-gentle-float 5.8s ease-in-out infinite;
+  will-change: transform;
+}
+
+@keyframes wwb-gentle-float {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(0, -7px, 0); }
+}
+
+.wwb-image-hover {
+  transition: transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .wwb-image-hover-frame:hover .wwb-image-hover,
+  .wwb-image-hover-frame:focus-within .wwb-image-hover {
+    transform: scale(1.035);
+  }
+
+  .wwb-mascot-stage:hover .wwb-gentle-float,
+  .ww-sidebar-promo:hover .wwb-gentle-float {
+    filter: brightness(1.035) saturate(1.04);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wwb-gentle-float {
+    animation: none;
+    will-change: auto;
+  }
+
+  .wwb-image-hover {
+    transition: none;
+  }
+}
+
 .ww-sidebar,
 /* shadcn Sidebar: paint the branded gradient on the inner surface
    (it otherwise fills solid bg-sidebar). */

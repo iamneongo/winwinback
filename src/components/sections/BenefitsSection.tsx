@@ -23,13 +23,13 @@ export function BenefitsSection() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           {/* Left: Image with overlay */}
           <div className="relative">
-            <div className="rounded-2xl overflow-hidden shadow-sm">
+            <div className="wwb-image-hover-frame rounded-2xl overflow-hidden shadow-sm">
               <Image
                 src="/images/route-illustration.jpg"
                 width={960}
                 height={640}
                 alt="Đường dẫn lên biểu trưng cho hành trình hoàn tiền"
-                className="w-full object-cover"
+                className="wwb-image-hover w-full object-cover"
               />
             </div>
           </div>

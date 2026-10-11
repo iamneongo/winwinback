@@ -59,7 +59,7 @@ export function HowItWorksSection() {
               width={1000}
               height={1000}
               alt="Điện thoại 3D minh họa quy trình hoàn tiền"
-              className="w-full max-w-[400px] h-auto drop-shadow-2xl"
+              className="wwb-gentle-float w-full max-w-[400px] h-auto drop-shadow-2xl"
             />
           </div>
         </div>

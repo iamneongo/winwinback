@@ -36,7 +36,7 @@ export function HeroSection() {
 
         {/* Right: Hero image */}
         <div
-          className="ww-hero-enter-img relative block flex-shrink-0 w-full max-w-[420px] mx-auto lg:w-[480px] xl:w-[600px] lg:max-w-none lg:mx-0 lg:ml-auto mt-4 lg:mt-0 self-center"
+          className="ww-hero-enter-img wwb-mascot-stage relative block flex-shrink-0 w-full max-w-[420px] mx-auto lg:w-[480px] xl:w-[600px] lg:max-w-none lg:mx-0 lg:ml-auto mt-4 lg:mt-0 self-center"
           style={{ '--delay': '200ms' } as React.CSSProperties}
         >
           <Image
@@ -44,7 +44,7 @@ export function HeroSection() {
             width={1000}
             height={1000}
             alt="Linh vật Win-Win Back cầm điện thoại với TikTok, Shopee"
-            className="w-full h-auto drop-shadow-2xl"
+            className="wwb-gentle-float w-full h-auto drop-shadow-2xl"
             priority
           />
         </div>
