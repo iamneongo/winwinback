@@ -32,12 +32,14 @@ export function OrderStatusControl({
     updateOrderStatusAction,
     undefined,
   );
+  const selectedLabel =
+    statusOptions.find((option) => option.value === status)?.label ?? "Chọn trạng thái";
   return (
     <form action={action} className="flex items-center gap-2">
       <input type="hidden" name="orderId" value={orderId} />
       <Select name="status" defaultValue={status} disabled={pending}>
         <SelectTrigger className="h-8 w-32 text-xs text-[#35537c]">
-          <SelectValue />
+          <SelectValue placeholder="Chọn trạng thái">{selectedLabel}</SelectValue>
         </SelectTrigger>
         <SelectContent>
           {statusOptions.map((option) => (

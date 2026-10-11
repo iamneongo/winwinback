@@ -101,6 +101,7 @@ export function OrderReviewForm({
     undefined,
   );
   const [value, setValue] = useState(status);
+  const selectedLabel = options.find((option) => option.value === value)?.label ?? "Chọn kết quả";
 
   return (
     <div className="space-y-3">
@@ -122,7 +123,7 @@ export function OrderReviewForm({
             onValueChange={(v) => setValue(v ?? status)}
           >
             <SelectTrigger className="h-9 w-full text-xs text-[#3a557c]">
-              <SelectValue placeholder="Chọn kết quả" />
+              <SelectValue placeholder="Chọn kết quả">{selectedLabel}</SelectValue>
             </SelectTrigger>
             <SelectContent>
               {options.map((option) => (

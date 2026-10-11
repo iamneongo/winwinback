@@ -59,7 +59,10 @@ export function AdminFilters({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [q]);
 
-  const hasActive = q.length > 0 || filters.some((f) => params.get(f.name));
+  const hasActive = q.length > 0 || filters.some((filter) => {
+    const value = params.get(filter.name);
+    return Boolean(value && value !== ALL);
+  });
 
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -74,27 +77,37 @@ export function AdminFilters({
         />
       </div>
 
-      {filters.map((filter) => (
-        <Select
-          key={filter.name}
-          value={params.get(filter.name) ?? ALL}
-          onValueChange={(value) =>
-            setParam(filter.name, !value || value === ALL ? null : value)
-          }
-        >
-          <SelectTrigger className="h-9 w-40 text-xs">
-            <SelectValue placeholder={filter.placeholder} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL}>{filter.placeholder}</SelectItem>
-            {filter.options.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      ))}
+      {filters.map((filter) => {
+        const requestedValue = params.get(filter.name) ?? ALL;
+        const selectedValue = filter.options.some((option) => option.value === requestedValue)
+          ? requestedValue
+          : ALL;
+        const selectedLabel = selectedValue === ALL
+          ? filter.placeholder
+          : filter.options.find((option) => option.value === selectedValue)?.label ?? filter.placeholder;
+
+        return (
+          <Select
+            key={filter.name}
+            value={selectedValue}
+            onValueChange={(value) =>
+              setParam(filter.name, !value || value === ALL ? null : value)
+            }
+          >
+            <SelectTrigger className="h-9 w-40 text-xs">
+              <SelectValue placeholder={filter.placeholder}>{selectedLabel}</SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL}>{filter.placeholder}</SelectItem>
+              {filter.options.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        );
+      })}
 
       {hasActive && (
         <Button

@@ -91,13 +91,13 @@ export function Sidebar({
       <SidebarFooter className="gap-3 overflow-hidden px-3 pt-0 pb-5">
         {/* Keep the promo outside the scrollable navigation so it stays pinned
             above the account action while only the menu scrolls. */}
-        <div className="ww-sidebar-promo wwb-image-hover-frame relative h-56 shrink-0 overflow-hidden rounded-2xl bg-[#062c52] p-4 group-data-[collapsible=icon]:hidden">
+        <div className="ww-sidebar-promo relative h-56 shrink-0 overflow-hidden rounded-2xl bg-[#062c52] p-4 group-data-[collapsible=icon]:hidden">
           <Image
             src="/images/dashboard-sidebar-mascot-v2.png"
             alt=""
             fill
             sizes="17rem"
-            className="wwb-gentle-float object-cover object-bottom"
+            className="object-cover object-bottom"
           />
           <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-[#062c52] via-[#062c52]/90 to-transparent" />
           <div className="relative z-10 max-w-[11rem]">
