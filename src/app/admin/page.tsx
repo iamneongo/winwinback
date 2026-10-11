@@ -12,10 +12,6 @@ import { getOrderTrend } from "@/lib/admin-metrics";
 export const metadata = { title: "Tổng quan quản trị — Win-Win Back" };
 export const dynamic = "force-dynamic";
 
-function compactMoney(value: number) {
-  return `${new Intl.NumberFormat("vi-VN", { notation: "compact", maximumFractionDigits: 1 }).format(value)}đ`;
-}
-
 function Metric({ icon: Icon, tint, label, value }: { icon: typeof Users; tint: string; label: string; value: string }) {
   return <article className="min-w-0 rounded-xl border border-[#e4ebf5] bg-white p-4 shadow-[0_3px_10px_rgba(34,73,120,0.035)]"><div className="flex items-center gap-3"><span className={`flex size-10 shrink-0 items-center justify-center rounded-full ${tint}`}><Icon className="size-5" strokeWidth={2.4} /></span><p className="truncate text-xs font-semibold text-[#587298]">{label}</p></div><p className="mt-4 truncate text-[25px] font-black leading-none tracking-tight text-[#0e2b59]">{value}</p></article>;
 }
@@ -50,10 +46,10 @@ export default async function AdminPage() {
   return <main className="mx-auto w-full max-w-[1600px] px-4 py-5 sm:px-6 lg:px-5 lg:py-5">
     <div className="mb-4 flex items-center gap-2 lg:hidden"><BadgeDollarSign className="size-5 text-[#f0c328]" /><h1 className="text-lg font-black text-[#11345f]">Bảng điều khiển quản trị</h1></div>
     <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-      <Metric icon={Coins} tint="bg-[#e9f8dd] text-[#4bac22]" label="Tổng hoàn tiền tháng" value={compactMoney(totalCashback)} />
+      <Metric icon={Coins} tint="bg-[#e9f8dd] text-[#4bac22]" label="Tổng hoàn tiền tháng" value={formatVnd(totalCashback)} />
       <Metric icon={Clock3} tint="bg-[#fff3d9] text-[#eda919]" label="Đơn chờ duyệt" value={String(pendingOrders.length)} />
       <Metric icon={Users} tint="bg-[#e8f1ff] text-[#287be5]" label="Người dùng hoạt động" value={String(userRows.length)} />
-      <Metric icon={Landmark} tint="bg-[#f2e8ff] text-[#913fdb]" label="Tổng doanh thu đối tác" value={compactMoney(totalCommission)} />
+      <Metric icon={Landmark} tint="bg-[#f2e8ff] text-[#913fdb]" label="Tổng doanh thu đối tác" value={formatVnd(totalCommission)} />
       <Metric icon={PackageCheck} tint="bg-[#eaf7e5] text-[#46aa2b]" label="Tỉ lệ duyệt" value={`${approvalRate}%`} />
     </section>
 
@@ -64,7 +60,7 @@ export default async function AdminPage() {
       </article>
       <article className="rounded-xl border border-[#e4ebf5] bg-white">
         <SectionTitle>Phân bổ hoàn tiền theo sàn</SectionTitle>
-        <div className="p-4 sm:p-5"><DonutChart segments={[{ label: "Shopee", value: shopee, color: "#ff633b" }, { label: "TikTok Shop", value: tiktok, color: "#111827" }]} format="compact" /></div>
+        <div className="p-4 sm:p-5"><DonutChart segments={[{ label: "Shopee", value: shopee, color: "#ff633b" }, { label: "TikTok Shop", value: tiktok, color: "#111827" }]} format="vnd" /></div>
       </article>
       <article className="min-w-0 overflow-hidden rounded-xl border border-[#e4ebf5] bg-white">
         <SectionTitle href="/admin/rut-tien">Yêu cầu rút tiền gần đây</SectionTitle>
