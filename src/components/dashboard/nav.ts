@@ -37,6 +37,10 @@ export const customerNav: NavItem[] = [
   { href: "/dashboard/tai-khoan", icon: Settings, label: "Cài đặt" },
 ];
 
+/** Keep the mobile dock focused; less-used destinations live in the profile menu. */
+export const customerMobileNav = customerNav.slice(0, 5);
+export const customerMobileMoreNav = customerNav.slice(5);
+
 /** Admin navigation. */
 export const adminNav: NavItem[] = [
   { href: "/admin", icon: LayoutDashboard, label: "Tổng quan", exact: true },
@@ -49,6 +53,9 @@ export const adminNav: NavItem[] = [
   { href: "/admin/bai-viet", icon: FileText, label: "Bài viết SEO", short: "Bài viết" },
   { href: "/admin/integrations", icon: Plug, label: "Kết nối sàn", short: "Kết nối" },
 ];
+
+export const adminMobileNav = adminNav.slice(0, 5);
+export const adminMobileMoreNav = adminNav.slice(5);
 
 /** Cross-links between the two shells. */
 export const customerAdminLink: NavItem = {

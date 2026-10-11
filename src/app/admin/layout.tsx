@@ -4,6 +4,7 @@ import { getBellData } from "@/lib/notifications";
 import { Dock } from "@/components/dashboard/Dock";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { HeaderMenus } from "@/components/dashboard/HeaderMenus";
+import { adminMobileMoreNav } from "@/components/dashboard/nav";
 import { BrandLogo } from "@/components/BrandLogo";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -57,6 +58,7 @@ export default async function AdminLayout({
                 variant="admin"
                 notifications={bell.items}
                 unreadCount={bell.unreadCount}
+                mobileMoreItems={adminMobileMoreNav}
               />
             </div>
           </header>

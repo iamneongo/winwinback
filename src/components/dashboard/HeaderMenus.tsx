@@ -17,6 +17,7 @@ import {
   Package,
   Info,
   Gift,
+  MoreHorizontal,
 } from "lucide-react";
 import {
   Popover,
@@ -26,10 +27,13 @@ import {
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import type { NavItem } from "@/components/dashboard/nav";
 
 export type HeaderNotification = {
   id: string;
@@ -82,12 +86,14 @@ export function HeaderMenus({
   variant = "customer",
   notifications = [],
   unreadCount = 0,
+  mobileMoreItems = [],
 }: {
   name: string;
   role: "user" | "admin";
   variant?: "customer" | "admin";
   notifications?: HeaderNotification[];
   unreadCount?: number;
+  mobileMoreItems?: NavItem[];
 }) {
   const initial = name.trim().charAt(0).toUpperCase();
   const router = useRouter();
@@ -210,6 +216,16 @@ export function HeaderMenus({
           <ChevronDown className="hidden h-4 w-4 text-[#6681a7] sm:block" />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-56">
+          {mobileMoreItems.length > 0 && (
+            <DropdownMenuGroup className="lg:hidden">
+              <DropdownMenuLabel className="flex items-center gap-2 text-[#6681a7]"><MoreHorizontal className="size-4" />Điều hướng khác</DropdownMenuLabel>
+              {mobileMoreItems.map((item) => {
+                const Icon = item.icon;
+                return <DropdownMenuItem key={item.href} render={<Link href={item.href} />}><Icon />{item.label}</DropdownMenuItem>;
+              })}
+              <DropdownMenuSeparator />
+            </DropdownMenuGroup>
+          )}
           <div className="min-w-0 px-2 py-1.5 text-left leading-4 sm:hidden">
             <span className="block text-xs text-[#6681a7]">Xin chào,</span>
             <span className="block truncate font-bold text-[#0d315d]" title={name}>{name}</span>
