@@ -1,6 +1,6 @@
 import { and, desc, eq, isNull, sql } from "drizzle-orm";
 import Link from "next/link";
-import { BadgeCheck, Check, ChevronDown, ChevronLeft, ChevronRight, CircleDollarSign, Clock3, Filter, Hourglass, PackageCheck, RotateCcw, Search, ShoppingBag, Sparkles, WalletCards, XCircle } from "lucide-react";
+import { BadgeCheck, Check, ChevronLeft, ChevronRight, CircleDollarSign, Clock3, Filter, Hourglass, PackageCheck, RotateCcw, Search, ShoppingBag, Sparkles, WalletCards, XCircle } from "lucide-react";
 import Image from "next/image";
 import { db } from "@/db";
 import { affiliateLinks, linkClicks, orders } from "@/db/schema";
@@ -12,6 +12,8 @@ import { DateRangeFilter } from "@/components/dashboard/DateRangeFilter";
 import { OrderDetailButton } from "@/components/dashboard/OrderDetailButton";
 import { CopyLink } from "@/components/dashboard/CopyLink";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DashboardPageHeader } from "@/components/dashboard/ui";
 
 export const metadata = { title: "Đơn hàng — Win-Win Back" };
@@ -66,25 +68,31 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
   const waitingCashback = waiting.reduce((sum, row) => sum + row.cashbackAmount, 0);
   const completeCashback = complete.reduce((sum, row) => sum + row.cashbackAmount, 0);
   const selectedStatus = query.status;
+  const activeTab = selectedStatus === "pending" || selectedStatus === "processing" || selectedStatus === "completed" ? selectedStatus : "all";
+  const platformFilter = query.platform && query.platform !== "all" ? query.platform : undefined;
   const keyword = query.q?.trim().toLowerCase() ?? "";
   const startDate = query.from ? new Date(`${query.from}T00:00:00`) : undefined;
   const endDate = query.to ? new Date(`${query.to}T23:59:59.999`) : undefined;
   const validStartDate = startDate && !Number.isNaN(startDate.getTime()) ? startDate : undefined;
   const validEndDate = endDate && !Number.isNaN(endDate.getTime()) ? endDate : undefined;
-  const visibleRows = rows.filter((row) => (!selectedStatus || (selectedStatus === "processing" ? row.status === "confirmed" : row.status === selectedStatus)) && (!query.platform || row.platform === query.platform) && (!keyword || [row.productName, row.externalOrderId].some((value) => value.toLowerCase().includes(keyword))) && (!validStartDate || row.orderedAt >= validStartDate) && (!validEndDate || row.orderedAt <= validEndDate));
+  const visibleRows = rows.filter((row) => (!selectedStatus || (selectedStatus === "processing" ? row.status === "confirmed" : row.status === selectedStatus)) && (!platformFilter || row.platform === platformFilter) && (!keyword || [row.productName, row.externalOrderId].some((value) => value.toLowerCase().includes(keyword))) && (!validStartDate || row.orderedAt >= validStartDate) && (!validEndDate || row.orderedAt <= validEndDate));
   const totalPages = Math.max(1, Math.ceil(visibleRows.length / PAGE_SIZE));
   const page = Math.min(Math.max(1, Number(query.page) || 1), totalPages);
   const pageRows = visibleRows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
   const firstShown = visibleRows.length === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
   const lastShown = (page - 1) * PAGE_SIZE + pageRows.length;
   const pagerQuery = { status: query.status, platform: query.platform, q: query.q, from: query.from, to: query.to };
-  const tabs = [{ label: "Tất cả", count: rows.length, href: "/dashboard/don-hang", active: !selectedStatus }, { label: "Chờ xác nhận", count: waiting.length, href: "/dashboard/don-hang?status=pending", active: selectedStatus === "pending" }, { label: "Đang xử lý", count: processing.length, href: "/dashboard/don-hang?status=processing", active: selectedStatus === "processing" }, { label: "Hoàn tất", count: complete.length, href: "/dashboard/don-hang?status=completed", active: selectedStatus === "completed" }];
+  const tabs = [{ value: "all", label: "Tất cả", count: rows.length, href: "/dashboard/don-hang" }, { value: "pending", label: "Chờ xác nhận", count: waiting.length, href: "/dashboard/don-hang?status=pending" }, { value: "processing", label: "Đang xử lý", count: processing.length, href: "/dashboard/don-hang?status=processing" }, { value: "completed", label: "Hoàn tất", count: complete.length, href: "/dashboard/don-hang?status=completed" }];
 
   return <main className="mx-auto w-full max-w-[1440px] px-4 py-6 sm:px-7 lg:px-8 lg:py-7">
     <DashboardPageHeader title="Đơn hàng của tôi" description="Theo dõi trạng thái đơn hàng và tiền hoàn của bạn" />
-    <nav aria-label="Trạng thái đơn hàng" className="mb-5 flex w-full max-w-[44rem] items-center justify-between gap-2 overflow-x-auto rounded-xl border border-[#dbe7f6] bg-[#f8fbff] p-1">{tabs.map((tab) => <Link key={tab.label} href={tab.href} aria-current={tab.active ? "page" : undefined} className={`inline-flex shrink-0 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors ${tab.active ? "bg-[#edf9df] font-bold text-[#28711a] ring-1 ring-inset ring-[#b1eb78]" : "text-[#34527d] hover:bg-white"}`}>{tab.label}<span className={`rounded-full px-1.5 py-0.5 text-[11px] font-bold ${tab.active ? "bg-[#d8f3bc] text-[#28711a]" : "bg-[#eef3fb] text-[#547299]"}`}>{tab.count}</span></Link>)}</nav>
+    <Tabs defaultValue={activeTab} className="mb-5 w-full max-w-[44rem]">
+      <TabsList aria-label="Trạng thái đơn hàng" className="flex h-auto w-full justify-between gap-1 overflow-x-auto rounded-xl border border-[#dbe7f6] bg-[#f8fbff] p-1">
+        {tabs.map((tab) => <TabsTrigger key={tab.value} value={tab.value} render={<Link href={tab.href} />} className="group rounded-lg px-4 py-2.5 text-sm text-[#34527d] hover:bg-white data-active:bg-[#edf9df] data-active:font-bold data-active:text-[#28711a] data-active:shadow-none data-active:ring-1 data-active:ring-inset data-active:ring-[#b1eb78]">{tab.label}<span className="rounded-full bg-[#eef3fb] px-1.5 py-0.5 text-[11px] font-bold text-[#547299] group-data-[active]:bg-[#d8f3bc] group-data-[active]:text-[#28711a]">{tab.count}</span></TabsTrigger>)}
+      </TabsList>
+    </Tabs>
     <form className="mb-5 grid gap-3 lg:grid-cols-[1.15fr_1.25fr_1.25fr_auto_auto]" action="/dashboard/don-hang">
-      <label className="grid gap-1.5 text-xs font-bold text-[#213e67]">Sàn mua sắm<span className="relative"><select name="platform" defaultValue={query.platform ?? ""} className="h-11 w-full appearance-none rounded-lg border border-[#d9e5f4] bg-white px-3 pr-10 text-sm font-medium text-[#35537c] outline-none transition focus:border-[#8bd950] focus:ring-2 focus:ring-[#b7e961]/25"><option value="">Tất cả sàn</option><option value="shopee">Shopee</option><option value="tiktok">TikTok Shop</option></select><ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#547299]" /></span></label>
+      <label className="grid gap-1.5 text-xs font-bold text-[#213e67]">Sàn mua sắm<span><Select name="platform" defaultValue={query.platform || "all"}><SelectTrigger className="h-11 rounded-lg border-[#d9e5f4] bg-white px-3 text-sm font-medium text-[#35537c] focus-visible:border-[#8bd950] focus-visible:ring-[#b7e961]/25"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">Tất cả sàn</SelectItem><SelectItem value="shopee">Shopee</SelectItem><SelectItem value="tiktok">TikTok Shop</SelectItem></SelectContent></Select></span></label>
       <label className="grid gap-1.5 text-xs font-bold text-[#213e67]">Mã đơn hàng<span className="relative"><Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#5779a7]" /><input name="q" defaultValue={query.q} placeholder="Nhập mã đơn hàng, sản phẩm..." className="h-11 w-full rounded-lg border border-[#d9e5f4] bg-white px-10 text-sm text-[#35537c] outline-none placeholder:text-[#8ba0bd] focus:border-[#8bd950] focus:ring-2 focus:ring-[#b7e961]/25" /></span></label>
       <DateRangeFilter defaultFrom={query.from} defaultTo={query.to} />
       <div className="flex items-end"><Link href="/dashboard/don-hang" className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-[#d9e5f4] bg-white px-4 text-sm font-bold text-[#34527d] transition hover:bg-[#f6f9fd]"><RotateCcw className="h-4 w-4" /> Xóa bộ lọc</Link></div>

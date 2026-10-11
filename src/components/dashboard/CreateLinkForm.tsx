@@ -12,6 +12,7 @@ import {
   PackageX,
   Share2,
   Check,
+  ClipboardPaste,
 } from "lucide-react";
 import { createLinkAction, type ActionState } from "@/app/dashboard/actions";
 import { Button } from "@/components/ui/button";
@@ -49,10 +50,24 @@ export function CreateLinkForm({ defaultUrl, autoIntent }: { defaultUrl?: string
   const showIneligible = ineligible !== null && state !== dismissed;
   // Transient "Đã sao chép" feedback on the share button.
   const [copied, setCopied] = useState(false);
+  const [urlValue, setUrlValue] = useState(defaultUrl ?? "");
+  const [pasteError, setPasteError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (state?.success) formRef.current?.reset();
-  }, [state]);
+  const inputValue = state?.success && state !== dismissed ? "" : urlValue;
+
+  async function pasteLink() {
+    try {
+      const pasted = await navigator.clipboard.readText();
+      if (!pasted.trim()) {
+        setPasteError("Clipboard đang trống. Hãy sao chép link sản phẩm trước nhé.");
+        return;
+      }
+      setUrlValue(pasted.trim());
+      setPasteError(null);
+    } catch {
+      setPasteError("Không thể đọc clipboard. Hãy dán link vào ô nhập.");
+    }
+  }
 
   useEffect(() => {
     if (!defaultUrl || !autoIntent || autoSubmitted.current || !/^[\da-f-]{36}$/i.test(autoIntent)) return;
@@ -73,6 +88,7 @@ export function CreateLinkForm({ defaultUrl, autoIntent }: { defaultUrl?: string
 
   function close() {
     setDismissed(state);
+    if (state?.success) setUrlValue("");
   }
 
   /**
@@ -114,15 +130,38 @@ export function CreateLinkForm({ defaultUrl, autoIntent }: { defaultUrl?: string
               name="url"
               type="url"
               required
-              defaultValue={defaultUrl}
+              value={inputValue}
+              onChange={(event) => {
+                if (state?.success) setDismissed(state);
+                setUrlValue(event.target.value);
+                setPasteError(null);
+              }}
               placeholder="Dán link sản phẩm TikTok Shop hoặc Shopee…"
               className="min-w-0 flex-1 bg-transparent py-1.5 text-sm text-gray-700 outline-none placeholder:text-gray-400"
             />
           </div>
           <div className="w-full sm:w-auto">
-            <SubmitButton />
+            {inputValue.trim() ? (
+              <SubmitButton />
+            ) : (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={pasteLink}
+                className="h-auto w-full gap-1.5 whitespace-nowrap rounded-xl border-[#dce6ef] px-4 py-2.5 text-[#315577] hover:bg-[#f4f8fc] sm:w-auto"
+              >
+                <ClipboardPaste className="h-4 w-4" />
+                Dán nhanh
+              </Button>
+            )}
           </div>
         </div>
+        {pasteError && (
+          <p role="alert" className="flex items-center gap-1.5 text-sm text-red-600">
+            <AlertCircle className="h-4 w-4 shrink-0" />
+            {pasteError}
+          </p>
+        )}
         {state?.error && (
           <p role="alert" className="flex items-center gap-1.5 text-sm text-red-600">
             <AlertCircle className="h-4 w-4 shrink-0" />

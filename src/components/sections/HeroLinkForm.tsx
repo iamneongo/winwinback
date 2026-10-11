@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
-import { Link2, ArrowRight, LoaderCircle } from 'lucide-react';
+import { Link2, ArrowRight, LoaderCircle, ClipboardPaste } from 'lucide-react';
 import { TikTokIcon, ShopeeIcon } from './BrandIcons';
 import { Button } from '@/components/ui/button';
 import { detectPlatform } from '@/lib/affiliate/platform';
@@ -42,6 +42,21 @@ export function HeroLinkForm() {
   const [inputValue, setInputValue] = useState('');
   const [navigating, setNavigating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  async function handlePaste() {
+    try {
+      const pasted = await navigator.clipboard.readText();
+      if (!pasted.trim()) {
+        setError('Clipboard đang trống. Hãy sao chép link sản phẩm trước nhé.');
+        return;
+      }
+      setInputValue(pasted.trim());
+      setNavigating(false);
+      setError(null);
+    } catch {
+      setError('Không thể đọc clipboard. Hãy dán link vào ô nhập.');
+    }
+  }
 
   useEffect(() => {
     const resetAfterBack = () => setNavigating(false);
@@ -101,15 +116,27 @@ export function HeroLinkForm() {
           placeholder="Dán link sản phẩm..."
           className="min-w-0 flex-1 truncate bg-transparent py-1.5 text-sm text-gray-700 outline-none placeholder:text-gray-400"
         />
-        <Button
-          type="submit"
-          variant="cta"
-          disabled={navigating}
-          className="h-auto flex-shrink-0 gap-1.5 whitespace-nowrap rounded-lg px-3 py-2.5 sm:px-4"
-        >
-          <span className="hidden sm:inline">{navigating ? 'Đang chuyển…' : 'Kiểm tra hoàn tiền'}</span>
-          {navigating ? <LoaderCircle className="h-4 w-4 animate-spin motion-reduce:animate-none" /> : <ArrowRight className="h-4 w-4" />}
-        </Button>
+        {inputValue.trim() ? (
+          <Button
+            type="submit"
+            variant="cta"
+            disabled={navigating}
+            className="h-auto flex-shrink-0 gap-1.5 whitespace-nowrap rounded-lg px-3 py-2.5 sm:px-4"
+          >
+            <span className="hidden sm:inline">{navigating ? 'Đang chuyển…' : 'Kiểm tra hoàn tiền'}</span>
+            {navigating ? <LoaderCircle className="h-4 w-4 animate-spin motion-reduce:animate-none" /> : <ArrowRight className="h-4 w-4" />}
+          </Button>
+        ) : (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handlePaste}
+            className="h-auto flex-shrink-0 gap-1.5 whitespace-nowrap rounded-lg border-[#dce6ef] px-3 py-2.5 text-[#315577] hover:bg-[#f4f8fc]"
+          >
+            <ClipboardPaste className="h-4 w-4" />
+            <span>Dán nhanh</span>
+          </Button>
+        )}
       </form>
       {error ? <p role="alert" className="mt-2 px-1 text-sm font-medium text-red-700">{error}</p> : null}
       <p aria-live="polite" className="sr-only">{navigating ? 'Đang mở trang kiểm tra link' : ''}</p>
