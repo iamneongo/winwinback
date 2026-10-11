@@ -6,6 +6,7 @@ import { cashbackRate } from "@/lib/config";
 import { settleOrderCashback, reverseOrderCashback } from "@/lib/wallet";
 import { notifyAdminsForPendingOrder, notifyOrderStatusForOrder } from "@/lib/notify";
 import {
+  getShopeeAffReport,
   getShopeeConversions,
   type ShopeeConversion,
   type ShopeeReportCheckout,
@@ -149,6 +150,27 @@ export async function reconcile(
   const fetched = [...byOrderSn.values()];
   if (!fetched.length) return { ...empty, connected: true };
 
+  // The processed conversions endpoint may report commission=0 while an order
+  // is still pending. TikTok exposes an estimated commission in that state, so
+  // use Shopee's report estimate as the display/pending-cashback fallback too.
+  // This amount is not paid to the wallet until the conversion is completed.
+  const reportCommissionByOrderSn = new Map<string, number>();
+  try {
+    const reportPageSize = 500;
+    for (let page = 1; page <= 5; page++) {
+      const { list } = await getShopeeAffReport({ days: sinceDays, page, size: reportPageSize });
+      for (const checkout of list) {
+        for (const order of flattenCheckout(checkout)) {
+          if (order.commission > 0) reportCommissionByOrderSn.set(order.orderSn, order.commission);
+        }
+      }
+      if (list.length < reportPageSize) break;
+    }
+  } catch {
+    // Conversion reconciliation must continue even if the optional report
+    // endpoint is temporarily unavailable; its current data remains usable.
+  }
+
   const existing = await db
     .select()
     .from(orders)
@@ -169,10 +191,15 @@ export async function reconcile(
   for (const c of fetched) {
     const status = mapShopeeStatus(c.status);
     const payable = status === "completed" && !c.isFraud;
-    const commission = Math.round(c.commission ?? 0);
+    const commission = Math.round(c.commission ?? 0) || reportCommissionByOrderSn.get(c.orderSn) || 0;
     const orderValue = Math.round(c.orderValue ?? 0);
     const productName = c.itemName?.trim() || "Đơn Shopee";
-    const cashback = payable ? Math.round(commission * cashbackRate) : 0;
+    // Match TikTok: retain an estimate while the order is pending so the user
+    // sees a meaningful expected cashback instead of 0 ₫. Cancelled/fraudulent
+    // orders stay at zero; wallet settlement is still gated by `payable`.
+    const cashback = status === "cancelled" || c.isFraud
+      ? 0
+      : Math.round(commission * cashbackRate);
     const orderedAt = c.purchaseTime ? new Date(c.purchaseTime * 1000) : undefined;
     const verified = c.isFraud ? "fraud" : verifiedFrom(status);
 
