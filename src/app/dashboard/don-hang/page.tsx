@@ -78,7 +78,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
   const firstShown = visibleRows.length === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
   const lastShown = (page - 1) * PAGE_SIZE + pageRows.length;
   const pagerQuery = { status: query.status, platform: query.platform, q: query.q, from: query.from, to: query.to };
-  const tabs = [{ label: "Tất cả", count: rows.length, href: "/dashboard/don-hang", active: !selectedStatus }, { label: "Chờ xác nhận", count: waiting.length, href: "/dashboard/don-hang?status=pending", active: selectedStatus === "pending" }, { label: "Đang xử lý", count: processing.length, href: "/dashboard/don-hang?status=processing", active: selectedStatus === "processing" }, { label: "Đã xác nhận", count: processing.length, href: "/dashboard/don-hang?status=confirmed", active: selectedStatus === "confirmed" }, { label: "Hoàn tất", count: complete.length, href: "/dashboard/don-hang?status=completed", active: selectedStatus === "completed" }];
+  const tabs = [{ label: "Tất cả", count: rows.length, href: "/dashboard/don-hang", active: !selectedStatus }, { label: "Chờ xác nhận", count: waiting.length, href: "/dashboard/don-hang?status=pending", active: selectedStatus === "pending" }, { label: "Đang xử lý", count: processing.length, href: "/dashboard/don-hang?status=processing", active: selectedStatus === "processing" }, { label: "Hoàn tất", count: complete.length, href: "/dashboard/don-hang?status=completed", active: selectedStatus === "completed" }];
 
   return <main className="mx-auto w-full max-w-[1440px] px-4 py-6 sm:px-7 lg:px-8 lg:py-7">
     <DashboardPageHeader title="Đơn hàng của tôi" description="Theo dõi trạng thái đơn hàng và tiền hoàn của bạn" />

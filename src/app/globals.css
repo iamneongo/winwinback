@@ -243,10 +243,6 @@
   display: none;
 }
 
-.winwin-root #rut-tien {
-  display: none;
-}
-
 /* Wallet overview: metrics span row one; history and helpful panels keep two columns. */
 @media (min-width: 1280px) {
   .winwin-root main:has(#rut-tien) > section {

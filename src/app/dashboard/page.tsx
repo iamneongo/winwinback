@@ -185,7 +185,7 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
         <Metric
           label="Tổng tiền hoàn tạm tính"
           value={formatVnd(pending)}
-          href="/dashboard/don-hang?status=waiting"
+          href="/dashboard/don-hang?status=pending"
           action="Xem chi tiết"
           tone="gold"
         />
