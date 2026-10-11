@@ -18,6 +18,10 @@ import {
   Info,
   Gift,
   MoreHorizontal,
+  ClipboardCheck,
+  FileText,
+  Plug,
+  Ticket,
 } from "lucide-react";
 import {
   Popover,
@@ -33,7 +37,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type { NavItem } from "@/components/dashboard/nav";
+import type { ProfileNavItem } from "@/components/dashboard/nav";
 
 export type HeaderNotification = {
   id: string;
@@ -65,6 +69,15 @@ const typeTone: Record<string, string> = {
   system: "bg-[#eef2f8] text-[#526b90]",
 };
 
+const profileNavIcon = {
+  ticket: Ticket,
+  settings: Settings,
+  "clipboard-check": ClipboardCheck,
+  "file-text": FileText,
+  plug: Plug,
+  "shield-check": ShieldCheck,
+} satisfies Record<ProfileNavItem["icon"], React.ComponentType<{ className?: string }>>;
+
 /** Format an ISO timestamp as a short Vietnamese relative time. */
 function relativeTime(iso: string): string {
   const then = new Date(iso).getTime();
@@ -93,7 +106,7 @@ export function HeaderMenus({
   variant?: "customer" | "admin";
   notifications?: HeaderNotification[];
   unreadCount?: number;
-  mobileMoreItems?: NavItem[];
+  mobileMoreItems?: ProfileNavItem[];
 }) {
   const initial = name.trim().charAt(0).toUpperCase();
   const router = useRouter();
@@ -220,7 +233,7 @@ export function HeaderMenus({
             <DropdownMenuGroup className="lg:hidden">
               <DropdownMenuLabel className="flex items-center gap-2 text-[#6681a7]"><MoreHorizontal className="size-4" />Điều hướng khác</DropdownMenuLabel>
               {mobileMoreItems.map((item) => {
-                const Icon = item.icon;
+                const Icon = profileNavIcon[item.icon];
                 return <DropdownMenuItem key={item.href} render={<Link href={item.href} />}><Icon />{item.label}</DropdownMenuItem>;
               })}
               <DropdownMenuSeparator />

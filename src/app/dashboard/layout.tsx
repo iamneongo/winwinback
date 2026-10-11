@@ -7,7 +7,7 @@ import { formatVnd } from "@/lib/config";
 import { Dock } from "@/components/dashboard/Dock";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { HeaderMenus } from "@/components/dashboard/HeaderMenus";
-import { customerMobileMoreNav, customerAdminLink } from "@/components/dashboard/nav";
+import { customerMobileMoreNav, customerAdminProfileLink } from "@/components/dashboard/nav";
 import { BrandLogo } from "@/components/BrandLogo";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -76,7 +76,7 @@ export default async function DashboardLayout({
                 role={user.role}
                 notifications={bell.items}
                 unreadCount={bell.unreadCount}
-                mobileMoreItems={isAdmin ? [...customerMobileMoreNav, customerAdminLink] : customerMobileMoreNav}
+                mobileMoreItems={isAdmin ? [...customerMobileMoreNav, customerAdminProfileLink] : customerMobileMoreNav}
               />
             </div>
           </header>

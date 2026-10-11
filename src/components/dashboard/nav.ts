@@ -26,6 +26,13 @@ export type NavItem = {
   exact?: boolean;
 };
 
+/** Serializable navigation data for the client-side profile dropdown. */
+export type ProfileNavItem = {
+  href: string;
+  label: string;
+  icon: "ticket" | "settings" | "clipboard-check" | "file-text" | "plug" | "shield-check";
+};
+
 /** Customer dashboard navigation. */
 export const customerNav: NavItem[] = [
   { href: "/dashboard", icon: Home, label: "Tổng quan", exact: true },
@@ -39,7 +46,9 @@ export const customerNav: NavItem[] = [
 
 /** Keep the mobile dock focused; less-used destinations live in the profile menu. */
 export const customerMobileNav = customerNav.slice(0, 5);
-export const customerMobileMoreNav = customerNav.slice(5);
+export const customerMobileMoreNav: ProfileNavItem[] = [
+  { href: "/dashboard/rut-tham", icon: "ticket", label: "Rút thăm may mắn" },
+];
 
 /** Admin navigation. */
 export const adminNav: NavItem[] = [
@@ -55,7 +64,18 @@ export const adminNav: NavItem[] = [
 ];
 
 export const adminMobileNav = adminNav.slice(0, 5);
-export const adminMobileMoreNav = adminNav.slice(5);
+export const adminMobileMoreNav: ProfileNavItem[] = [
+  { href: "/admin/nhiem-vu", icon: "clipboard-check", label: "Duyệt nhiệm vụ" },
+  { href: "/admin/rut-tham", icon: "ticket", label: "Rút thăm may mắn" },
+  { href: "/admin/bai-viet", icon: "file-text", label: "Bài viết SEO" },
+  { href: "/admin/integrations", icon: "plug", label: "Kết nối sàn" },
+];
+
+export const customerAdminProfileLink: ProfileNavItem = {
+  href: "/admin",
+  icon: "shield-check",
+  label: "Quản trị",
+};
 
 /** Cross-links between the two shells. */
 export const customerAdminLink: NavItem = {
