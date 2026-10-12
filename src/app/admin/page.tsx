@@ -54,7 +54,7 @@ export default async function AdminPage() {
       <Metric icon={PackageCheck} tint="bg-[#eaf7e5] text-[#46aa2b]" label="Tỉ lệ duyệt" value={`${approvalRate}%`} />
     </section>
 
-    <section className="mt-3 grid gap-3 xl:grid-cols-[minmax(0,1.65fr)_minmax(290px,1fr)_minmax(320px,1.1fr)]">
+    <section className="mt-3 grid items-start gap-3 xl:grid-cols-[minmax(0,1.65fr)_minmax(290px,1fr)_minmax(320px,1.1fr)]">
       <article className="rounded-xl border border-[#e4ebf5] bg-white">
         <SectionTitle>Xu hướng hoàn tiền (7 ngày)</SectionTitle>
         <div className="px-4 pb-3 sm:px-5"><div className="mt-3 flex gap-5 text-[11px] font-medium text-[#506a90]"><span className="flex items-center gap-1.5"><i className="size-2 rounded-sm bg-[#3caf3e]" />Hoàn tiền (đ)</span><span className="flex items-center gap-1.5"><i className="size-2 rounded-sm bg-[#2376ee]" />Số đơn hoàn</span></div><div className="mt-3"><TrendChart ariaLabel="Xu hướng hoàn tiền và số đơn hàng trong 7 ngày" labels={trend.labels} data={[trend.cashback, trend.total]} series={[{ name: "Hoàn tiền", color: "#3caf3e", fill: true, format: "vnd" }, { name: "Số đơn", color: "#2376ee", format: "int" }]} /></div></div>
@@ -63,14 +63,14 @@ export default async function AdminPage() {
         <SectionTitle>Phân bổ hoàn tiền theo sàn</SectionTitle>
         <div className="p-4 sm:p-5"><DonutChart segments={[{ label: "Shopee", value: shopee, color: "#ff633b" }, { label: "TikTok Shop", value: tiktok, color: "#111827" }]} format="vnd" /></div>
       </article>
-      <article className="min-w-0 overflow-hidden rounded-xl border border-[#e4ebf5] bg-white">
+      <article className="min-h-48 min-w-0 overflow-hidden rounded-xl border border-[#e4ebf5] bg-white">
         <SectionTitle href="/admin/rut-tien">Yêu cầu rút tiền gần đây</SectionTitle>
         <WithdrawalOverviewTable rows={withdrawalPreview} />
       </article>
     </section>
 
-    <section className="mt-3 grid gap-3 xl:grid-cols-[minmax(0,2.25fr)_minmax(315px,1fr)]">
-      <article className="min-w-0 overflow-hidden rounded-xl border border-[#e4ebf5] bg-white">
+    <section className="mt-3 grid items-start gap-3 xl:grid-cols-[minmax(0,2.25fr)_minmax(315px,1fr)]">
+      <article className="min-h-48 min-w-0 overflow-hidden rounded-xl border border-[#e4ebf5] bg-white">
         <SectionTitle href="/admin/don-hang?status=pending">Danh sách đơn hoàn tiền chờ xử lý <span className="ml-1 text-xs font-semibold text-[#7d93b0]">({pendingOrders.length})</span></SectionTitle>
         <PendingOrdersOverviewTable rows={orderPreview} />
         <footer className="border-t border-[#edf1f7] px-4 py-3 text-[11px] text-[#7890b0]">Hiển thị {orderPreview.length} trên tổng số {pendingOrders.length} đơn</footer>
