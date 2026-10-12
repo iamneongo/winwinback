@@ -141,16 +141,16 @@ export function AdminDataTable<TData>({
   };
 
   return (
-    <section className={isPreview ? "min-w-0" : "min-w-0 overflow-hidden rounded-xl border border-[#dfe9f5] bg-white"} aria-label={ariaLabel}>
-      {!isPreview ? <div className="flex flex-wrap items-center gap-2 border-b border-[#e8eef6] p-3 sm:p-4">
-        <div className="relative min-w-[180px] flex-1 sm:max-w-sm">
+    <>
+      {!isPreview ? <div className="mb-3 flex flex-wrap items-center gap-2" role="search" aria-label={`Tìm kiếm và lọc: ${ariaLabel}`}>
+        <div className="relative w-full min-w-[180px] sm:max-w-sm sm:flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#587298]" aria-hidden="true" />
           <Input
             aria-label={searchPlaceholder}
             value={draft}
             onChange={(event) => { setDraft(event.target.value); if (mode === "client") setLocalPage(1); }}
             placeholder={searchPlaceholder}
-            className="h-10 pl-9 text-sm"
+            className="h-9 border-[#dbe6f3] bg-white pl-9 text-sm"
           />
         </div>
         {filters.map((filter) => {
@@ -171,7 +171,7 @@ export function AdminDataTable<TData>({
                 } else void setQuery({ [filter.key]: value, trang: 1 });
               }}
             >
-              <SelectTrigger aria-label={filter.label} className="h-10 w-40 border-[#dbe6f3] text-sm font-medium text-[#34527d]">
+              <SelectTrigger aria-label={filter.label} className="h-9 w-[calc(50%-0.25rem)] border-[#dbe6f3] bg-white text-sm font-medium text-[#34527d] sm:w-40">
                 <SelectValue placeholder={filter.label}>{selectedLabel}</SelectValue>
               </SelectTrigger>
               <SelectContent>
@@ -182,14 +182,15 @@ export function AdminDataTable<TData>({
           );
         })}
         {(draft || activeFilters || sorting.length) ? (
-          <Button variant="ghost" size="lg" onClick={() => { setDraft(""); if (mode === "client") { setLocalFilters([]); setLocalSorting([]); setLocalPage(1); } else void setQuery({ q: "", status: "", platform: "", role: "", category: "", type: "", read: "", sort: "", dir: "desc", trang: 1 }); }} className="text-[#49688f]">
+          <Button variant="ghost" size="default" onClick={() => { setDraft(""); if (mode === "client") { setLocalFilters([]); setLocalSorting([]); setLocalPage(1); } else void setQuery({ q: "", status: "", platform: "", role: "", category: "", type: "", read: "", sort: "", dir: "desc", trang: 1 }); }} className="text-[#49688f]">
             <X className="size-4" /> Xóa lọc
           </Button>
         ) : null}
       </div> : null}
 
-      <ScrollArea className="max-h-[65vh] lg:max-h-[720px]" aria-busy={isLoading}>
-        <ScrollAreaViewport className="max-h-[65vh] overscroll-contain lg:max-h-[720px]">
+      <section className={isPreview ? "flex min-h-0 min-w-0 flex-1 flex-col" : "min-w-0 overflow-hidden rounded-xl border border-[#dfe9f5] bg-white"} aria-label={ariaLabel}>
+      <ScrollArea className={isPreview ? "min-h-0 flex-1 max-h-[65vh] lg:max-h-[720px]" : "max-h-[65vh] lg:max-h-[720px]"} aria-busy={isLoading}>
+        <ScrollAreaViewport className="min-h-0 max-h-[65vh] overscroll-contain lg:max-h-[720px]">
           <ScrollAreaContent>
           <Table containerClassName="overflow-visible" className="table-fixed text-xs text-[#35537c]" style={{ minWidth }}>
         <TableHeader className="sticky top-0 z-10 bg-[#f8fbff] text-[#234168]">
@@ -198,7 +199,7 @@ export function AdminDataTable<TData>({
               {group.headers.map((header) => {
                 const direction = header.column.getIsSorted();
                 return (
-                  <TableHead key={header.id} scope="col" style={{ width: header.getSize() }} className="px-3 py-3 text-xs font-bold">
+                  <TableHead key={header.id} scope="col" style={{ width: header.getSize() }} className="h-9 px-3 py-2 text-[11px] font-bold">
                     {header.isPlaceholder ? null : !isPreview && header.column.getCanSort() ? (
                       <Button
                         type="button"
@@ -275,6 +276,7 @@ export function AdminDataTable<TData>({
           <Button variant="outline" size="icon-lg" aria-label="Trang sau" disabled={currentPage >= visiblePageCount || isLoading} onClick={() => goToPage(currentPage + 1)}><ChevronRight className="size-4" /></Button>
         </div>
       </div> : null}
-    </section>
+      </section>
+    </>
   );
 }
