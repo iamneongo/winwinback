@@ -7,7 +7,7 @@ import { affiliateLinks, orders } from "@/db/schema";
 import { requireUser } from "@/lib/auth/guards";
 import { CreateLinkForm } from "@/components/dashboard/CreateLinkForm";
 import { Empty, cardClass, sectionTitleClass } from "@/components/dashboard/ui";
-import { formatVnd } from "@/lib/config";
+import { cashbackRate, formatVnd } from "@/lib/config";
 import { getRequestBaseUrl } from "@/lib/baseUrl";
 import { platformLabel } from "@/lib/labels";
 import { MetricIcon, StepIcon } from "@/components/dashboard/MetricIcon";
@@ -344,7 +344,7 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
           />
           <div className="relative z-10 max-w-[11rem]">
             <p className="text-lg font-black leading-tight">
-              Nhận hoàn tiền <span className="text-[#d7fb76]">lên đến 10%</span>
+              Nhận lại <span className="text-[#d7fb76]">{Math.round(cashbackRate * 100)}% hoa hồng</span>
             </p>
             <Link
               href="#tao-link"

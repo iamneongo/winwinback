@@ -8,6 +8,8 @@ import { CommunitySection } from '@/components/sections/CommunitySection';
 import { FinalCTASection } from '@/components/sections/FinalCTASection';
 import { Footer } from '@/components/sections/Footer';
 
+export const dynamic = 'force-dynamic';
+
 export default function Home() {
   return (
     <div className="winwin-root" id="top">

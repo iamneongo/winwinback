@@ -3,7 +3,7 @@ import { Gift, PiggyBank, Ticket, Trophy } from "lucide-react";
 import { db } from "@/db";
 import { luckyDrawPeriods, luckyDrawTickets } from "@/db/schema";
 import { requireUser } from "@/lib/auth/guards";
-import { formatVnd } from "@/lib/config";
+import { formatVnd, prizeFundRate } from "@/lib/config";
 import { getFundBalance } from "@/lib/lucky-draw/service";
 import { DashboardPageHeader } from "@/components/dashboard/ui";
 
@@ -12,6 +12,7 @@ export const dynamic = "force-dynamic";
 
 export default async function LuckyDrawPage() {
   const user = await requireUser();
+  const prizeFundPct = Math.round(prizeFundRate * 100);
   const [fund, tickets] = await Promise.all([
     getFundBalance(),
     db
@@ -39,7 +40,7 @@ export default async function LuckyDrawPage() {
 
   return (
     <main className="mx-auto w-full max-w-[1100px] px-4 py-6 sm:px-7 lg:px-8 lg:py-7">
-      <DashboardPageHeader title="Rút thăm may mắn" description="Mỗi đơn mua hoàn tất bạn nhận 1 phiếu dự thưởng — số phiếu là 4 số cuối mã đơn hàng. Cuối kỳ hệ thống quay 1 số: trùng là lãnh trọn quỹ!" />
+      <DashboardPageHeader title="Rút thăm may mắn" description={`Mỗi đơn hợp lệ góp ${prizeFundPct}% hoa hồng affiliate vào quỹ và tặng bạn 1 phiếu dự thưởng (4 số cuối mã đơn). Cuối kỳ hệ thống quay 1 số; nếu trùng, bạn nhận toàn bộ quỹ.`} />
 
       <section className="relative overflow-hidden rounded-2xl border border-[#e6d4fb] bg-gradient-to-br from-[#faf3ff] to-[#eef5ff] p-6">
         <div className="flex items-center gap-4">

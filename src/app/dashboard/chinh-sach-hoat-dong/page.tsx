@@ -1,5 +1,5 @@
 import { PolicyShell, PolicySection } from "@/components/policy/PolicyShell";
-import { cashbackRate, minWithdrawal, formatVnd } from "@/lib/config";
+import { cashbackRate, prizeFundRate, minWithdrawal, formatVnd } from "@/lib/config";
 import { listMissions } from "@/lib/missions/definitions";
 
 export const metadata = { title: "Chính sách hoạt động — Win-Win Back" };
@@ -9,6 +9,7 @@ export const dynamic = "force-dynamic";
 
 export default async function ActivityPolicyPage() {
   const ratePct = Math.round(cashbackRate * 100);
+  const prizeFundPct = Math.round(prizeFundRate * 100);
   const missions = await listMissions();
   const firstOrder = missions.find((mission) => mission.key === "first_order");
   const invite = missions.find((mission) => mission.kind === "referral");
@@ -16,7 +17,7 @@ export default async function ActivityPolicyPage() {
   return (
     <PolicyShell
       title="Chính sách hoạt động"
-      subtitle="Cách Win-Win Back tính tiền hoàn, mốc thời gian, rút tiền và phần thưởng giới thiệu."
+      subtitle="Cách Win-Win Back tính tiền hoàn, quỹ rút thăm, mốc thời gian, rút tiền và phần thưởng giới thiệu."
     >
       <PolicySection heading="Tỷ lệ hoàn tiền">
         <p>
@@ -25,6 +26,15 @@ export default async function ActivityPolicyPage() {
           <b>{ratePct}%</b> phần hoa hồng đó về ví của bạn. Bạn không mất thêm bất
           kỳ khoản phí nào — vẫn thanh toán đúng giá trên sàn và dùng được
           voucher/mã giảm giá của sàn.
+        </p>
+      </PolicySection>
+
+      <PolicySection heading="Quỹ rút thăm may mắn">
+        <p>
+          Với mỗi đơn hợp lệ, <b>{prizeFundPct}%</b> hoa hồng affiliate sàn ghi
+          nhận được góp vào quỹ rút thăm may mắn. Tỷ lệ này tính trên hoa hồng
+          thực tế, không tính trên giá trị đơn hàng; bạn không bị trừ tiền hoàn
+          trong ví.
         </p>
       </PolicySection>
 

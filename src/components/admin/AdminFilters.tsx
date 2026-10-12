@@ -72,7 +72,7 @@ export function AdminFilters({
           value={q}
           onChange={(e) => setQ(e.target.value)}
           aria-label={searchPlaceholder}
-          className="h-full border-0 bg-transparent px-0 text-xs shadow-none placeholder:text-[#7890b0] focus-visible:border-0 focus-visible:ring-0"
+          className="h-full truncate border-0 bg-transparent px-0 text-xs shadow-none placeholder:text-[#7890b0] focus-visible:border-0 focus-visible:ring-0"
           placeholder={searchPlaceholder}
         />
       </div>
@@ -148,7 +148,7 @@ export function AdminSearchInput({
           name="q"
           defaultValue={defaultValue}
           aria-label={placeholder}
-          className="h-full min-w-0 flex-1 border-0 bg-transparent px-0 text-xs shadow-none placeholder:text-[#7890b0] focus-visible:border-0 focus-visible:ring-0"
+          className="h-full min-w-0 flex-1 truncate border-0 bg-transparent px-0 text-xs shadow-none placeholder:text-[#7890b0] focus-visible:border-0 focus-visible:ring-0"
           placeholder={placeholder}
         />
       </label>

@@ -1,7 +1,11 @@
 import Image from 'next/image';
 import { HeroLinkForm } from './HeroLinkForm';
+import { cashbackRate, prizeFundRate } from '@/lib/config';
 
 export function HeroSection() {
+  const cashbackPct = Math.round(cashbackRate * 100);
+  const prizeFundPct = Math.round(prizeFundRate * 100);
+
   return (
     <section className="reference-hero relative isolate overflow-hidden ww-hero-bg pb-16 pt-[110px]">
       <div className="reference-hero-surface absolute inset-0 pointer-events-none" style={{
@@ -23,12 +27,26 @@ export function HeroSection() {
             className="ww-hero-enter mt-5 text-base text-white/70 max-w-[520px] leading-6"
             style={{ '--delay': '180ms' } as React.CSSProperties}
           >
-            Mua sắm như bình thường trên TikTok Shop hoặc Shopee qua Win-Win Back để nhận cashback. Tiền hoàn về ví khi đơn hoàn tất, kèm voucher và mã giảm giá mỗi ngày.
+            Mua sắm như thường lệ trên Shopee hoặc TikTok Shop. Khi đơn hoàn tất, cashback được cộng vào ví của bạn.
+          </p>
+
+          <div className="ww-hero-enter mt-4 grid max-w-[520px] grid-cols-2 gap-2" style={{ '--delay': '220ms' } as React.CSSProperties}>
+            <div className="rounded-lg border border-white/20 bg-white/10 px-3 py-2.5">
+              <b className="block text-lg leading-5 text-[#d7fb76]">{cashbackPct}%</b>
+              <span className="text-xs text-white/85">hoa hồng affiliate hoàn về ví</span>
+            </div>
+            <div className="rounded-lg border border-white/20 bg-white/10 px-3 py-2.5">
+              <b className="block text-lg leading-5 text-[#d7fb76]">{prizeFundPct}%</b>
+              <span className="text-xs text-white/85">hoa hồng góp quỹ rút thăm</span>
+            </div>
+          </div>
+          <p className="mt-2 max-w-[520px] text-[11px] leading-4 text-white/65">
+            Tỷ lệ tính trên hoa hồng affiliate thực tế sàn ghi nhận, không phải giá trị đơn hàng.
           </p>
 
           <div
-            className="ww-hero-enter mt-8 max-w-[520px]"
-            style={{ '--delay': '260ms' } as React.CSSProperties}
+            className="ww-hero-enter mt-5 max-w-[520px]"
+            style={{ '--delay': '280ms' } as React.CSSProperties}
           >
             <HeroLinkForm />
           </div>

@@ -102,17 +102,12 @@ export default async function CashbackRequestsPage({ searchParams }: { searchPar
         <span className="grid size-9 place-items-center rounded-lg bg-[#e8f8dc] text-[#53ad20]"><BadgeDollarSign className="size-5" /></span>
         <h1 className="text-xl font-black text-[#11345f]">Quản lý yêu cầu hoàn tiền</h1>
       </header>
-      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
+      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
         <Metric icon={Clock3} tone="bg-[#fff2d4] text-[#e9a414]" label="Yêu cầu chờ duyệt" value={String(stats.pending)} />
         <Metric icon={CheckCircle2} tone="bg-[#e5f7e5] text-[#35a948]" label="Đã duyệt" value={String(stats.approved)} />
         <Metric icon={CircleX} tone="bg-[#feeae8] text-[#ed4832]" label="Đã từ chối" value={String(stats.rejected)} />
         <Metric icon={BadgeDollarSign} tone="bg-[#e8f0ff] text-[#2878eb]" label="Tổng tiền hoàn đang xử lý" value={formatVnd(stats.processing)} />
         <Metric icon={TrendingUp} tone="bg-[#f2e6ff] text-[#9c3bd9]" label="Tỷ lệ duyệt" value={`${approvalRate}%`} />
-        <article className="relative hidden min-h-[120px] overflow-hidden rounded-xl bg-[#062a51] p-4 xl:block">
-          <Image src="/images/dashboard-overview-mascot-banner-v5.png" alt="" fill sizes="18rem" className="object-cover object-[76%_35%] opacity-80" />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#062a51] via-[#062a51]/90 to-transparent" />
-          <div className="relative z-10"><p className="max-w-[10rem] text-base font-black text-[#c9f463]">Kiểm duyệt yêu cầu nhanh chóng</p><p className="mt-2 text-[10px] font-medium text-white/80">Bảo vệ hệ thống – Tối ưu chi phí</p></div>
-        </article>
       </section>
 
       <section className="mt-3 grid gap-3 xl:grid-cols-[minmax(0,1.8fr)_minmax(320px,1fr)_minmax(330px,1fr)] xl:items-start">

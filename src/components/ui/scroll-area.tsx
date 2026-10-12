@@ -23,7 +23,7 @@ function ScrollBar({ className, orientation = "vertical", ...props }: ComponentP
       data-slot="scroll-area-scrollbar"
       orientation={orientation}
       className={cn(
-        "flex touch-none select-none p-0.5 transition-colors",
+        "pointer-events-none flex touch-none select-none p-0.5 opacity-0 transition-opacity duration-150 focus-visible:pointer-events-auto focus-visible:opacity-100 data-[hovering]:pointer-events-auto data-[hovering]:opacity-100 data-[scrolling]:pointer-events-auto data-[scrolling]:opacity-100 motion-reduce:transition-none",
         orientation === "vertical" ? "h-full w-2.5 border-l border-l-transparent" : "h-2.5 flex-col border-t border-t-transparent",
         className,
       )}

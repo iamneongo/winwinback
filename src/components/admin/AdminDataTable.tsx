@@ -12,10 +12,20 @@ import {
   type ColumnFiltersState,
   type ColumnDef,
   type SortingState,
+  type VisibilityState,
 } from "@tanstack/react-table";
 import { parseAsInteger, parseAsString, useQueryStates } from "nuqs";
-import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, ChevronRight, Search, X } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, ChevronRight, Columns3, EyeOff, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea, ScrollAreaContent, ScrollAreaCorner, ScrollAreaViewport, ScrollBar } from "@/components/ui/scroll-area";
@@ -87,6 +97,7 @@ export function AdminDataTable<TData>({
   const [requestedPage, setRequestedPage] = useState<{ from: number; to: number } | null>(null);
   const [localSorting, setLocalSorting] = useState<SortingState>([]);
   const [localFilters, setLocalFilters] = useState<ColumnFiltersState>([]);
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
 
   useEffect(() => { if (mode === "server") setDraft(query.q); }, [mode, query.q]);
   useEffect(() => {
@@ -119,7 +130,8 @@ export function AdminDataTable<TData>({
     manualSorting: mode === "server",
     manualFiltering: mode === "server",
     pageCount: mode === "server" ? pageCount : undefined,
-    state: { sorting, globalFilter: mode === "client" ? draft : "", columnFilters: localFilters, pagination: { pageIndex: (mode === "client" ? localPage : page) - 1, pageSize } },
+    state: { sorting, globalFilter: mode === "client" ? draft : "", columnFilters: localFilters, columnVisibility, pagination: { pageIndex: (mode === "client" ? localPage : page) - 1, pageSize } },
+    onColumnVisibilityChange: setColumnVisibility,
   });
   const activeFilters = filters.some((filter) => mode === "client" ? localFilters.some((item) => item.id === filter.key && item.value) : Boolean(query[filter.key]));
   // nuqs updates its query state immediately, while the server still renders
@@ -139,6 +151,14 @@ export function AdminDataTable<TData>({
       void setQuery({ trang: target }).catch(() => setRequestedPage(null));
     }
   };
+  const setColumnSort = (columnId: string, direction: "asc" | "desc") => {
+    if (mode === "client") {
+      setLocalSorting([{ id: columnId, desc: direction === "desc" }]);
+      setLocalPage(1);
+    } else {
+      void setQuery({ sort: columnId, dir: direction, trang: 1 });
+    }
+  };
 
   return (
     <>
@@ -150,7 +170,7 @@ export function AdminDataTable<TData>({
             value={draft}
             onChange={(event) => { setDraft(event.target.value); if (mode === "client") setLocalPage(1); }}
             placeholder={searchPlaceholder}
-            className="h-9 border-[#dbe6f3] bg-white pl-9 text-sm"
+            className="h-9 truncate border-[#dbe6f3] bg-white pl-9 text-sm"
           />
         </div>
         {filters.map((filter) => {
@@ -186,6 +206,26 @@ export function AdminDataTable<TData>({
             <X className="size-4" /> Xóa lọc
           </Button>
         ) : null}
+        <DropdownMenu>
+          <DropdownMenuTrigger render={<Button type="button" variant="outline" size="default" className="sm:ml-auto" />}>
+            <Columns3 className="size-4" /> Cột
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="min-w-48">
+            <DropdownMenuLabel>Hiển thị cột</DropdownMenuLabel>
+            {table.getAllLeafColumns().filter((column) => column.getCanHide()).map((column) => {
+              const label = typeof column.columnDef.header === "string" ? column.columnDef.header : column.id;
+              return (
+                <DropdownMenuCheckboxItem
+                  key={column.id}
+                  checked={column.getIsVisible()}
+                  onCheckedChange={(checked) => column.toggleVisibility(checked === true)}
+                >
+                  {label}
+                </DropdownMenuCheckboxItem>
+              );
+            })}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div> : null}
 
       <section className={isPreview ? "flex min-h-0 min-w-0 flex-1 flex-col" : "min-w-0 overflow-hidden rounded-xl border border-[#dfe9f5] bg-white"} aria-label={ariaLabel}>
@@ -199,22 +239,29 @@ export function AdminDataTable<TData>({
               {group.headers.map((header) => {
                 const direction = header.column.getIsSorted();
                 return (
-                  <TableHead key={header.id} scope="col" style={{ width: header.getSize() }} className="h-9 px-3 py-2 text-[11px] font-bold">
+                  <TableHead key={header.id} scope="col" style={{ width: header.getSize() }} className="h-9 px-3 py-1 text-[11px] font-bold">
                     {header.isPlaceholder ? null : !isPreview && header.column.getCanSort() ? (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        onClick={() => {
-                          const next = direction === "asc" ? "desc" : direction === "desc" ? "" : "asc";
-                          if (mode === "client") { setLocalSorting(next ? [{ id: header.column.id, desc: next === "desc" }] : []); setLocalPage(1); }
-                          else void setQuery({ sort: next ? header.column.id : "", dir: next || "desc", trang: 1 });
-                        }}
-                        className="h-auto min-h-9 justify-start gap-1 px-0 text-left text-xs font-bold hover:bg-transparent hover:text-[#1261ed]"
-                        aria-label={`Sắp xếp theo ${String(header.column.columnDef.header)}`}
-                      >
-                        {flexRender(header.column.columnDef.header, header.getContext())}
-                        {direction === "asc" ? <ArrowUp className="size-3.5" /> : direction === "desc" ? <ArrowDown className="size-3.5" /> : <ArrowUpDown className="size-3.5 text-[#8aa0bd]" />}
-                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger render={<Button type="button" variant="ghost" size="lg" className="-ml-2 min-h-8 justify-start gap-1 px-2 text-left text-[11px] font-bold hover:bg-[#f1f5fa] hover:text-[#1261ed]" aria-label={`Tùy chọn cột ${String(header.column.columnDef.header)}`} />}>
+                          {flexRender(header.column.columnDef.header, header.getContext())}
+                          {direction === "asc" ? <ArrowUp className="size-3.5" /> : direction === "desc" ? <ArrowDown className="size-3.5" /> : <ArrowUpDown className="size-3.5 text-[#8aa0bd]" />}
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start" className="min-w-40">
+                          <DropdownMenuItem onClick={() => setColumnSort(header.column.id, "asc")}>
+                            <ArrowUp className="size-4" /> Tăng dần
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setColumnSort(header.column.id, "desc")}>
+                            <ArrowDown className="size-4" /> Giảm dần
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            disabled={!header.column.getCanHide() || table.getVisibleLeafColumns().length <= 1}
+                            onClick={() => header.column.toggleVisibility(false)}
+                          >
+                            <EyeOff className="size-4" /> Ẩn cột
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     ) : flexRender(header.column.columnDef.header, header.getContext())}
                   </TableHead>
                 );
@@ -225,7 +272,7 @@ export function AdminDataTable<TData>({
         <TableBody>
           {isLoading ? Array.from({ length: Math.min(pageSize, 8) }, (_, rowIndex) => (
             <TableRow key={`loading-${rowIndex}`} aria-hidden="true">
-              {columns.map((column, cellIndex) => (
+              {table.getVisibleLeafColumns().map((column, cellIndex) => (
                 <TableCell key={`loading-${rowIndex}-${cellIndex}`} className="px-3 py-3">
                   <Skeleton className={`h-4 ${cellIndex === 0 ? "w-3/4" : cellIndex === columns.length - 1 ? "w-1/3" : "w-1/2"}`} />
                 </TableCell>
@@ -254,7 +301,7 @@ export function AdminDataTable<TData>({
               ))}
             </TableRow>
           )) : (
-            <TableRow><TableCell colSpan={columns.length} className="h-28 text-center text-sm text-[#587298]">{emptyMessage}</TableCell></TableRow>
+            <TableRow><TableCell colSpan={table.getVisibleLeafColumns().length} className="h-28 text-center text-sm text-[#587298]">{emptyMessage}</TableCell></TableRow>
           )}
         </TableBody>
           </Table>
