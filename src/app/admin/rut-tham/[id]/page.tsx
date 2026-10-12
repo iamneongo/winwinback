@@ -42,7 +42,7 @@ export default async function AdminPeriodDetailPage({ params, searchParams }: { 
     .where(ticketFilter)
     .orderBy(desc(luckyDrawTickets.isWinner), luckyDrawTickets.number)
     .limit(PAGE_SIZE).offset((page - 1) * PAGE_SIZE);
-  return <RecordDetail backHref="/admin/rut-tham" backLabel="Danh sách kỳ rút thăm" title={period.name} description="Kết quả kỳ quay và danh sách phiếu đã tham gia." actions={period.status === "open" ? <DrawButton periodId={period.id} /> : undefined}>
+  return <RecordDetail layout="admin" backHref="/admin/rut-tham" backLabel="Danh sách kỳ rút thăm" title={period.name} description="Kết quả kỳ quay và danh sách phiếu đã tham gia." actions={period.status === "open" ? <DrawButton periodId={period.id} /> : undefined}>
     <DetailSection title="Kỳ quay">
       <DetailField label="Trạng thái">{period.status === "drawn" ? "Đã quay" : "Đang mở"}</DetailField>
       <DetailField label="Thời gian áp dụng">{period.startAt.toLocaleString("vi-VN")} – {period.endAt.toLocaleString("vi-VN")}</DetailField>

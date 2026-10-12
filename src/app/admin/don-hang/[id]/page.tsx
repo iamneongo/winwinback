@@ -21,7 +21,7 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
     .from(orders).innerJoin(users, eq(orders.userId, users.id)).where(eq(orders.id, id)).limit(1);
   if (!data) notFound();
   const { order } = data;
-  return <RecordDetail backHref="/admin/don-hang" backLabel="Danh sách đơn hàng" title={`Đơn hàng ${order.externalOrderId}`} description="Thông tin đơn, đối soát hoa hồng và trạng thái hoàn tiền." actions={<OrderStatusControl orderId={order.id} status={order.status} />}>
+  return <RecordDetail layout="admin" backHref="/admin/don-hang" backLabel="Danh sách đơn hàng" title={`Đơn hàng ${order.externalOrderId}`} description="Thông tin đơn, đối soát hoa hồng và trạng thái hoàn tiền." actions={<OrderStatusControl orderId={order.id} status={order.status} />}>
     <DetailSection title="Đơn hàng">
       <DetailField label="Sản phẩm">{order.productName}</DetailField>
       <DetailField label="Sàn">{platformLabel[order.platform]}</DetailField>

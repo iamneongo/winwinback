@@ -24,7 +24,7 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
     db.select({ id: orders.id, externalOrderId: orders.externalOrderId, status: orders.status, orderedAt: orders.orderedAt }).from(orders).where(eq(orders.userId, id)).orderBy(desc(orders.orderedAt)).limit(5),
     db.select({ id: walletTransactions.id, type: walletTransactions.type, amount: walletTransactions.amount, createdAt: walletTransactions.createdAt }).from(walletTransactions).where(eq(walletTransactions.userId, id)).orderBy(desc(walletTransactions.createdAt)).limit(5),
   ]);
-  return <RecordDetail backHref="/admin/nguoi-dung" backLabel="Danh sách người dùng" title={user.name} description="Tài khoản, số dư và hoạt động gần đây của người dùng.">
+  return <RecordDetail layout="admin" backHref="/admin/nguoi-dung" backLabel="Danh sách người dùng" title={user.name} description="Tài khoản, số dư và hoạt động gần đây của người dùng.">
     <DetailSection title="Tài khoản">
       <DetailField label="Email">{user.email}</DetailField>
       <DetailField label="Xác thực email">{user.emailVerified ? "Đã xác thực" : "Chưa xác thực"}</DetailField>

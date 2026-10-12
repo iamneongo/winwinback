@@ -8,6 +8,7 @@ import { PendingOrdersOverviewTable, WithdrawalOverviewTable } from "@/component
 import { formatVnd } from "@/lib/config";
 import { TrendChart, DonutChart } from "@/components/admin/charts";
 import { getOrderTrend } from "@/lib/admin-metrics";
+import { AdminPageContainer } from "@/components/admin/AdminPageContainer";
 
 export const metadata = { title: "Tổng quan quản trị — Win-Win Back" };
 export const dynamic = "force-dynamic";
@@ -43,7 +44,7 @@ export default async function AdminPage() {
     cashbackAmount: order.cashbackAmount, status: order.status,
   }));
 
-  return <main className="mx-auto w-full max-w-[1600px] px-4 py-5 sm:px-6 lg:px-5 lg:py-5">
+  return <AdminPageContainer className="py-5 lg:py-5">
     <div className="mb-4 flex items-center gap-2 lg:hidden"><BadgeDollarSign className="size-5 text-[#f0c328]" /><h1 className="text-lg font-black text-[#11345f]">Bảng điều khiển quản trị</h1></div>
     <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
       <Metric icon={Coins} tint="bg-[#e9f8dd] text-[#4bac22]" label="Tổng hoàn tiền tháng" value={formatVnd(totalCashback)} />
@@ -89,5 +90,5 @@ export default async function AdminPage() {
         </article>
       </aside>
     </section>
-  </main>;
+  </AdminPageContainer>;
 }

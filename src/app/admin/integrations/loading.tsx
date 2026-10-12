@@ -1,4 +1,5 @@
 import { Skeleton } from "@/components/ui/skeleton";
+import { AdminPageContainer } from "@/components/admin/AdminPageContainer";
 
 const sk = "bg-[#e7eef7]";
 
@@ -39,7 +40,7 @@ function MarketplaceSkeleton() {
 
 export default function Loading() {
   return (
-    <main className="mx-auto w-full max-w-[1600px] px-4 py-5 sm:px-6 lg:px-5">
+    <AdminPageContainer className="py-5">
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {Array.from({ length: 4 }).map((_, i) => (
           <MetricSkeleton key={i} />
@@ -68,6 +69,6 @@ export default function Loading() {
           </div>
         ))}
       </section>
-    </main>
+    </AdminPageContainer>
   );
 }

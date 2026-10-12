@@ -18,6 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { TrendChart, DonutChart } from "@/components/admin/charts";
 import { getOrderTrend } from "@/lib/admin-metrics";
 import { CashbackTable } from "./CashbackTable";
+import { AdminPageContainer } from "@/components/admin/AdminPageContainer";
 
 export const metadata = { title: "Yêu cầu hoàn tiền — Win-Win Back" };
 export const dynamic = "force-dynamic";
@@ -96,7 +97,7 @@ export default async function CashbackRequestsPage({ searchParams }: { searchPar
   const approvalRate = Math.round((stats.approved / total) * 100);
 
   return (
-    <main className="mx-auto w-full min-w-0 max-w-[1600px] px-4 py-5 sm:px-6 lg:px-5">
+    <AdminPageContainer className="py-5">
       <header className="mb-4 flex items-center gap-3 lg:hidden">
         <span className="grid size-9 place-items-center rounded-lg bg-[#e8f8dc] text-[#53ad20]"><BadgeDollarSign className="size-5" /></span>
         <h1 className="text-xl font-black text-[#11345f]">Quản lý yêu cầu hoàn tiền</h1>
@@ -123,6 +124,6 @@ export default async function CashbackRequestsPage({ searchParams }: { searchPar
           <CashbackTable rows={rows.map(({ order, name, email }) => ({ id: order.id, externalOrderId: order.externalOrderId, name, email, platform: order.platform, orderAmount: order.orderAmount, cashbackAmount: order.cashbackAmount, status: order.status, createdAt: order.createdAt.toISOString() }))} total={count?.total ?? 0} page={page} />
         </div>
       </section>
-    </main>
+    </AdminPageContainer>
   );
 }

@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { MarkAllNotificationsRead, MarkNotificationReadOnView } from "@/components/dashboard/NotificationActions";
 import { NotificationDetail, NotificationsInbox } from "@/components/dashboard/NotificationsInbox";
 import { NotificationsTable } from "@/app/admin/thong-bao/NotificationsTable";
+import { AdminPageContainer } from "@/components/admin/AdminPageContainer";
 import {
   getAdminNotificationsPage,
   getNotificationForUser,
@@ -41,7 +42,7 @@ export async function NotificationCenterPage({
     });
 
     return (
-      <main className="mx-auto w-full min-w-0 max-w-[1400px] px-4 py-5 sm:px-7 lg:px-8 lg:py-7">
+      <AdminPageContainer className="py-5 lg:py-7">
         <header className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h1 className="text-2xl font-black tracking-tight text-[#11335e] sm:text-[28px] lg:hidden">Thông báo</h1>
@@ -52,7 +53,7 @@ export async function NotificationCenterPage({
           <MarkAllNotificationsRead unreadCount={result.unreadCount} />
         </header>
         <NotificationsTable rows={result.items} total={result.total} page={result.page} />
-      </main>
+      </AdminPageContainer>
     );
   }
 

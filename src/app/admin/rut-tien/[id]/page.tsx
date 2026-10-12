@@ -21,7 +21,7 @@ export default async function AdminWithdrawalDetailPage({ params }: { params: Pr
     .from(withdrawals).innerJoin(users, eq(withdrawals.userId, users.id)).where(eq(withdrawals.id, id)).limit(1);
   if (!data) notFound();
   const { withdrawal: item } = data;
-  return <RecordDetail backHref="/admin/rut-tien" backLabel="Yêu cầu rút tiền" title={`Yêu cầu RT${item.id.slice(0, 8).toUpperCase()}`} description="Đối chiếu thông tin tài khoản và trạng thái chi trả." actions={<WithdrawalControls withdrawalId={item.id} status={item.status} />}>
+  return <RecordDetail layout="admin" backHref="/admin/rut-tien" backLabel="Yêu cầu rút tiền" title={`Yêu cầu RT${item.id.slice(0, 8).toUpperCase()}`} description="Đối chiếu thông tin tài khoản và trạng thái chi trả." actions={<WithdrawalControls withdrawalId={item.id} status={item.status} />}>
     <DetailSection title="Yêu cầu">
       <DetailField label="Số tiền">{formatVnd(item.amount)}</DetailField>
       <DetailField label="Trạng thái">{withdrawalStatusLabel[item.status]}</DetailField>

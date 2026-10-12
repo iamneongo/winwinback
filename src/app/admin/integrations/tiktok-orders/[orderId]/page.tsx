@@ -23,7 +23,7 @@ export default async function TikTokLiveOrderDetailPage({ params }: { params: Pr
   const order = await fetchConnectedCreatorOrder(orderId);
   if (!order) notFound();
   const [localOrder] = await db.select({ id: orders.id }).from(orders).where(eq(orders.externalOrderId, orderId)).limit(1);
-  return <RecordDetail backHref="/admin/integrations/tiktok-orders" backLabel="Đơn TikTok Affiliate" title={`Đơn ${order.id}`} description="Dữ liệu trực tiếp từ tài khoản TikTok Shop Creator đã kết nối." actions={localOrder ? <Link href={`/admin/don-hang/${localOrder.id}`} className="rounded-lg bg-[#b7e961] px-4 py-2.5 text-sm font-bold text-[#173b5e] hover:bg-[#a9e75e]">Xem đơn trong hệ thống</Link> : undefined}>
+  return <RecordDetail layout="admin" backHref="/admin/integrations/tiktok-orders" backLabel="Đơn TikTok Affiliate" title={`Đơn ${order.id}`} description="Dữ liệu trực tiếp từ tài khoản TikTok Shop Creator đã kết nối." actions={localOrder ? <Link href={`/admin/don-hang/${localOrder.id}`} className="rounded-lg bg-[#b7e961] px-4 py-2.5 text-sm font-bold text-[#173b5e] hover:bg-[#a9e75e]">Xem đơn trong hệ thống</Link> : undefined}>
     <DetailSection title="Thông tin đơn TikTok">
       <DetailField label="Mã đơn">{order.id}</DetailField>
       <DetailField label="Trạng thái từ TikTok"><Badge title={order.status ? `Trạng thái gốc: ${order.status}` : undefined}>{tiktokAffiliateStatusLabel(order.status)}</Badge></DetailField>

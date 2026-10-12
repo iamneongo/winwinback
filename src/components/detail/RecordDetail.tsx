@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { AdminPageContainer } from "@/components/admin/AdminPageContainer";
 
 export function RecordDetail({
   backHref,
@@ -7,6 +8,7 @@ export function RecordDetail({
   title,
   description,
   actions,
+  layout = "dashboard",
   children,
 }: {
   backHref: string;
@@ -14,9 +16,13 @@ export function RecordDetail({
   title: string;
   description?: string;
   actions?: React.ReactNode;
+  layout?: "admin" | "dashboard";
   children: React.ReactNode;
 }) {
-  return <main className="mx-auto w-full min-w-0 max-w-[1440px] px-4 py-6 sm:px-7 lg:px-8">
+  const containerClassName = layout === "admin"
+    ? "py-6"
+    : "mx-auto w-full min-w-0 max-w-[1440px] px-4 py-6 sm:px-7 lg:px-8";
+  const content = <>
     <header className="mb-5 flex flex-wrap items-start justify-between gap-4">
       <div className="min-w-0">
         <Link href={backHref} className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#315c90] hover:text-[#1261ed] hover:underline"><ArrowLeft className="size-4" />{backLabel}</Link>
@@ -26,7 +32,10 @@ export function RecordDetail({
       {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
     </header>
     <div className="grid gap-4">{children}</div>
-  </main>;
+  </>;
+  return layout === "admin"
+    ? <AdminPageContainer className={containerClassName}>{content}</AdminPageContainer>
+    : <main className={containerClassName}>{content}</main>;
 }
 
 export function DetailSection({ title, children }: { title: string; children: React.ReactNode }) {

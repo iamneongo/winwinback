@@ -5,6 +5,7 @@ import { withdrawals, users } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth/guards";
 import { formatVnd } from "@/lib/config";
 import { WithdrawalsTable } from "./WithdrawalsTable";
+import { AdminPageContainer } from "@/components/admin/AdminPageContainer";
 
 export const metadata = { title: "Yêu cầu rút tiền — Win-Win Back" };
 export const dynamic = "force-dynamic";
@@ -32,10 +33,10 @@ export default async function WithdrawalsPage({ searchParams }: { searchParams: 
   const sortColumn = Object.hasOwn(sortMap, one("sort")) ? sortMap[one("sort") as "amount" | "bankName" | "status" | "requestedAt" | "processedAt"] : withdrawals.requestedAt;
   const rows = await db.select({ w: withdrawals, name: users.name, email: users.email }).from(withdrawals).innerJoin(users, eq(withdrawals.userId, users.id)).where(where).orderBy(one("dir") === "asc" ? asc(sortColumn) : desc(sortColumn), desc(withdrawals.id)).limit(PAGE_SIZE).offset((page - 1) * PAGE_SIZE);
 
-  return <main className="mx-auto w-full min-w-0 max-w-[1600px] px-4 py-5 sm:px-6 lg:px-5">
+  return <AdminPageContainer className="py-5">
     <div className="mb-4 lg:hidden"><h1 className="text-xl font-black text-[#11345f]">Yêu cầu rút tiền</h1><p className="mt-1 text-sm text-[#60799c]">Duyệt, chi trả và từ chối yêu cầu rút tiền của người dùng</p></div>
     <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4"><Metric icon={Clock3} tone="bg-[#fff3dc] text-[#eda815]" label="Chờ xử lý" value={String(stats?.pendingCount ?? 0)} /><Metric icon={Wallet} tone="bg-[#fff1d9] text-[#e99a10]" label="Tiền chờ duyệt" value={formatVnd(stats?.pendingAmount ?? 0)} /><Metric icon={Landmark} tone="bg-[#e8f1ff] text-[#2877ec]" label="Đã duyệt, chờ chi" value={formatVnd(stats?.approvedAmount ?? 0)} /><Metric icon={CircleCheck} tone="bg-[#e7f7ef] text-[#31a141]" label="Tổng đã chi" value={formatVnd(stats?.paidAmount ?? 0)} /></section>
     <div className="mb-3 mt-5"><h2 className="text-base font-black text-[#12355f]">Danh sách yêu cầu rút tiền</h2><p className="mt-1 text-xs text-[#6c86a8]">Kiểm tra thông tin ngân hàng và xử lý từng yêu cầu</p></div>
     <WithdrawalsTable rows={rows.map(({ w, name, email }) => ({ id: w.id, name, email, amount: w.amount, bankName: w.bankName, bankAccountLast4: w.bankAccount.slice(-4), accountHolder: w.accountHolder, status: w.status, requestedAt: w.requestedAt.toISOString(), processedAt: w.processedAt?.toISOString() ?? null }))} total={count?.total ?? 0} page={page} />
-  </main>;
+  </AdminPageContainer>;
 }

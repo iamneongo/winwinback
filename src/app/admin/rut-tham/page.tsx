@@ -7,6 +7,7 @@ import { formatVnd } from "@/lib/config";
 import { getFundBalance } from "@/lib/lucky-draw/service";
 import { CreatePeriodForm } from "./LuckyDrawForms";
 import { PeriodsTable } from "./PeriodsTable";
+import { AdminPageContainer } from "@/components/admin/AdminPageContainer";
 
 export const metadata = { title: "Rút thăm may mắn — Quản trị" };
 export const dynamic = "force-dynamic";
@@ -35,7 +36,7 @@ export default async function AdminLuckyDrawPage({ searchParams }: { searchParam
   const periods = await db.select().from(luckyDrawPeriods).where(where).orderBy(one("dir") === "asc" ? asc(sortColumn) : desc(sortColumn), desc(luckyDrawPeriods.id)).limit(PAGE_SIZE).offset((page - 1) * PAGE_SIZE);
   const eligibleIn = (start: Date, end: Date) => undrawn.filter((ticket) => ticket.createdAt >= start && ticket.createdAt <= end).length;
 
-  return <main className="mx-auto w-full min-w-0 max-w-[1200px] px-4 py-6 sm:px-7 lg:px-8 lg:py-7">
+  return <AdminPageContainer className="py-6 lg:py-7">
     <header className="mb-6"><h1 className="text-xl font-black leading-tight tracking-tight text-[#11335e] lg:hidden">Rút thăm may mắn</h1><p className="mt-1 text-sm text-[#58749a]">Mỗi đơn hoàn tất góp 10% hoa hồng vào quỹ và được 1 phiếu (4 số cuối mã đơn). Admin mở kỳ rồi quay: trùng số → lãnh hết quỹ; không trùng → phiếu gần nhất nhận 20%, phần còn lại cộng dồn.</p></header>
     <div className="grid gap-3 sm:grid-cols-3">
       <article className="rounded-xl border border-[#e1eaf6] bg-white px-5 py-5"><div className="flex items-start gap-4"><span className="flex size-12 items-center justify-center rounded-full bg-[#f6e9ff] text-[#aa34de]"><PiggyBank className="size-6" /></span><div><p className="text-sm font-medium text-[#34527d]">Quỹ hiện tại</p><p className="mt-1 text-[26px] font-black leading-none text-[#12335f]">{formatVnd(fund)}</p><p className="mt-3 text-xs text-[#7790b1]">Cộng dồn qua các kỳ chưa trúng</p></div></div></article>
@@ -44,5 +45,5 @@ export default async function AdminLuckyDrawPage({ searchParams }: { searchParam
     </div>
     <section className="my-5 rounded-xl border border-[#dfe9f5] bg-white p-5"><h2 className="mb-4 text-sm font-bold text-[#173861]">Mở kỳ quay mới</h2><CreatePeriodForm /></section>
     <PeriodsTable rows={periods.map((period) => ({ id: period.id, name: period.name, startAt: period.startAt.toISOString(), endAt: period.endAt.toISOString(), status: period.status, eligibleTickets: eligibleIn(period.startAt, period.endAt), potTotal: period.potTotal, winningNumber: period.winningNumber, exactMatch: period.exactMatch, paidOut: period.paidOut, createdAt: period.createdAt.toISOString() }))} total={count?.total ?? 0} page={page} />
-  </main>;
+  </AdminPageContainer>;
 }

@@ -5,6 +5,7 @@ import { isTikTokConfigured } from "@/lib/affiliate/tiktok/config";
 import { getStoredTikTokToken } from "@/lib/affiliate/tiktok/tokens";
 import { TikTokOrdersPanel } from "@/components/admin/TikTokOrdersPanel";
 import { TikTokCollabPanel } from "@/components/admin/TikTokCollabPanel";
+import { AdminPageContainer } from "@/components/admin/AdminPageContainer";
 
 export const metadata = { title: "Dữ liệu đơn hàng TikTok — Win-Win Back" };
 export const dynamic = "force-dynamic";
@@ -16,7 +17,7 @@ export default async function TikTokOrdersPage() {
   const connected = Boolean(stored);
 
   return (
-    <main className="mx-auto w-full min-w-0 max-w-[1200px] px-4 py-5 sm:px-6 lg:px-5 lg:pt-6">
+    <AdminPageContainer className="py-5 lg:pt-6">
       <Link
         href="/admin/integrations"
         className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#1766e7] hover:underline"
@@ -67,6 +68,6 @@ export default async function TikTokOrdersPage() {
           <TikTokCollabPanel />
         </div>
       )}
-    </main>
+    </AdminPageContainer>
   );
 }

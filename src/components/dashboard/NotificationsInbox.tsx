@@ -15,6 +15,8 @@ import {
 import type { Notification } from "@/db/schema";
 import type { NotificationFilter } from "@/lib/notifications";
 import { MarkAllNotificationsRead } from "@/components/dashboard/NotificationActions";
+import { ADMIN_PAGE_CONTAINER_CLASS } from "@/components/admin/AdminPageContainer";
+import { cn } from "@/lib/utils";
 
 const notificationMeta = {
   cashback: { label: "Hoàn tiền", Icon: Coins, tone: "bg-[#e8f8eb] text-[#168146]" },
@@ -69,7 +71,10 @@ export function NotificationsInbox({
 }) {
   const adminView = basePath.startsWith("/admin");
   return (
-    <main className="mx-auto w-full min-w-0 max-w-[1100px] px-4 py-5 sm:px-7 lg:px-8 lg:py-7">
+    <main className={cn(
+      adminView ? ADMIN_PAGE_CONTAINER_CLASS : "mx-auto w-full min-w-0 max-w-[1100px] px-4 sm:px-7 lg:px-8",
+      "py-5 lg:py-7",
+    )}>
       <header className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className={`text-2xl font-black tracking-tight text-[#11335e] sm:text-[28px] ${adminView ? "lg:hidden" : ""}`}>Thông báo</h1>
@@ -166,26 +171,32 @@ export function NotificationDetail({
   item: Notification;
   basePath: "/dashboard/thong-bao" | "/admin/thong-bao";
 }) {
+  const adminView = basePath.startsWith("/admin");
   const meta = notificationMeta[item.type as keyof typeof notificationMeta] ?? notificationMeta.system;
   const href = safeInternalHref(item.href);
   return (
-    <main className="mx-auto w-full min-w-0 max-w-[900px] px-4 py-5 sm:px-7 lg:px-8 lg:py-7">
-      <Link href={basePath} className="inline-flex items-center gap-2 text-sm font-bold text-[#52749e] hover:text-[#1766e7]"><ArrowLeft className="size-4" /> Tất cả thông báo</Link>
-      <article className="mt-4 overflow-hidden rounded-xl border border-[#e1eaf6] bg-white">
-        <header className="flex items-start gap-4 border-b border-[#e8eef6] px-5 py-5 sm:px-7 sm:py-6">
-          <span className={`grid size-11 shrink-0 place-items-center rounded-full ${meta.tone}`}><meta.Icon className="size-5" /></span>
-          <div className="min-w-0 flex-1">
-            <span className="text-xs font-bold text-[#6681a7]">{meta.label}</span>
-            <h1 className="mt-1 break-words text-xl font-black leading-snug tracking-tight text-[#11335e] sm:text-2xl">{item.title}</h1>
-            <p className="mt-2 text-xs text-[#8196b2]">{formatDate(item.createdAt)}</p>
+    <main className={cn(
+      adminView ? ADMIN_PAGE_CONTAINER_CLASS : "mx-auto w-full min-w-0 max-w-[900px] px-4 sm:px-7 lg:px-8",
+      "py-5 lg:py-7",
+    )}>
+      <div className={adminView ? "mx-auto w-full max-w-4xl" : undefined}>
+        <Link href={basePath} className="inline-flex items-center gap-2 text-sm font-bold text-[#52749e] hover:text-[#1766e7]"><ArrowLeft className="size-4" /> Tất cả thông báo</Link>
+        <article className="mt-4 overflow-hidden rounded-xl border border-[#e1eaf6] bg-white">
+          <header className="flex items-start gap-4 border-b border-[#e8eef6] px-5 py-5 sm:px-7 sm:py-6">
+            <span className={`grid size-11 shrink-0 place-items-center rounded-full ${meta.tone}`}><meta.Icon className="size-5" /></span>
+            <div className="min-w-0 flex-1">
+              <span className="text-xs font-bold text-[#6681a7]">{meta.label}</span>
+              <h1 className="mt-1 break-words text-xl font-black leading-snug tracking-tight text-[#11335e] sm:text-2xl">{item.title}</h1>
+              <p className="mt-2 text-xs text-[#8196b2]">{formatDate(item.createdAt)}</p>
+            </div>
+            {item.readAt && <span className="hidden shrink-0 items-center gap-1 rounded-full bg-[#f1f5fa] px-2.5 py-1 text-[11px] font-semibold text-[#6681a7] sm:inline-flex"><Check className="size-3.5" /> Đã đọc</span>}
+          </header>
+          <div className="px-5 py-6 sm:px-7 sm:py-8">
+            <p className="whitespace-pre-wrap break-words text-sm leading-7 text-[#34577f]">{item.body}</p>
+            {href && <Link href={href} className="mt-6 inline-flex h-10 items-center gap-2 rounded-lg bg-[#b7e961] px-4 text-sm font-bold text-[#173b5e] shadow-[0_3px_8px_rgba(142,198,63,0.22)] transition-colors hover:bg-[#a8dd4c]">Đi tới nội dung liên quan <ArrowRight className="size-4" /></Link>}
           </div>
-          {item.readAt && <span className="hidden shrink-0 items-center gap-1 rounded-full bg-[#f1f5fa] px-2.5 py-1 text-[11px] font-semibold text-[#6681a7] sm:inline-flex"><Check className="size-3.5" /> Đã đọc</span>}
-        </header>
-        <div className="px-5 py-6 sm:px-7 sm:py-8">
-          <p className="whitespace-pre-wrap break-words text-sm leading-7 text-[#34577f]">{item.body}</p>
-          {href && <Link href={href} className="mt-6 inline-flex h-10 items-center gap-2 rounded-lg bg-[#b7e961] px-4 text-sm font-bold text-[#173b5e] shadow-[0_3px_8px_rgba(142,198,63,0.22)] transition-colors hover:bg-[#a8dd4c]">Đi tới nội dung liên quan <ArrowRight className="size-4" /></Link>}
-        </div>
-      </article>
+        </article>
+      </div>
     </main>
   );
 }

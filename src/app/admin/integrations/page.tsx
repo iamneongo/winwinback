@@ -15,6 +15,7 @@ import { getStoredTikTokToken } from "@/lib/affiliate/tiktok/tokens";
 import { getAffiliateProvider } from "@/lib/affiliate/providers";
 import { isShopeeAffConfigured } from "@/lib/affiliate/shopee/config";
 import { Badge } from "@/components/ui/badge";
+import { AdminPageContainer } from "@/components/admin/AdminPageContainer";
 
 export const metadata = { title: "Kết nối sàn — Win-Win Back" };
 export const dynamic = "force-dynamic";
@@ -52,7 +53,7 @@ export default async function IntegrationsPage({ searchParams }: { searchParams:
   const connectedCount = Number(shopeeReady) + Number(tiktokStatus.connected);
   const banner = tiktok ? callbacks[tiktok] : undefined;
 
-  return <main className="mx-auto w-full max-w-[1600px] px-4 py-5 sm:px-6 lg:px-5">
+  return <AdminPageContainer className="py-5">
     <header className="mb-4 flex items-center gap-3 lg:hidden"><span className="grid size-9 place-items-center rounded-lg bg-[#e8f8dc] text-[#60b924]"><Link2 className="size-5" /></span><h1 className="text-xl font-black text-[#11345f]">Quản lý kết nối sàn</h1></header>
     {banner && <p className={`mb-3 rounded-lg border px-4 py-3 text-sm ${banner.ok ? "border-[#b7e961]/70 bg-[#eefbe0] text-[#2f7a1c]" : "border-red-200 bg-red-50 text-red-600"}`}>{banner.text}</p>}
 
@@ -70,5 +71,5 @@ export default async function IntegrationsPage({ searchParams }: { searchParams:
       <article className="overflow-hidden rounded-xl border border-[#e4ebf5] bg-white"><div className="flex items-center justify-between border-b border-[#edf1f7] px-5 py-4"><div className="flex items-center gap-3"><MarketplaceLogo platform="tiktok" /><div><h2 className="font-black text-[#102e5c]">TikTok Shop</h2><p className="text-[11px] text-[#6c86a8]">Affiliate Creator API</p></div></div><Badge variant={tiktokStatus.connected ? "success" : "warning"} className="px-3 py-1 text-[11px]">{tiktokStatus.connected ? "Đang hoạt động" : "Chưa kết nối"}</Badge></div><div className="p-5"><TikTokIntegration status={tiktokStatus} /></div></article>
     </section>
 
-  </main>;
+  </AdminPageContainer>;
 }

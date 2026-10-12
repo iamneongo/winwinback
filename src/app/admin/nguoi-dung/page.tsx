@@ -5,6 +5,7 @@ import { users } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth/guards";
 import { formatVnd } from "@/lib/config";
 import { UsersTable } from "./UsersTable";
+import { AdminPageContainer } from "@/components/admin/AdminPageContainer";
 
 export const metadata = { title: "Quản lý người dùng — Win-Win Back" };
 export const dynamic = "force-dynamic";
@@ -34,10 +35,10 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
   const order = one("dir") === "asc" ? asc(sortColumn) : desc(sortColumn);
   const rows = await db.select().from(users).where(where).orderBy(order, desc(users.id)).limit(PAGE_SIZE).offset((page - 1) * PAGE_SIZE);
 
-  return <main className="mx-auto w-full min-w-0 max-w-[1600px] px-4 py-5 sm:px-6 lg:px-5">
+  return <AdminPageContainer className="py-5">
     <div className="mb-4 lg:hidden"><h1 className="text-xl font-black text-[#11345f]">Quản lý người dùng</h1><p className="mt-1 text-sm text-[#60799c]">Theo dõi tài khoản và số dư ví hoàn tiền</p></div>
     <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4"><Metric icon={UsersRound} tone="bg-[#e8f1ff] text-[#2877ec]" label="Tổng người dùng" value={String(stats?.total ?? 0)} /><Metric icon={UserCheck} tone="bg-[#e7f7ef] text-[#31a141]" label="Đã xác thực email" value={String(stats?.verified ?? 0)} /><Metric icon={ShieldCheck} tone="bg-[#f2e8ff] text-[#913fdb]" label="Tài khoản quản trị" value={String(stats?.admins ?? 0)} /><Metric icon={WalletCards} tone="bg-[#e9f8de] text-[#4fac24]" label="Tổng số dư ví" value={formatVnd(stats?.totalBalance ?? 0)} /></section>
     <div className="mb-3 mt-5"><h2 className="text-base font-black text-[#12355f]">Danh sách người dùng</h2><p className="mt-1 text-xs text-[#6c86a8]">Thông tin tài khoản, xác thực và số dư ví</p></div>
     <UsersTable rows={rows.map((user) => ({ id: user.id, name: user.name, email: user.email, image: user.image, role: user.role, emailVerified: user.emailVerified, balance: user.balance, notifyOrders: user.notifyOrders, notifyCashback: user.notifyCashback, createdAt: user.createdAt.toISOString() }))} total={count?.total ?? 0} page={page} />
-  </main>;
+  </AdminPageContainer>;
 }

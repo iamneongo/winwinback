@@ -4,6 +4,7 @@ import { formatVnd } from "@/lib/config";
 import { cardClass, sectionTitleClass, Empty } from "@/components/dashboard/ui";
 import { MissionClaimControls } from "@/components/admin/MissionClaimControls";
 import { ClipboardCheck } from "lucide-react";
+import { AdminPageContainer } from "@/components/admin/AdminPageContainer";
 
 export const metadata = { title: "Duyệt nhiệm vụ — Win-Win Back" };
 export const dynamic = "force-dynamic";
@@ -22,7 +23,7 @@ export default async function AdminMissionsPage() {
   const claims = await listPendingClaims();
 
   return (
-    <main className="mx-auto w-full max-w-[1440px] px-4 py-5 sm:px-7 lg:px-6">
+    <AdminPageContainer className="py-5">
       <header className="mb-5">
         <h1 className="flex items-center gap-2 text-xl font-black tracking-tight text-[#0d315d] lg:hidden">
           <ClipboardCheck className="h-6 w-6 text-[#1766e7]" /> Duyệt nhiệm vụ
@@ -86,6 +87,6 @@ export default async function AdminMissionsPage() {
           </ul>
         )}
       </div>
-    </main>
+    </AdminPageContainer>
   );
 }
