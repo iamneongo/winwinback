@@ -1,7 +1,6 @@
 import { NavBar } from '@/components/sections/NavBar';
 import { HeroSection } from '@/components/sections/HeroSection';
 import { CommissionAllocationSection } from '@/components/sections/CommissionAllocationSection';
-import { PartnersSection } from '@/components/sections/PartnersSection';
 import { HowItWorksSection } from '@/components/sections/HowItWorksSection';
 import { BenefitsSection } from '@/components/sections/BenefitsSection';
 import { FAQSection } from '@/components/sections/FAQSection';
@@ -19,7 +18,6 @@ export default function Home() {
         <HeroSection />
         <CommissionAllocationSection />
         <CommunitySection />
-        <PartnersSection />
         <HowItWorksSection />
         <BenefitsSection />
         <FAQSection />

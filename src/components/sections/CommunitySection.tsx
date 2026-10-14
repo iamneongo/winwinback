@@ -49,59 +49,59 @@ const communities = [
 
 export function CommunitySection() {
   return (
-    <section className="bg-[#fcfcf7] py-16 sm:py-20 border-t border-[#102e47]/6">
+    <section id="cong-dong" className="bg-[radial-gradient(circle_at_50%_35%,#fff_18%,#f4fced_100%)] py-16 sm:py-20">
       <div className="mx-auto max-w-screen-xl px-6">
         {/* Header */}
-        <div className="text-center mb-12">
+        <div className="mb-10 text-center">
           <p
             data-animate
-            className="text-[10px] font-bold tracking-[0.15em] text-[#102e47]/50 uppercase mb-3"
+            className="mb-3 text-[11px] font-bold uppercase tracking-[0.13em] text-[#3f6484]"
           >
             CỘNG ĐỒNG
           </p>
           <h2
             data-animate
-            className="text-3xl sm:text-4xl lg:text-5xl font-bold text-[#102e47] leading-tight tracking-tight mb-4"
+            className="mb-4 text-balance text-3xl font-black leading-tight tracking-tight text-[#0b3152] sm:text-4xl lg:text-5xl"
             style={{ '--animate-delay': '80ms' } as React.CSSProperties}
           >
-            Mua sắm cùng cộng đồng,<br className="hidden sm:block" />
-            nhận deal tốt hơn mỗi ngày.
+            Tham gia cộng đồng,<br className="hidden sm:block" />
+            nhận <span className="text-[#23a727]">deal hot</span> mỗi ngày.
           </h2>
           <p
             data-animate
-            className="text-base text-[#102e47]/60 max-w-md mx-auto leading-relaxed"
+            className="mx-auto max-w-xl text-sm leading-relaxed text-[#4c6987] sm:text-base"
             style={{ '--animate-delay': '140ms' } as React.CSSProperties}
           >
-            Tham gia nhóm để chia sẻ link sản phẩm tốt, hỏi đáp và nhận thông báo hoàn tiền sớm nhất.
+            Cập nhật ưu đãi mới, chia sẻ kinh nghiệm và hỏi đáp cùng cộng đồng Win-Win Back.
           </p>
         </div>
 
         {/* Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="mx-auto grid max-w-[1120px] grid-cols-1 gap-4 md:grid-cols-3 md:gap-5">
           {communities.map((c, i) => (
             <div
               key={c.key}
               data-animate
-              className="bg-white rounded-2xl p-6 flex flex-col gap-5 shadow-sm border border-[#102e47]/6"
+              className="flex flex-col gap-4 rounded-2xl bg-white p-5 shadow-[0_5px_14px_rgba(39,90,59,0.07)] sm:p-6"
               style={{ '--animate-delay': `${200 + i * 100}ms` } as React.CSSProperties}
             >
               {/* Icon + platform label */}
-              <div className="flex items-center gap-2.5">
-                {c.icon}
-                <span className="text-[10px] font-bold tracking-[0.12em] text-[#102e47]/50 uppercase">{c.platform}</span>
+              <div className="flex items-center gap-3">
+                <span className="grid size-10 place-items-center rounded-full bg-[#eff7ff]">{c.icon}</span>
+                <span className="text-[11px] font-extrabold uppercase tracking-[0.1em] text-[#2792e2]">{c.platform}</span>
               </div>
 
               {/* Text */}
               <div className="flex-1">
-                <p className="font-bold text-[#102e47] text-lg leading-tight mb-1.5">{c.name}</p>
-                <p className="text-sm text-[#102e47]/60 leading-relaxed">{c.desc}</p>
+                <p className="mb-1.5 text-lg font-bold leading-tight text-[#0b3152]">{c.name}</p>
+                <p className="text-sm leading-relaxed text-[#4c6987]">{c.desc}</p>
               </div>
 
               {/* Lime glass CTA button */}
               <Button
                 variant="cta"
                 nativeButton={false}
-                className="h-auto w-full gap-1.5 rounded-xl px-4 py-2.5"
+                className="mt-auto h-auto w-full gap-1.5 rounded-xl px-4 py-3"
                 render={
                   <a href={c.href} target="_blank" rel="noopener noreferrer" />
                 }

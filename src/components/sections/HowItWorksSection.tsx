@@ -3,108 +3,74 @@ import { ArrowRight } from 'lucide-react';
 
 const steps = [
   {
-    num: '01',
-    title: 'Dán link sản phẩm',
-    desc: 'Sao chép link bất kỳ sản phẩm nào trên TikTok Shop hoặc Shopee, rồi dán vào ô kiểm tra.',
+    number: '1',
+    title: 'Lấy link sản phẩm',
+    description: 'Tìm sản phẩm trên Shopee hoặc TikTok Shop rồi sao chép link.',
+    image: '/images/landing-step-link-v1.webp',
+    imageAlt: 'Linh vật Win-Win Back giới thiệu link sản phẩm',
   },
   {
-    num: '02',
-    title: 'Mua trên sàn như bình thường',
-    desc: 'Thanh toán trên sàn như thường. Mã giảm giá và flash sale vẫn dùng được.',
+    number: '2',
+    title: 'Mua sắm như bình thường',
+    description: 'Dán link vào Win-Win Back và tiếp tục mua hàng trên sàn.',
+    image: '/images/landing-step-shop-v1.webp',
+    imageAlt: 'Linh vật Win-Win Back đẩy xe hàng',
   },
   {
-    num: '03',
-    title: 'Nhận tiền về ví',
-    desc: 'Win-Win Back ghi nhận đơn hàng và chuyển tiền hoàn về ví khi đơn hoàn tất.',
+    number: '3',
+    title: 'Nhận hoàn tiền',
+    description: 'Khi đơn được xác nhận đủ điều kiện, tiền hoàn sẽ về ví của bạn.',
+    image: '/images/landing-step-wallet-v1.webp',
+    imageAlt: 'Linh vật Win-Win Back bên ví hoàn tiền',
   },
 ];
 
 export function HowItWorksSection() {
   return (
-    <section id="cach-hoat-dong" className="relative overflow-hidden bg-[#e9f5ef] py-16 sm:py-24">
-      <div className="relative mx-auto max-w-screen-xl px-6">
-
-        {/* Row 1: Heading (left) + Image (right) */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center mb-14">
-          <div>
-            <p
-              data-animate
-              className="text-[10px] font-bold tracking-[0.15em] text-[#102e47]/50 uppercase mb-4"
-            >
-              3 BƯỚC ĐƠN GIẢN ĐỂ NHẬN TIỀN HOÀN
-            </p>
-            <h2
-              data-animate
-              className="text-3xl sm:text-4xl lg:text-5xl font-bold text-[#102e47] leading-tight tracking-tight mb-4"
-              style={{ '--animate-delay': '80ms' } as React.CSSProperties}
-            >
-              Mua sắm như bình thường,<br />
-              <span className="text-[#2d6a4f]">nhận thêm tiền hoàn.</span>
-            </h2>
-            <p
-              data-animate
-              className="text-base text-[#102e47]/70 leading-relaxed max-w-sm"
-              style={{ '--animate-delay': '140ms' } as React.CSSProperties}
-            >
-              Chỉ cần dán link sản phẩm, tiếp tục mua hàng trên sàn như mọi khi. Win-Win Back sẽ ghi nhận đơn và hoàn tiền về ví khi đơn hàng đủ điều kiện.
-            </p>
-          </div>
-
-          <div
-            data-animate="fade-right"
-            className="flex items-center justify-center"
-          >
-            <Image
-              src="/images/how-it-works-phone.png"
-              width={1000}
-              height={1000}
-              alt="Điện thoại 3D minh họa quy trình hoàn tiền"
-              className="w-full max-w-[400px] h-auto drop-shadow-2xl"
-            />
-          </div>
+    <section id="cach-hoat-dong" className="bg-[#fbfdf9] py-16 sm:py-20">
+      <div className="mx-auto max-w-screen-xl px-5 sm:px-7">
+        <div className="mx-auto mb-10 max-w-[680px] text-center">
+          <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.13em] text-[#4a6683]">Cách hoạt động</p>
+          <h2 className="text-balance text-3xl font-black leading-tight tracking-tight text-[#0b3152] sm:text-4xl lg:text-5xl">
+            Chỉ 3 bước đơn giản,<br />
+            <span className="text-[#21a528]">hoàn tiền về ví của bạn</span>
+          </h2>
+          <p className="mx-auto mt-3 max-w-[590px] text-sm leading-6 text-[#4b6988] sm:text-base">
+            Mua sắm như bình thường, Win-Win Back ghi nhận đơn qua link của bạn và chuyển tiền hoàn khi sàn xác nhận.
+          </p>
         </div>
 
-        {/* Row 2: Steps (horizontal) + CTA right */}
-        <div
-          data-animate
-          className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8"
-          style={{ '--animate-delay': '100ms' } as React.CSSProperties}
-        >
-          {steps.map((step, i) => (
-            <div
-              key={i}
-              data-animate
-              className="reference-flow-item bg-white rounded-2xl p-6 flex flex-col gap-4 shadow-sm border border-[#102e47]/6"
-              style={{ '--animate-delay': `${180 + i * 100}ms` } as React.CSSProperties}
-            >
-              <div
-                className="w-11 h-11 rounded-full flex items-center justify-center font-black text-base text-[#102e47]"
-                style={{ background: 'linear-gradient(135deg, #d4f57a 0%, #b7e961 100%)' }}
-              >
-                {step.num}
-              </div>
-              <div>
-                <p className="font-bold text-lg text-[#102e47] leading-tight">{step.title}</p>
-                <p className="text-sm text-[#102e47]/60 leading-relaxed mt-1.5">{step.desc}</p>
-              </div>
+        <div className="mx-auto grid max-w-[1120px] gap-5 lg:grid-cols-3 lg:gap-7">
+          {steps.map((step, index) => (
+            <div key={step.number} className="relative">
+              <article className="flex h-full flex-col overflow-hidden rounded-2xl bg-white px-5 pb-0 pt-5 shadow-[0_5px_14px_rgba(39,90,59,0.07)] sm:px-6">
+                <div className="flex items-start gap-3">
+                  <span className="grid size-9 shrink-0 place-items-center rounded-full bg-gradient-to-b from-[#b6ee58] to-[#2db826] text-base font-black text-[#0b3152]">{step.number}</span>
+                  <div>
+                    <h3 className="text-base font-bold leading-6 text-[#0b3152] sm:text-lg">{step.title}</h3>
+                    <p className="mt-1.5 text-sm leading-5 text-[#54718d]">{step.description}</p>
+                  </div>
+                </div>
+                <Image
+                  src={step.image}
+                  width={1536}
+                  height={1024}
+                  alt={step.imageAlt}
+                  className="mx-auto mt-auto h-[220px] w-full object-contain object-bottom sm:h-[240px]"
+                  sizes="(max-width: 1023px) 85vw, 28vw"
+                />
+              </article>
+              {index < steps.length - 1 ? (
+                <ArrowRight className="absolute -right-6 top-1/2 z-10 hidden size-7 -translate-y-1/2 text-[#8dd855] lg:block" aria-hidden="true" />
+              ) : null}
             </div>
           ))}
         </div>
-
-        {/* CTA — right-aligned */}
-        <div
-          data-animate
-          className="mt-8 flex justify-end"
-          style={{ '--animate-delay': '480ms' } as React.CSSProperties}
-        >
-          <a
-            href="/dashboard#tao-link"
-            className="inline-flex items-center gap-1.5 text-[#102e47] font-semibold text-sm hover:underline"
-          >
-            Thử ngay với link của bạn <ArrowRight className="h-4 w-4" />
+        <div className="mt-8 text-center">
+          <a href="/dashboard#tao-link" className="inline-flex items-center gap-2 text-sm font-bold text-[#12653a] underline-offset-4 hover:underline">
+            Thử ngay với link của bạn <ArrowRight className="size-4" />
           </a>
         </div>
-
       </div>
     </section>
   );

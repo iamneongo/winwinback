@@ -1,41 +1,30 @@
-import Link from "next/link";
+import Link from 'next/link';
+import { MessageCircle } from 'lucide-react';
+import { BrandLogo } from '@/components/BrandLogo';
 
 export function Footer() {
   return (
-    <footer className="bg-[#082b4b] py-10">
-      <div className="mx-auto max-w-screen-xl px-6">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
-          {/* Left: logo + desc */}
-          <div className="max-w-xs">
-            <div className="flex items-center gap-2 mb-3">
-              <svg viewBox="0 0 48 48" className="h-7 w-7" aria-hidden="true">
-                <defs>
-                  <linearGradient id="winwin-arrow-footer" x1="4" y1="42" x2="43" y2="5" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#9AD336"/>
-                    <stop offset="1" stopColor="#EABF39"/>
-                  </linearGradient>
-                </defs>
-                <path d="M6 36.5 17.5 23l7.4 6.7L37.8 11" fill="none" stroke="url(#winwin-arrow-footer)" strokeLinecap="round" strokeLinejoin="round" strokeWidth="7.5"/>
-                <path d="M29.2 11h8.6v8.6" fill="none" stroke="#EABF39" strokeLinecap="round" strokeLinejoin="round" strokeWidth="7.5"/>
-              </svg>
-              <span className="font-bold text-white text-lg">Win-Win Back</span>
-            </div>
-            <p className="text-sm text-white/50 leading-relaxed">
-              Nền tảng hỗ trợ hành trình mua sắm có hoàn tiền, minh bạch và nhanh chóng.
-            </p>
-          </div>
-          {/* Right: nav */}
-          <nav className="flex items-center gap-6">
-            {[
-              { label: 'Cách hoạt động', href: '#cach-hoat-dong' },
-              { label: 'Đối tác', href: '#doi-tac' },
-              { label: 'Giải đáp', href: '#giai-dap' },
-            ].map(({ label, href }) => (
-              <Link key={href} href={href} className="text-sm text-white/60 hover:text-white transition-colors">
-                {label}
-              </Link>
-            ))}
-          </nav>
+    <footer className="bg-white py-9">
+      <div className="mx-auto flex max-w-screen-xl flex-col gap-7 px-5 sm:px-7 lg:flex-row lg:items-center lg:justify-between">
+        <div className="max-w-[270px]">
+          <BrandLogo />
+          <p className="mt-2 text-xs leading-5 text-[#5a7693]">
+            Nền tảng hỗ trợ hoàn tiền mua sắm an toàn, minh bạch và nhanh chóng.
+          </p>
+        </div>
+        <nav className="flex flex-wrap gap-x-6 gap-y-2 text-sm font-semibold text-[#345779]" aria-label="Liên kết cuối trang">
+          <Link href="/#cach-hoat-dong" className="hover:text-[#239a2b]">Cách hoạt động</Link>
+          <Link href="/#doi-tac" className="hover:text-[#239a2b]">Đối tác</Link>
+          <Link href="/#cong-dong" className="hover:text-[#239a2b]">Cộng đồng</Link>
+          <Link href="/bai-viet" className="hover:text-[#239a2b]">Tin tức</Link>
+        </nav>
+        <div className="flex items-center gap-2">
+          <a href="https://www.facebook.com/groups/vinhlongnhom/" target="_blank" rel="noopener noreferrer" aria-label="Nhóm Facebook Win-Win Back" className="grid size-9 place-items-center rounded-full bg-[#eaf4ff] text-[#1877f2] hover:bg-[#daecff]">
+            <svg viewBox="0 0 24 24" className="size-4" fill="currentColor" aria-hidden="true"><path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073c0 6.027 4.388 11.024 10.125 11.927v-8.437H7.078v-3.49h3.047V9.41c0-3.025 1.792-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.971h-1.513c-1.491 0-1.956.93-1.956 1.886v2.267h3.328l-.532 3.49h-2.796v8.437C19.612 23.097 24 18.1 24 12.073z" /></svg>
+          </a>
+          <a href="https://zalo.me/g/slradppiin66t4sbfzwg" target="_blank" rel="noopener noreferrer" aria-label="Nhóm Zalo Win-Win Back" className="grid size-9 place-items-center rounded-full bg-[#e8f5ff] text-[#0068ff] hover:bg-[#d8ecff]">
+            <MessageCircle className="size-4" />
+          </a>
         </div>
       </div>
     </footer>

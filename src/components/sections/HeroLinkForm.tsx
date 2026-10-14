@@ -18,16 +18,16 @@ interface PlatformConfig {
 
 const platforms: PlatformConfig[] = [
   {
-    key: 'tiktok',
-    label: 'TikTok Shop',
-    icon: (active) => <TikTokIcon className="w-5 h-5 flex-shrink-0" white={active} />,
-    activeBg: '#05111e',
-  },
-  {
     key: 'shopee',
     label: 'Shopee',
     icon: (active) => <ShopeeIcon className="w-5 h-5 flex-shrink-0" white={active} />,
     activeBg: '#ee4d2d',
+  },
+  {
+    key: 'tiktok',
+    label: 'TikTok Shop',
+    icon: (active) => <TikTokIcon className="w-5 h-5 flex-shrink-0" white={active} />,
+    activeBg: '#05111e',
   },
 ];
 
@@ -38,7 +38,7 @@ const platforms: PlatformConfig[] = [
  * detected from the pasted URL server-side.
  */
 export function HeroLinkForm() {
-  const [active, setActive] = useState<Platform>('tiktok');
+  const [active, setActive] = useState<Platform>('shopee');
   const [inputValue, setInputValue] = useState('');
   const [navigating, setNavigating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -81,7 +81,7 @@ export function HeroLinkForm() {
   }
 
   return (
-    <div className="rounded-2xl bg-white p-3 shadow-[0_18px_40px_rgba(6,26,48,0.35)]">
+    <div className="rounded-2xl bg-white p-3 shadow-[0_8px_24px_rgba(31,103,91,0.16)] sm:p-4">
       {/* Platform tabs */}
       <div className="mb-3 flex flex-wrap gap-2">
         {platforms.map((p) => (
@@ -105,7 +105,7 @@ export function HeroLinkForm() {
         action="/start"
         method="GET"
         onSubmit={handleSubmit}
-        className="flex items-center gap-2 rounded-xl border border-gray-200 px-3 py-2 transition-colors focus-within:border-[#b7e961]"
+        className="flex items-center gap-2 rounded-xl border border-[#e0e9ee] bg-[#fbfdff] px-3 py-2 transition-colors focus-within:border-[#9bdc55]"
       >
         <Link2 className="ml-1 h-4 w-4 flex-shrink-0 text-[#6b8290]" />
         <input
@@ -113,7 +113,7 @@ export function HeroLinkForm() {
           type="text"
           value={inputValue}
           onChange={(e) => { setInputValue(e.target.value); setNavigating(false); setError(null); }}
-          placeholder="Dán link sản phẩm..."
+          placeholder="Dán link sản phẩm Shopee hoặc TikTok Shop..."
           className="min-w-0 flex-1 truncate bg-transparent py-1.5 text-sm text-gray-700 outline-none placeholder:text-gray-400"
         />
         {inputValue.trim() ? (
