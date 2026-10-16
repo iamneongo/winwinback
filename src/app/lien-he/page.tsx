@@ -1,6 +1,5 @@
 import Image from 'next/image';
-import Link from 'next/link';
-import { ChevronRight, Headset, Mail, MessageCircle, MessagesSquare } from 'lucide-react';
+import { Headset, Mail, MessageCircle, MessagesSquare } from 'lucide-react';
 import { ContactForm } from '@/components/sections/ContactForm';
 import { MarketingLayout } from '@/components/sections/MarketingLayout';
 
@@ -22,11 +21,6 @@ export default function ContactPage() {
           <div className="contact-hero-wash pointer-events-none absolute inset-0 -z-10" aria-hidden="true" />
           <div className="marketing-container relative grid min-h-[570px] items-start pt-28 sm:min-h-[460px] sm:grid-cols-[minmax(0,1fr)_minmax(0,0.95fr)] sm:items-center sm:pb-12 sm:pt-20">
             <div className="relative z-10 max-w-[570px]">
-              <nav aria-label="Đường dẫn" className="mb-4 flex items-center gap-2 text-sm text-[#456984]">
-                <Link href="/" className="hover:text-[#168d36]">Trang chủ</Link>
-                <ChevronRight className="size-3.5" aria-hidden="true" />
-                <span aria-current="page">Liên hệ</span>
-              </nav>
               <p className="inline-flex items-center gap-1.5 rounded-full bg-white/85 px-3 py-1.5 text-[11px] font-extrabold uppercase tracking-[0.06em] text-[#257339] ring-1 ring-white/70">
                 <Headset className="size-3.5" aria-hidden="true" /> Chúng tôi luôn sẵn sàng hỗ trợ
               </p>
@@ -45,17 +39,17 @@ export default function ContactPage() {
             <h2 className="mt-3 text-balance text-2xl font-black tracking-[-0.025em] text-[#0b3153] sm:text-3xl">Thông tin liên hệ</h2>
             <p className="mt-2 text-sm leading-6 text-[#526f8e]">Bạn có thể liên hệ qua các kênh chính thức bên dưới. Hãy chọn cách thuận tiện nhất cho mình.</p>
             <div className="mt-6 divide-y divide-[#dbe9df] border-y border-[#dbe9df]">
-              <a href={`mailto:${email}`} className="group flex items-start gap-4 py-5 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#278a34]">
+              <a href={`mailto:${email}`} className="flex items-start gap-4 py-5 no-underline hover:no-underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#278a34]">
                 <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-[#edf8e9] text-[#158c2a]"><Mail className="size-6" aria-hidden="true" /></span>
-                <span><strong className="block text-sm text-[#12365a]">Email hỗ trợ</strong><span className="mt-1 block font-bold text-[#168b2b] group-hover:underline">{email}</span><span className="mt-1 block text-sm text-[#526f8e]">Phù hợp với yêu cầu cần cung cấp thông tin chi tiết.</span></span>
+                <span><strong className="block text-sm text-[#12365a]">Email hỗ trợ</strong><span className="mt-1 block font-bold text-[#168b2b]">{email}</span><span className="mt-1 block text-sm text-[#526f8e]">Phù hợp với yêu cầu cần cung cấp thông tin chi tiết.</span></span>
               </a>
-              <a href={zalo} target="_blank" rel="noopener noreferrer" className="group flex items-start gap-4 py-5 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#278a34]">
+              <a href={zalo} target="_blank" rel="noopener noreferrer" className="flex items-start gap-4 py-5 no-underline hover:no-underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#278a34]">
                 <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-[#e7f2ff] text-[#1687ec]"><MessageCircle className="size-6" aria-hidden="true" /></span>
-                <span><strong className="block text-sm text-[#12365a]">Zalo cộng đồng</strong><span className="mt-1 block font-bold text-[#168b2b] group-hover:underline">Tham gia nhóm Zalo</span><span className="mt-1 block text-sm text-[#526f8e]">Trao đổi về mua sắm và hoàn tiền cùng cộng đồng.</span></span>
+                <span><strong className="block text-sm text-[#12365a]">Zalo cộng đồng</strong><span className="mt-1 block font-bold text-[#168b2b]">Tham gia nhóm Zalo</span><span className="mt-1 block text-sm text-[#526f8e]">Trao đổi về mua sắm và hoàn tiền cùng cộng đồng.</span></span>
               </a>
-              <a href={facebook} target="_blank" rel="noopener noreferrer" className="group flex items-start gap-4 py-5 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#278a34]">
+              <a href={facebook} target="_blank" rel="noopener noreferrer" className="flex items-start gap-4 py-5 no-underline hover:no-underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#278a34]">
                 <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-[#eaf2ff] text-[#2276e7]"><MessagesSquare className="size-6" aria-hidden="true" /></span>
-                <span><strong className="block text-sm text-[#12365a]">Facebook Page</strong><span className="mt-1 block font-bold text-[#168b2b] group-hover:underline">Nhắn tin cho Win-Win Back</span><span className="mt-1 block text-sm text-[#526f8e]">Theo dõi cập nhật và gửi tin nhắn trực tiếp.</span></span>
+                <span><strong className="block text-sm text-[#12365a]">Facebook Page</strong><span className="mt-1 block font-bold text-[#168b2b]">Nhắn tin cho Win-Win Back</span><span className="mt-1 block text-sm text-[#526f8e]">Theo dõi cập nhật và gửi tin nhắn trực tiếp.</span></span>
               </a>
             </div>
           </div>

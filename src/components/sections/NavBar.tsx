@@ -1,8 +1,9 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRef } from 'react';
-import { ArrowRight, ChevronRight, Menu, X } from 'lucide-react';
+import { ArrowRight, Headset, House, Menu, Newspaper, X } from 'lucide-react';
 import { BrandLogo } from '@/components/BrandLogo';
 import { Button } from '@/components/ui/button';
 import styles from './NavBar.module.css';
@@ -15,7 +16,7 @@ export function NavBar({ variant = 'overlay', active = null }: { variant?: 'over
   const onNews = variant === 'news-overlay';
   const isOverlay = variant !== 'solid';
   const navLinkClass = (active: boolean) => `${styles.navLink} inline-flex h-9 items-center rounded-full px-4 py-0 text-sm font-semibold no-underline hover:backdrop-blur-md focus-visible:backdrop-blur-md ${isOverlay ? 'text-[#133451] hover:text-[#133451]' : 'text-white/80 hover:text-white'} ${active ? `${styles.active} backdrop-blur-md` : ''}`;
-  const mobileLinkClass = (item: Exclude<ActiveNavLink, null>) => `${styles.mobileLink} flex min-h-12 items-center justify-between rounded-xl px-4 text-base font-bold text-[#12365a] ${active === item ? styles.mobileLinkActive : ''}`;
+  const mobileLinkClass = (item: Exclude<ActiveNavLink, null>) => `${styles.mobileLink} flex min-h-14 items-center gap-3 rounded-2xl px-4 text-base font-bold ${active === item ? styles.mobileLinkActive : ''}`;
   const closeMobileMenu = () => mobileMenuRef.current?.close();
 
   return (
@@ -36,10 +37,10 @@ export function NavBar({ variant = 'overlay', active = null }: { variant?: 'over
         <Button
           variant="cta"
           nativeButton={false}
-          className="h-auto min-h-11 gap-1.5 rounded-full px-3 py-2 text-xs hover:scale-[1.03] max-[359px]:hidden sm:px-5 sm:py-2.5 sm:text-sm"
+          className="hidden h-auto min-h-11 gap-1.5 rounded-full px-5 py-2.5 text-sm hover:scale-[1.03] lg:inline-flex"
           render={<a href="/login" />}
         >
-          Đăng nhập <ArrowRight className="hidden h-3.5 w-3.5 sm:block" />
+          Đăng nhập <ArrowRight className="size-3.5" />
         </Button>
         <button
           type="button"
@@ -60,17 +61,22 @@ export function NavBar({ variant = 'overlay', active = null }: { variant?: 'over
           if (event.clientX < event.currentTarget.getBoundingClientRect().left) closeMobileMenu();
         }}
       >
-        <div className="flex min-h-full flex-col px-5 pb-8 pt-5">
-          <div className="flex items-center justify-between gap-3 border-b border-[#dcebdc] pb-5">
+        <div className="flex min-h-full flex-col px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-[max(1.25rem,env(safe-area-inset-top))]">
+          <div className="flex items-center justify-between gap-3 border-b border-white/80 pb-5">
             <Link href="/" onClick={closeMobileMenu} aria-label="Win-Win Back - Trang chủ"><BrandLogo /></Link>
-            <button type="button" onClick={closeMobileMenu} aria-label="Đóng menu" className="grid size-11 place-items-center rounded-full bg-white text-[#12365a] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#278a34]"><X className="size-5" aria-hidden="true" /></button>
+            <button type="button" onClick={closeMobileMenu} aria-label="Đóng menu" className="grid size-11 place-items-center rounded-full bg-white/75 text-[#12365a] ring-1 ring-white/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#278a34]"><X className="size-5" aria-hidden="true" /></button>
           </div>
           <nav className="mt-7 space-y-2" aria-label="Điều hướng mobile">
-            <Link href="/" onClick={closeMobileMenu} aria-current={active === 'home' ? 'page' : undefined} className={mobileLinkClass('home')}>Trang chủ <ChevronRight className="size-4" aria-hidden="true" /></Link>
-            <Link href="/bai-viet" onClick={closeMobileMenu} aria-current={active === 'news' ? 'page' : undefined} className={mobileLinkClass('news')}>Tin tức <ChevronRight className="size-4" aria-hidden="true" /></Link>
-            <Link href="/lien-he" onClick={closeMobileMenu} aria-current={active === 'contact' ? 'page' : undefined} className={mobileLinkClass('contact')}>Liên hệ <ChevronRight className="size-4" aria-hidden="true" /></Link>
+            <Link href="/" onClick={closeMobileMenu} aria-current={active === 'home' ? 'page' : undefined} className={mobileLinkClass('home')}><House className="size-5 shrink-0 text-[#258e3c]" aria-hidden="true" />Trang chủ</Link>
+            <Link href="/bai-viet" onClick={closeMobileMenu} aria-current={active === 'news' ? 'page' : undefined} className={mobileLinkClass('news')}><Newspaper className="size-5 shrink-0 text-[#258e3c]" aria-hidden="true" />Tin tức</Link>
+            <Link href="/lien-he" onClick={closeMobileMenu} aria-current={active === 'contact' ? 'page' : undefined} className={mobileLinkClass('contact')}><Headset className="size-5 shrink-0 text-[#258e3c]" aria-hidden="true" />Liên hệ</Link>
           </nav>
-          <Link href="/login" onClick={closeMobileMenu} className="mt-auto flex min-h-12 items-center justify-center gap-2 rounded-full bg-[#b7ed62] px-4 text-sm font-bold text-[#0b3153] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#278a34]">Đăng nhập <ArrowRight className="size-4" aria-hidden="true" /></Link>
+          <div className="mt-auto flex flex-col items-center pt-6">
+            <Image src="/images/landing-hero-mascot-v1.webp" alt="" width={1536} height={1024} sizes="230px" className={`${styles.mobileMascot} h-auto w-full max-w-[230px]`} aria-hidden="true" />
+            <Button variant="cta" nativeButton={false} className="h-auto min-h-12 w-full gap-2 rounded-full px-5 py-3 text-sm font-bold" render={<a href="/login" onClick={closeMobileMenu} />}>
+              Đăng nhập để bắt đầu <ArrowRight className="size-4" aria-hidden="true" />
+            </Button>
+          </div>
         </div>
       </dialog>
     </header>

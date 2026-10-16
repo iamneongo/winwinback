@@ -36,38 +36,57 @@
 .mobileMenu {
   position: fixed;
   inset: 0 0 0 auto;
-  width: min(86vw, 350px);
+  width: min(90vw, 360px);
   height: 100dvh;
   max-height: none;
   margin: 0;
   padding: 0;
   border: 0;
-  background: #f5faf3;
+  overflow-y: auto;
+  background-color: #e4f7ff;
+  background-image:
+    linear-gradient(180deg, rgb(227 248 255 / 72%), rgb(247 255 250 / 86%) 48%, rgb(241 251 231 / 72%)),
+    url('/images/landing-sky-v2.webp');
+  background-position: center, center bottom;
+  background-size: cover;
   color: #12365a;
-  box-shadow: -16px 0 36px rgb(8 43 75 / 16%);
+  box-shadow: -12px 0 30px rgb(8 43 75 / 20%);
   animation: mobile-menu-enter 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .mobileMenu::backdrop {
-  background: rgb(8 43 75 / 45%);
+  background: rgb(8 43 75 / 52%);
   backdrop-filter: blur(3px);
 }
 
 .mobileLink {
-  transition: background 180ms ease, color 180ms ease;
+  border: 1px solid transparent;
+  color: #12365a;
+  transition: background 200ms ease, border-color 200ms ease, box-shadow 200ms ease, transform 200ms ease;
 }
 
 .mobileLink:hover,
 .mobileLink:focus-visible,
 .mobileLinkActive {
-  background: rgb(255 255 255 / 78%);
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 90%), 0 3px 8px rgb(38 129 175 / 9%);
+  background: linear-gradient(180deg, rgb(255 255 255 / 50%), rgb(255 255 255 / 85%));
+  border-color: rgb(255 255 255 / 85%);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 90%), 0 4px 8px rgb(38 129 175 / 12%);
   color: #0b3153;
+}
+
+.mobileLink:hover {
+  transform: translateY(-1px);
 }
 
 .mobileLink:focus-visible {
   outline: 2px solid #76c933;
   outline-offset: 2px;
+}
+
+@media (max-height: 680px) {
+  .mobileMascot {
+    display: none;
+  }
 }
 
 @keyframes mobile-menu-enter {
@@ -82,6 +101,10 @@
 
   .mobileLink {
     transition: none;
+  }
+
+  .mobileLink:hover {
+    transform: none;
   }
 
   .mobileMenu {
