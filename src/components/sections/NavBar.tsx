@@ -4,42 +4,28 @@ import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import { BrandLogo } from '@/components/BrandLogo';
 import { Button } from '@/components/ui/button';
+import styles from './NavBar.module.css';
 
-export function NavBar({ variant = 'overlay' }: { variant?: 'overlay' | 'news-overlay' | 'solid' }) {
+type ActiveNavLink = 'home' | 'news' | 'contact' | null;
+
+export function NavBar({ variant = 'overlay', active = null }: { variant?: 'overlay' | 'news-overlay' | 'solid'; active?: ActiveNavLink }) {
   const onLanding = variant === 'overlay';
+  const onNews = variant === 'news-overlay';
   const isOverlay = variant !== 'solid';
-  const scrollTo = (id: string) => {
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
-  };
+  const navLinkClass = (active: boolean) => `${styles.navLink} inline-flex min-h-11 items-center rounded-full px-4 text-sm font-semibold no-underline hover:backdrop-blur-md focus-visible:backdrop-blur-md ${isOverlay ? 'text-[#133451] hover:text-[#133451]' : 'text-white/80 hover:text-white'} ${active ? `${styles.active} backdrop-blur-md` : ''}`;
 
   return (
-    <header className={isOverlay ? 'hero-nav absolute inset-x-0 top-0 z-30' : 'relative z-30 bg-[#0d315d]'}>
-      {/* gradient overlay */}
-      {variant === 'news-overlay' ? <div className="ww-nav-gradient absolute inset-0 pointer-events-none" /> : null}
-      <div className="relative mx-auto max-w-screen-xl px-4 sm:px-6 flex items-center justify-between gap-2 h-[73px]">
+    <header className={isOverlay ? `hero-nav absolute inset-x-0 top-0 z-30 ${onNews ? 'news-nav' : ''}` : 'relative z-30 bg-[#0d315d]'}>
+      <div className="marketing-container relative flex h-[73px] items-center justify-between gap-2">
         {/* Logo */}
         <Link href={onLanding ? '#top' : '/'} className="flex items-center gap-2">
-          <BrandLogo light={!onLanding} />
+          <BrandLogo light={!isOverlay} />
         </Link>
         {/* Nav links */}
-        <nav className="hidden lg:flex items-center gap-7" aria-label="Điều hướng chính">
-          {[
-            { label: 'Cách hoạt động', id: 'cach-hoat-dong' },
-            { label: 'Đối tác', id: 'doi-tac' },
-            { label: 'Cộng đồng', id: 'cong-dong' },
-          ].map(({ label, id }) => (
-            onLanding ? (
-              <button key={id} onClick={() => scrollTo(id)} className="text-sm font-semibold text-[#133451] transition-colors hover:text-[#238820]">{label}</button>
-            ) : (
-              <Link key={id} href={`/#${id}`} className="text-sm font-semibold text-white/80 transition-colors hover:text-white">{label}</Link>
-            )
-          ))}
-          <Link
-            href="/bai-viet"
-            className={onLanding ? 'text-sm font-semibold text-[#133451] transition-colors hover:text-[#238820]' : 'text-sm font-semibold text-white/80 transition-colors hover:text-white'}
-          >
-            Tin tức
-          </Link>
+        <nav className="hidden items-center gap-3 lg:flex" aria-label="Điều hướng chính">
+          <Link href="/" aria-current={active === 'home' ? 'page' : undefined} className={navLinkClass(active === 'home')}>Trang chủ</Link>
+          <Link href="/bai-viet" aria-current={active === 'news' ? 'page' : undefined} className={navLinkClass(active === 'news')}>Tin tức</Link>
+          <Link href="/lien-he" aria-current={active === 'contact' ? 'page' : undefined} className={navLinkClass(active === 'contact')}>Liên hệ</Link>
         </nav>
         {/* Auth + CTA */}
         <div className="flex items-center gap-4">

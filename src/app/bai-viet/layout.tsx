@@ -1,9 +1,8 @@
-import { Footer } from "@/components/sections/Footer";
-import { ArticleNavBar } from "./ArticleNavBar";
+import { MarketingLayout } from "@/components/sections/MarketingLayout";
 
 /**
- * Public articles share the landing navigation and footer. The listing header
- * overlays its banner; detail pages retain a solid header above light content.
+ * Public articles use the same marketing shell as the landing page.
+ * Both the news index and image-led article details share the sky-overlay header.
  */
 export default function ArticleLayout({
   children,
@@ -11,10 +10,8 @@ export default function ArticleLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="winwin-root relative flex min-h-screen flex-col">
-      <ArticleNavBar />
+    <MarketingLayout className="flex min-h-screen flex-col">
       <div className="flex-1 bg-[#f4f7fc]">{children}</div>
-      <Footer />
-    </div>
+    </MarketingLayout>
   );
 }

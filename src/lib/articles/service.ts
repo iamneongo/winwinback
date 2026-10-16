@@ -543,9 +543,11 @@ export async function listPublishedArticles(opts?: {
   category?: string;
   limit?: number;
   offset?: number;
+  excludeSlug?: string;
 }): Promise<Article[]> {
   const conds = [eq(articles.status, "published")];
   if (opts?.category) conds.push(await categoryCondition(opts.category));
+  if (opts?.excludeSlug) conds.push(ne(articles.slug, opts.excludeSlug));
   return db
     .select()
     .from(articles)
@@ -561,14 +563,14 @@ export interface CategoryCount {
 }
 
 /** Public: compact category counts, including articles created before normalization. */
-export async function listArticleCategories(): Promise<CategoryCount[]> {
+export async function listArticleCategories(excludeSlug?: string): Promise<CategoryCount[]> {
   const rows = await db
     .select({
       raw: articles.category,
       count: sql<number>`count(*)::int`,
     })
     .from(articles)
-    .where(eq(articles.status, "published"))
+    .where(and(eq(articles.status, "published"), excludeSlug ? ne(articles.slug, excludeSlug) : undefined))
     .groupBy(articles.category);
   const counts = new Map<string, number>();
   for (const row of rows) {
@@ -576,6 +578,20 @@ export async function listArticleCategories(): Promise<CategoryCount[]> {
     counts.set(name, (counts.get(name) ?? 0) + Number(row.count));
   }
   return [...counts].map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count);
+}
+
+export async function countPublishedArticles(opts?: {
+  category?: string;
+  excludeSlug?: string;
+}): Promise<number> {
+  const conds = [eq(articles.status, "published")];
+  if (opts?.category) conds.push(await categoryCondition(opts.category));
+  if (opts?.excludeSlug) conds.push(ne(articles.slug, opts.excludeSlug));
+  const [row] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(articles)
+    .where(and(...conds));
+  return Number(row?.count ?? 0);
 }
 
 /** Public: prioritize category, then platform; fill remaining slots with recent articles. */

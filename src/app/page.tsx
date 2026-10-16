@@ -1,29 +1,24 @@
-import { NavBar } from '@/components/sections/NavBar';
+import { MarketingLayout } from '@/components/sections/MarketingLayout';
 import { HeroSection } from '@/components/sections/HeroSection';
-import { CommissionAllocationSection } from '@/components/sections/CommissionAllocationSection';
+import { WalletGrowthSection } from '@/components/sections/WalletGrowthSection';
 import { HowItWorksSection } from '@/components/sections/HowItWorksSection';
-import { BenefitsSection } from '@/components/sections/BenefitsSection';
 import { FAQSection } from '@/components/sections/FAQSection';
 import { CommunitySection } from '@/components/sections/CommunitySection';
 import { FinalCTASection } from '@/components/sections/FinalCTASection';
-import { Footer } from '@/components/sections/Footer';
 
 export const dynamic = 'force-dynamic';
 
 export default function Home() {
   return (
-    <div className="winwin-root" id="top">
-      <NavBar />
+    <MarketingLayout className="landing-page" id="top">
       <main>
         <HeroSection />
-        <CommissionAllocationSection />
-        <CommunitySection />
         <HowItWorksSection />
-        <BenefitsSection />
+        <WalletGrowthSection />
+        <CommunitySection />
         <FAQSection />
         <FinalCTASection />
       </main>
-      <Footer />
-    </div>
+    </MarketingLayout>
   );
 }

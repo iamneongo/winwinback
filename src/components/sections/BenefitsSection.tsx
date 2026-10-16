@@ -21,7 +21,7 @@ const benefits = [
 export function BenefitsSection() {
   return (
     <section className="bg-[#f2fbf1] py-16 sm:py-20">
-      <div className="mx-auto max-w-screen-xl px-5 sm:px-7">
+      <div className="marketing-container">
         <div className="mx-auto mb-9 max-w-[710px] text-center">
           <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.13em] text-[#4a6683]">Mua sắm an tâm</p>
           <h2 className="text-balance text-3xl font-black leading-tight tracking-tight text-[#0b3152] sm:text-4xl">

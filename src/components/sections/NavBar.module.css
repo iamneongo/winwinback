@@ -1,0 +1,44 @@
+.navLink {
+  position: relative;
+  border: 1px solid transparent;
+  background: transparent;
+  transition: background 240ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 240ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 240ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 240ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.active,
+.navLink:is(:hover, :focus-visible) {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0.76));
+  border-color: rgba(255, 255, 255, 0.78);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    inset 0 -2px 5px rgba(92, 184, 215, 0.18),
+    0 4px 12px rgba(38, 129, 175, 0.16);
+  text-decoration: none;
+}
+
+.navLink:is(:hover, :focus-visible) {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.52), rgba(255, 255, 255, 0.88));
+  box-shadow:
+    inset 0 2px 2px rgba(255, 255, 255, 0.95),
+    inset 0 -3px 7px rgba(92, 184, 215, 0.2),
+    0 6px 18px rgba(38, 129, 175, 0.2);
+  transform: translateY(-2px) scale(1.035);
+}
+
+.navLink:focus-visible {
+  outline: 2px solid #76c933;
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .navLink {
+    transition: none;
+  }
+
+  .navLink:is(:hover, :focus-visible) {
+    transform: none;
+  }
+}

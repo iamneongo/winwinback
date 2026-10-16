@@ -49,27 +49,21 @@ const communities = [
 
 export function CommunitySection() {
   return (
-    <section id="cong-dong" className="bg-[radial-gradient(circle_at_50%_35%,#fff_18%,#f4fced_100%)] py-16 sm:py-20">
-      <div className="mx-auto max-w-screen-xl px-6">
+    <section id="cong-dong" className="bg-[#f3f9ef] py-16 sm:py-20">
+      <div className="marketing-container">
         {/* Header */}
         <div className="mb-10 text-center">
-          <p
-            data-animate
-            className="mb-3 text-[11px] font-bold uppercase tracking-[0.13em] text-[#3f6484]"
-          >
-            CỘNG ĐỒNG
-          </p>
           <h2
             data-animate
-            className="mb-4 text-balance text-3xl font-black leading-tight tracking-tight text-[#0b3152] sm:text-4xl lg:text-5xl"
+            className="landing-section-title mb-4 text-[#0b3152]"
             style={{ '--animate-delay': '80ms' } as React.CSSProperties}
           >
-            Tham gia cộng đồng,<br className="hidden sm:block" />
-            nhận <span className="text-[#23a727]">deal hot</span> mỗi ngày.
+            Cùng cộng đồng săn deal,<br className="hidden sm:block" />{' '}
+            <span className="text-[#278d31]">hỏi đáp về hoàn tiền.</span>
           </h2>
           <p
             data-animate
-            className="mx-auto max-w-xl text-sm leading-relaxed text-[#4c6987] sm:text-base"
+            className="landing-section-copy mx-auto max-w-[65ch] text-[#4c6987]"
             style={{ '--animate-delay': '140ms' } as React.CSSProperties}
           >
             Cập nhật ưu đãi mới, chia sẻ kinh nghiệm và hỏi đáp cùng cộng đồng Win-Win Back.
@@ -93,8 +87,8 @@ export function CommunitySection() {
 
               {/* Text */}
               <div className="flex-1">
-                <p className="mb-1.5 text-lg font-bold leading-tight text-[#0b3152]">{c.name}</p>
-                <p className="text-sm leading-relaxed text-[#4c6987]">{c.desc}</p>
+                <p className="landing-card-title mb-1.5 text-[#0b3152]">{c.name}</p>
+                <p className="landing-card-copy text-[#4c6987]">{c.desc}</p>
               </div>
 
               {/* Lime glass CTA button */}

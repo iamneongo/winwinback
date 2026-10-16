@@ -18,8 +18,8 @@ const faqs = [
     answer: 'Được. Bạn vẫn có thể dùng voucher, mã giảm giá và ưu đãi có sẵn của sàn khi thanh toán.',
   },
   {
-    question: 'Những sàn nào đang được hỗ trợ?',
-    answer: 'Hiện Win-Win Back hỗ trợ link sản phẩm từ Shopee và TikTok Shop.',
+    question: 'Những sản phẩm nào được tính hoàn tiền?',
+    answer: 'Các đơn hàng mua qua link Win-Win Back trên Shopee và TikTok Shop có thể được ghi nhận khi đáp ứng điều kiện của sàn.',
   },
 ];
 
@@ -27,44 +27,45 @@ export function FAQSection() {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   return (
-    <section id="giai-dap" className="bg-[#fcfefb] py-16 sm:py-20">
-      <div className="mx-auto grid max-w-screen-xl items-center gap-8 px-5 sm:px-7 lg:grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)] lg:gap-16">
-        <div className="relative">
-          <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.13em] text-[#4a6683]">Câu hỏi thường gặp</p>
-          <h2 className="text-balance text-3xl font-black leading-tight tracking-tight text-[#0b3152] sm:text-4xl">
-            Bạn có thắc mắc?<br />Chúng tôi có câu trả lời!
+    <section id="giai-dap" className="bg-[#f3f9ef] py-12 sm:py-16">
+      <div className="marketing-container grid items-center gap-6 md:grid-cols-[190px_minmax(0,1fr)] lg:grid-cols-[225px_400px_minmax(0,1fr)] lg:gap-6">
+        <Image
+          data-animate
+          src="/images/landing-faq-illustration-v1.png"
+          width={1536}
+          height={1024}
+          alt="Minh họa bong bóng trò chuyện và dấu hỏi"
+          className="hidden h-auto w-full max-w-[245px] justify-self-center md:block"
+          sizes="(max-width: 1023px) 190px, 245px"
+        />
+        <div className="md:col-start-2 lg:col-start-auto">
+          <p className="landing-eyebrow mb-3 text-[#54718d]">Giải đáp thắc mắc</p>
+          <h2 className="landing-section-title landing-section-title--compact text-[#0b3152]">
+            Bạn có câu hỏi?<br /><span className="text-[#278d31]">Chúng tôi có câu trả lời.</span>
           </h2>
-          <p className="mt-4 max-w-sm text-sm leading-6 text-[#4b6988]">
-            Một số câu hỏi phổ biến về cách hoạt động, hoàn tiền và các sàn được hỗ trợ.
+          <p className="landing-section-copy mt-3 max-w-[65ch] text-[#4b6988]">
+            Tổng hợp những câu hỏi thường gặp giúp bạn hiểu rõ hơn về cách hoạt động của Win-Win Back.
           </p>
-          <Image
-            src="/images/landing-hero-mascot-v1.webp"
-            width={1536}
-            height={1024}
-            alt="Linh vật Win-Win Back vui vẻ giải đáp thắc mắc"
-            className="mt-3 hidden h-auto w-full max-w-[340px] lg:block"
-            sizes="340px"
-          />
         </div>
-        <div className="space-y-2.5">
+        <div className="space-y-2.5 md:col-span-2 lg:col-span-1">
           {faqs.map((faq, index) => {
             const open = openIndex === index;
             const panelId = `landing-faq-answer-${index}`;
             return (
-              <div key={faq.question} className="overflow-hidden rounded-xl bg-white shadow-[0_3px_10px_rgba(25,70,65,0.07)]">
+              <div key={faq.question} className="overflow-hidden rounded-xl border border-[#e8efe4] bg-white shadow-[0_3px_10px_rgba(25,70,65,0.05)]">
                 <h3>
                   <button
                     type="button"
                     aria-expanded={open}
                     aria-controls={panelId}
                     onClick={() => setOpenIndex(open ? null : index)}
-                    className="flex min-h-14 w-full items-center justify-between gap-4 px-5 py-3 text-left text-sm font-bold text-[#0b3152] sm:text-base"
+                    className="flex min-h-14 w-full items-center justify-between gap-4 px-4 py-3 text-left text-base font-bold text-[#0b3152] sm:px-5"
                   >
                     <span>{faq.question}</span>
                     <ChevronDown className={`size-4 shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
                   </button>
                 </h3>
-                <div id={panelId} hidden={!open} className="px-5 pb-4 text-sm leading-6 text-[#4b6988]">
+                <div id={panelId} hidden={!open} className="landing-section-copy px-5 pb-4 text-[#4b6988]">
                   {faq.answer}
                 </div>
               </div>

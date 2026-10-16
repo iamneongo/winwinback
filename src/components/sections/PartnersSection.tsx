@@ -24,7 +24,7 @@ const cards = [
 export function PartnersSection() {
   return (
     <section id="doi-tac" className="bg-[#fcfcf7] py-14 sm:py-20">
-      <div className="mx-auto max-w-screen-xl px-6">
+      <div className="marketing-container">
         {/* Header */}
         <div className="flex flex-col lg:flex-row items-start justify-between gap-8 mb-12">
           <div className="flex-1">
