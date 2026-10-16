@@ -21,7 +21,7 @@ export function HeroSection() {
           <p className="mb-5 inline-flex items-center gap-2 rounded-full bg-white/70 px-3 py-1.5 text-[11px] font-extrabold uppercase tracking-[0.08em] text-[#174369] ring-1 ring-white/70">
             <ShoppingCart className="size-3.5 text-[#27a732]" aria-hidden="true" /> Mua sắm thông minh
           </p>
-          <h1 className="landing-section-title text-[#0a3151]">
+          <h1 className="marketing-page-title text-[#0a3151]">
             Mua sắm Shopee & TikTok,
             <span className="mt-1 block text-[#168b2b]">nhận cashback<br className="hidden sm:block" /> về ví mỗi đơn!</span>
           </h1>

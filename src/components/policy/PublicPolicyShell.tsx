@@ -54,7 +54,7 @@ export function PublicPolicyShell({
                 <ChevronRight className="size-3.5" aria-hidden="true" />
                 <span aria-current="page">{title}</span>
               </nav>
-              <h1 id="policy-title" className="mt-5 max-w-[12ch] text-balance text-[clamp(2.5rem,4.5vw,4rem)] font-black leading-[1.02] tracking-[-0.03em] text-[#0b3153]">{title}</h1>
+              <h1 id="policy-title" className="marketing-page-title mt-5 max-w-[12ch] text-[#0b3153]">{title}</h1>
               <p className="mt-4 max-w-[48ch] text-pretty text-[15px] leading-7 text-[#315674] sm:text-base">{subtitle}</p>
             </div>
             <div className="pointer-events-none absolute bottom-0 right-[-5%] z-0 w-[52%] max-w-[500px] sm:right-[2%] sm:w-[46%] lg:right-[4%] lg:max-w-[500px]" aria-hidden="true">

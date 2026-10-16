@@ -25,7 +25,7 @@
     inset 0 2px 2px rgba(255, 255, 255, 0.95),
     inset 0 -3px 7px rgba(92, 184, 215, 0.2),
     0 6px 18px rgba(38, 129, 175, 0.2);
-  transform: translateY(-2px) scale(1.035);
+  transform: translateY(-1px);
 }
 
 .navLink:focus-visible {
@@ -33,9 +33,59 @@
   outline-offset: 3px;
 }
 
+.mobileMenu {
+  position: fixed;
+  inset: 0 0 0 auto;
+  width: min(86vw, 350px);
+  height: 100dvh;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: #f5faf3;
+  color: #12365a;
+  box-shadow: -16px 0 36px rgb(8 43 75 / 16%);
+  animation: mobile-menu-enter 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.mobileMenu::backdrop {
+  background: rgb(8 43 75 / 45%);
+  backdrop-filter: blur(3px);
+}
+
+.mobileLink {
+  transition: background 180ms ease, color 180ms ease;
+}
+
+.mobileLink:hover,
+.mobileLink:focus-visible,
+.mobileLinkActive {
+  background: rgb(255 255 255 / 78%);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 90%), 0 3px 8px rgb(38 129 175 / 9%);
+  color: #0b3153;
+}
+
+.mobileLink:focus-visible {
+  outline: 2px solid #76c933;
+  outline-offset: 2px;
+}
+
+@keyframes mobile-menu-enter {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .navLink {
     transition: none;
+  }
+
+  .mobileLink {
+    transition: none;
+  }
+
+  .mobileMenu {
+    animation: none;
   }
 
   .navLink:is(:hover, :focus-visible) {

@@ -163,6 +163,15 @@
   font-family: inherit;
 }
 
+/* Shared H1 scale across the public marketing pages. */
+.marketing-page-title {
+  font-size: clamp(2.25rem, 4.2vw, 3.75rem);
+  font-weight: 900;
+  line-height: 1.04;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+}
+
 /* Landing-only type scale and in-page navigation. */
 html:has(.landing-page) {
   scroll-behavior: smooth;
@@ -680,6 +689,25 @@ html:has(.landing-page) {
 
 .news-hero-wash {
   background: linear-gradient(180deg, rgba(218, 247, 255, 0.15) 0%, rgba(210, 246, 255, 0.02) 66%, rgba(241, 250, 237, 0.92) 100%);
+}
+
+.contact-hero {
+  background: #b8e8f5;
+}
+
+.contact-hero::after {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: -5;
+  height: clamp(6rem, 11vw, 9rem);
+  background: linear-gradient(180deg, rgba(245, 250, 243, 0) 0%, rgba(245, 250, 243, 0.48) 50%, #f5faf3 100%);
+}
+
+.contact-hero-wash {
+  background: linear-gradient(180deg, rgba(218, 247, 255, 0.15) 0%, rgba(210, 246, 255, 0.02) 66%, rgba(245, 250, 243, 0.92) 100%);
 }
 
 .news-main {

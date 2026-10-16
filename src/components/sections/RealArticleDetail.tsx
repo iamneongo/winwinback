@@ -82,7 +82,7 @@ export function RealArticleDetail({
             <span className="max-w-[48ch] truncate" aria-current="page">{article.title}</span>
           </nav>
           <span className="mt-5 inline-flex rounded-full bg-[#e4f6d8] px-3 py-1.5 text-xs font-extrabold tracking-[0.04em] text-[#287c3c]">{category}</span>
-          <h1 className="mt-3 max-w-[960px] text-balance text-[clamp(2.25rem,3.8vw,3.6rem)] font-black leading-[1.04] tracking-[-0.03em]">{article.title}</h1>
+          <h1 className="marketing-page-title mt-3 max-w-[960px]">{article.title}</h1>
           {summary && <p className="mt-3 max-w-[760px] text-pretty text-base leading-6 text-[#426381] sm:text-lg sm:leading-7">{summary}</p>}
           <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-[#5c7894] sm:text-sm">
             <div className="flex items-center gap-2.5">
