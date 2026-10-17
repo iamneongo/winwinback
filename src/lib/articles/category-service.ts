@@ -1,20 +1,68 @@
 import "server-only";
 
 import { asc, eq, sql } from "drizzle-orm";
+import pg from "pg";
 import { db } from "@/db";
 import { articleCategories, articles } from "@/db/schema";
 import { normalizeArticleCategory, UNCATEGORIZED } from "./categories";
+import { migrateArticleCategories } from "./category-migration";
 
 export type ManagedCategory = { name: string; count: number };
 
+let pendingMigration: Promise<void> | undefined;
+
+async function recoverMissingCategoryTable(): Promise<void> {
+  if (!pendingMigration) {
+    pendingMigration = (async () => {
+      const connectionString = process.env.DATABASE_URL;
+      if (!connectionString) throw new Error("DATABASE_URL is not set");
+      const client = new pg.Client({ connectionString });
+      await client.connect();
+      try {
+        await migrateArticleCategories(client);
+        console.info("[articles] Article category schema initialized.");
+      } finally {
+        await client.end();
+      }
+    })().catch((error: unknown) => {
+      pendingMigration = undefined;
+      throw error;
+    });
+  }
+  await pendingMigration;
+}
+
+function isMissingCategoryTable(error: unknown): boolean {
+  let cause = error;
+  for (let depth = 0; depth < 4 && cause && typeof cause === "object"; depth++) {
+    if ("code" in cause && cause.code === "42P01" && "message" in cause
+      && String(cause.message).includes('"article_categories"')) return true;
+    cause = "cause" in cause ? cause.cause : undefined;
+  }
+  return false;
+}
+
+async function ensureCategoryTableForMutation(): Promise<void> {
+  const result = await db.execute<{ exists: boolean }>(sql`select to_regclass('article_categories') is not null as exists`);
+  if (!result.rows[0]?.exists) await recoverMissingCategoryTable();
+}
+
 export async function listManagedCategories(): Promise<ManagedCategory[]> {
-  const rows = await db.select({
-    name: articleCategories.name,
-    count: sql<number>`count(${articles.id})::int`,
-  }).from(articleCategories)
-    .leftJoin(articles, eq(articles.category, articleCategories.name))
-    .groupBy(articleCategories.name)
-    .orderBy(asc(articleCategories.name));
+  const query = () => db.select({
+      name: articleCategories.name,
+      count: sql<number>`count(${articles.id})::int`,
+    }).from(articleCategories)
+      .leftJoin(articles, eq(articles.category, articleCategories.name))
+      .groupBy(articleCategories.name)
+      .orderBy(asc(articleCategories.name));
+  let rows;
+  try {
+    rows = await query();
+  } catch (error) {
+    if (!isMissingCategoryTable(error)) throw error;
+    await recoverMissingCategoryTable();
+    rows = await query();
+  }
   return rows.map((row) => ({ name: row.name, count: Number(row.count) }));
 }
 
@@ -28,6 +76,7 @@ export async function resolveArticleCategory(raw: string | null | undefined): Pr
 }
 
 export async function createManagedCategory(name: string): Promise<void> {
+  await ensureCategoryTableForMutation();
   const existing = await db.select({ name: articleCategories.name }).from(articleCategories)
     .where(sql`lower(${articleCategories.name}) = lower(${name})`).limit(1);
   if (existing.length) throw new Error("Danh mục này đã tồn tại.");
@@ -35,6 +84,7 @@ export async function createManagedCategory(name: string): Promise<void> {
 }
 
 export async function renameManagedCategory(from: string, to: string): Promise<void> {
+  await ensureCategoryTableForMutation();
   await db.transaction(async (tx) => {
     const [current] = await tx.select({ name: articleCategories.name }).from(articleCategories)
       .where(eq(articleCategories.name, from)).for("update").limit(1);
@@ -48,6 +98,7 @@ export async function renameManagedCategory(from: string, to: string): Promise<v
 }
 
 export async function deleteManagedCategory(name: string, destination: string | null): Promise<number> {
+  await ensureCategoryTableForMutation();
   return db.transaction(async (tx) => {
     const [source] = await tx.select({ name: articleCategories.name }).from(articleCategories)
       .where(eq(articleCategories.name, name)).for("update").limit(1);
