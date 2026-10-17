@@ -130,9 +130,9 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
           </ul>
         </section>
         <section className="relative min-h-[13.5rem] overflow-hidden rounded-xl border border-[#dcefcf] bg-[#effde8] p-5">
-          <div className="absolute inset-y-0 right-0 z-0 w-1/2"><Image src="/images/dashboard-cashback-tracking-promo-v1.png" alt="Linh vật Win-Win Back theo dõi tiền hoàn" fill sizes="9rem" className="object-cover object-right" priority /></div>
+          <div className="absolute inset-y-0 right-0 z-0 w-1/2"><Image src="/images/dashboard-cashback-tracking-promo-v3.webp" alt="Linh vật Win-Win Back theo dõi tiền hoàn" fill sizes="9rem" className="object-cover object-right" priority /></div>
           <div aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-0 z-10 w-1/2 bg-[#effde8]" />
-          <div className="relative z-20 max-w-36"><h2 className="text-sm font-bold leading-5 text-[#173861]">Theo dõi hoàn tiền dễ dàng</h2><p className="mt-2 text-xs leading-4 text-[#49688f]">Win-Win Back sẽ tự động cập nhật trạng thái đơn hàng và tiền hoàn của bạn.</p><Link href="/dashboard" className="mt-4 inline-flex w-full items-center justify-between rounded-lg bg-[#a9e75e] px-3 py-2 text-xs font-bold text-[#173b5e] shadow-[0_3px_6px_rgba(99,180,45,0.18)] transition hover:bg-[#b7e961]">Tìm hiểu thêm <ChevronRight className="h-3.5 w-3.5" /></Link></div>
+          <div className="relative z-20 max-w-36"><h2 className="text-sm font-bold leading-5 text-[#173861]">Theo dõi hoàn tiền dễ dàng</h2><p className="mt-2 text-xs leading-4 text-[#49688f]">Win-Win Back sẽ tự động cập nhật trạng thái đơn hàng và tiền hoàn của bạn.</p><Link href="/dashboard" className="ww-btn-cta mt-4 inline-flex w-full items-center justify-between rounded-lg px-3 py-2 text-xs font-bold">Tìm hiểu thêm <ChevronRight className="h-3.5 w-3.5" /></Link></div>
         </section>
       </aside>
     </section>

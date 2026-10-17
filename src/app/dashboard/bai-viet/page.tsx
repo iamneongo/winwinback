@@ -53,7 +53,7 @@ export default async function MyArticlesPage({
       <FileText className="mx-auto size-8 text-[#6681a7]" />
       <h2 className="mt-3 text-base font-bold text-[#173861]">Chưa có bài viết nào</h2>
       <p className="mt-1 text-sm text-[#58749a]">Dán link sản phẩm ở Dashboard để tạo link hoàn tiền và bài giới thiệu.</p>
-      <Link href="/dashboard" className="mt-4 inline-flex rounded-lg bg-[#b7e961] px-4 py-2.5 text-sm font-bold text-[#173b5e]">Tạo link sản phẩm</Link>
+      <Link href="/dashboard" className="ww-btn-cta mt-4 inline-flex rounded-lg px-4 py-2.5 text-sm font-bold">Tạo link sản phẩm</Link>
     </section> : null}
     {total > 0 || q || status || platform ? <>
       <p className="mb-2 text-xs text-[#58749a] sm:hidden">Vuốt ngang để xem đủ cột trong bảng.</p>

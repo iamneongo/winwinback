@@ -43,7 +43,7 @@ export function BankAccountPanel({ account }: { account: BankAccountDetails | nu
         <div className="mt-4 rounded-lg border border-[#e2eaf4] p-4">
           <b className="text-sm text-[#244a7c]">Chưa có tài khoản liên kết</b>
           <p className="mt-1 text-xs leading-5 text-[#718bad]">Lưu tài khoản để điền sẵn thông tin khi yêu cầu rút tiền.</p>
-          <button type="button" onClick={() => setEditing(true)} className="mt-4 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-lg bg-[#a9e75e] px-3 text-xs font-bold text-[#173b5e] transition-colors hover:bg-[#9ddd50] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1261ed]">
+          <button type="button" onClick={() => setEditing(true)} className="ww-btn-cta mt-4 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-lg px-3 text-xs font-bold">
             <Plus className="size-4" /> Thêm tài khoản
           </button>
         </div>

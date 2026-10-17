@@ -91,7 +91,7 @@ export function TikTokIntegration({ status }: { status: TikTokStatus }) {
           <p className="text-sm text-[#49688f]">Chưa kết nối tài khoản TikTok Shop Creator.</p>
           <a
             href="/admin/integrations/tiktok/start"
-            className="inline-flex min-h-10 items-center justify-center rounded-lg bg-[#b7e961] px-4 text-sm font-bold text-[#173b5e] hover:bg-[#a9e75e]"
+            className="ww-btn-cta inline-flex min-h-10 items-center justify-center rounded-lg px-4 text-sm font-bold"
           >
             Kết nối TikTok Shop
           </a>

@@ -16,7 +16,7 @@ export default async function AdminArticleDetailPage({ params }: { params: Promi
   if (!isUuid(id)) notFound();
   const article = await getArticleById(id);
   if (!article) notFound();
-  return <RecordDetail layout="admin" backHref="/admin/bai-viet" backLabel="Bài viết SEO" title={article.title} description="Kiểm tra nội dung, dữ liệu sản phẩm và thông tin hiển thị trên trang tin tức." actions={<Link href={`/admin/bai-viet/${article.id}/sua`} className="inline-flex rounded-lg bg-[#b7e961] px-4 py-2.5 text-sm font-bold text-[#173b5e] hover:bg-[#a9e75e]">Chỉnh sửa bài viết</Link>}>
+  return <RecordDetail layout="admin" backHref="/admin/bai-viet" backLabel="Bài viết SEO" title={article.title} description="Kiểm tra nội dung, dữ liệu sản phẩm và thông tin hiển thị trên trang tin tức." actions={<Link href={`/admin/bai-viet/${article.id}/sua`} className="ww-btn-cta inline-flex rounded-lg px-4 py-2.5 text-sm font-bold">Chỉnh sửa bài viết</Link>}>
     <DetailSection title="Thông tin bài viết">
       <DetailField label="Trạng thái">{article.status === "published" ? "Đang hiển thị" : "Đã ẩn"}</DetailField>
       <DetailField label="Ngày tạo">{article.createdAt.toLocaleString("vi-VN")}</DetailField>

@@ -193,7 +193,7 @@ export function NotificationDetail({
           </header>
           <div className="px-5 py-6 sm:px-7 sm:py-8">
             <p className="whitespace-pre-wrap break-words text-sm leading-7 text-[#34577f]">{item.body}</p>
-            {href && <Link href={href} className="mt-6 inline-flex h-10 items-center gap-2 rounded-lg bg-[#b7e961] px-4 text-sm font-bold text-[#173b5e] shadow-[0_3px_8px_rgba(142,198,63,0.22)] transition-colors hover:bg-[#a8dd4c]">Đi tới nội dung liên quan <ArrowRight className="size-4" /></Link>}
+            {href && <Link href={href} className="ww-btn-cta mt-6 inline-flex h-10 items-center gap-2 rounded-lg px-4 text-sm font-bold">Đi tới nội dung liên quan <ArrowRight className="size-4" /></Link>}
           </div>
         </article>
       </div>

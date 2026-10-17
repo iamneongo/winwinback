@@ -129,41 +129,23 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
   const baseUrl = await getRequestBaseUrl();
   return (
     <main className="mx-auto w-full max-w-[1440px] px-4 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-7">
-      <section className="ww-dashboard-link-banner relative isolate overflow-hidden rounded-xl px-5 py-6 text-white shadow-[0_8px_24px_rgba(9,54,95,0.14)] sm:h-[13.5rem] sm:px-7">
+      <section className="ww-dashboard-link-banner relative isolate flex items-center overflow-hidden rounded-xl px-4 py-5 text-[#0a3151] sm:min-h-[13.75rem] sm:px-7 sm:py-6">
         <Image
-          src="/images/dashboard-overview-banner-v9.png"
+          src="/images/landing-hero-mascot-v3.webp"
           alt=""
-          width={1792}
+          width={1536}
           height={1024}
           priority
-          sizes="(max-width: 1280px) 0px, 470px"
-          className="pointer-events-none absolute right-8 top-1/2 z-0 hidden h-[15rem] w-auto max-w-none -translate-y-1/2 [mask-image:linear-gradient(90deg,transparent_0%,black_38%)] xl:block"
+          sizes="(max-width: 1279px) 0px, 330px"
+          className="pointer-events-none absolute bottom-0 right-[2%] z-0 hidden h-auto w-[330px] max-w-none xl:block"
         />
-        <div className="relative z-10 max-w-[44rem]">
-          <h1 className="flex items-center gap-2 text-xl font-black tracking-tight sm:text-2xl">
-            <span className="text-[#d7fb76]">✦</span> Nhập link sản phẩm để nhận
-            hoàn tiền
+        <div className="relative z-10 w-full max-w-[44rem]">
+          <h1 className="text-balance text-xl font-black leading-snug tracking-tight sm:text-2xl">
+            <span>Nhập link sản phẩm để <span className="text-[#168b2b]">nhận hoàn tiền</span></span>
           </h1>
-          <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold text-white">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-[#0a3159] px-2.5 py-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
-              <span className="inline-flex h-5 w-5 items-center justify-center rounded-md bg-[#ee4d2d] shadow-[0_2px_5px_rgba(238,77,45,0.38)]">
-                <ShopeeIcon className="h-3 w-3" white />
-              </span>
-              Shopee
-            </span>
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-[#0a3159] px-2.5 py-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
-              <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#090b0f] shadow-[0_2px_5px_rgba(0,0,0,0.36)]">
-                <TikTokIcon className="h-3.5 w-3.5" />
-              </span>
-              TikTok Shop
-            </span>
-          </div>
-          <div id="tao-link" className="mt-3 max-w-[44rem] scroll-mt-6">
+          <div id="tao-link" className="mt-4 max-w-[44rem] scroll-mt-6 sm:mt-5">
             <CreateLinkForm defaultUrl={prefillUrl} autoIntent={intent} />
           </div>
-          <p className="mt-2 text-xs text-white/65">
-            Hướng dẫn: Dán link → Mua hàng → Nhận hoàn tiền vào ví
-          </p>
         </div>
       </section>
 
@@ -264,7 +246,7 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
 
       <section id="link-cua-ban" className="mt-5 scroll-mt-6">
         <div className={`${cardClass} overflow-hidden p-0`}>
-          <div className="flex items-center justify-between gap-3 border-b border-[#e8eef6] px-4 py-4 sm:px-5">
+          <div className="flex items-center justify-between gap-3 px-4 py-4 sm:px-5">
             <h2 className={sectionTitleClass}>Link của bạn</h2>
             <span className="text-xs font-semibold text-[#6681a7]">
               {totalLinks} link
@@ -348,7 +330,7 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
             </p>
             <Link
               href="#tao-link"
-              className="mt-4 inline-flex items-center gap-2 rounded-full bg-[#b7e961] px-4 py-2 text-xs font-bold text-[#123758]"
+              className="ww-btn-cta mt-4 inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-bold"
             >
               Xem ngay <ArrowRight className="h-3.5 w-3.5" />
             </Link>

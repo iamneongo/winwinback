@@ -109,22 +109,22 @@ export function MissionBoard({
   return (
     <div className="space-y-5">
       {/* Referral / invite card */}
-      {hasReferralMission && <section className="ww-dashboard-link-banner relative overflow-hidden rounded-xl px-5 py-6 text-white shadow-[0_8px_24px_rgba(9,54,95,0.14)] sm:px-7">
+      {hasReferralMission && <section className="ww-dashboard-link-banner relative overflow-hidden rounded-xl px-5 py-6 text-[#0a3151] sm:px-7">
         <div className="relative z-10 max-w-[42rem]">
           <h2 className="flex items-center gap-2 text-lg font-black tracking-tight">
-            <Gift className="h-5 w-5 text-[#d7fb76]" /> Mời bạn — nhận thưởng
+            <Gift className="h-5 w-5 text-[#168b2b]" /> Mời bạn — nhận thưởng
           </h2>
-          <p className="mt-1 text-sm text-white/75">
+          <p className="mt-1 text-sm text-[#315a76]">
             Chia sẻ link giới thiệu của bạn. Bạn và người được mời sẽ nhận thưởng
             sau đơn hợp lệ. Đã có{" "}
-            <b className="text-[#d7fb76]">{referralCount}</b> người được mời có đơn hợp lệ.
+            <b className="text-[#168b2b]">{referralCount}</b> người được mời có đơn hợp lệ.
           </p>
           <div className="mt-3 flex flex-col gap-2 sm:flex-row">
             <input
               readOnly
               value={inviteUrl}
               onFocus={(e) => e.currentTarget.select()}
-              className="min-w-0 flex-1 truncate rounded-lg border border-white/15 bg-white/10 px-3 py-2 text-sm text-white outline-none placeholder:text-white/50"
+              className="min-w-0 flex-1 truncate rounded-lg border border-[#c7dfea] bg-white/90 px-3 py-2 text-sm text-[#0a3151] outline-none focus-visible:ring-2 focus-visible:ring-[#168b2b]"
             />
             <Button
               variant="cta"

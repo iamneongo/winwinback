@@ -46,7 +46,7 @@ export default async function AffiliateLinkDetailPage({ params }: { params: Prom
     backLabel="Link của bạn"
     title={link.title?.trim() || "Link sản phẩm"}
     description="Chi tiết lượt truy cập, bài viết và đơn hàng được ghi nhận từ link này."
-    actions={<a href={`/go/${link.shortCode}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-lg bg-[#a9e75e] px-4 py-2.5 text-sm font-bold text-[#173b5e] transition hover:bg-[#b7e961]">Mở link <ArrowUpRight className="size-4" /></a>}
+    actions={<a href={`/go/${link.shortCode}`} target="_blank" rel="noopener noreferrer" className="ww-btn-cta inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-bold">Mở link <ArrowUpRight className="size-4" /></a>}
   >
     <DetailSection title="Thông tin link">
       <DetailField label="Sàn mua sắm">{platformLabel[link.platform]}</DetailField>
