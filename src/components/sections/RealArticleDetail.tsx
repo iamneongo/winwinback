@@ -124,7 +124,7 @@ export function RealArticleDetail({
             <p className="mt-3 max-w-[500px] text-sm leading-6 text-[#426381] sm:text-base">
               {article.price ? `Giá ghi nhận lúc đăng: ${formatVnd(article.price)}. ` : ""}Thông tin sản phẩm và mức hoàn tiền có thể thay đổi; hãy kiểm tra lại trên {platform} trước khi thanh toán.
             </p>
-            <Link href={buyHref ?? "/register"} target={buyHref ? "_blank" : undefined} rel={buyHref ? "noopener noreferrer" : undefined} className="news-cta-button mt-5 inline-flex min-h-11 items-center gap-2 rounded-full px-5 py-3 text-sm font-extrabold text-[#173b5e]">{buyHref ? `Xem sản phẩm trên ${platform}` : "Bắt đầu mua sắm ngay"} <ArrowRight className="size-4" aria-hidden="true" /></Link>
+            <Link href={buyHref ?? "/register"} target={buyHref ? "_blank" : undefined} rel={buyHref ? "noopener noreferrer" : undefined} className="ww-btn-cta mt-5 inline-flex min-h-11 items-center gap-2 rounded-full px-5 py-3 text-sm font-extrabold focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-[#65a935]">{buyHref ? `Xem sản phẩm trên ${platform}` : "Bắt đầu mua sắm ngay"} <ArrowRight className="size-4" aria-hidden="true" /></Link>
           </div>
         </section>
 

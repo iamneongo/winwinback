@@ -32,7 +32,7 @@ export function WalletGrowthSection() {
           </p>
           <a
             href="/register"
-            className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-full bg-[#a8e743] px-5 text-sm font-bold text-[#123b20] transition-colors hover:bg-[#98d932] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#287d31] focus-visible:ring-offset-2"
+            className="ww-btn-cta mt-4 inline-flex min-h-11 items-center gap-2 rounded-full px-5 text-sm font-bold transition-[filter,transform] duration-200 hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#287d31]"
           >
             Bắt đầu mua sắm ngay <ArrowRight className="size-4" aria-hidden="true" />
           </a>

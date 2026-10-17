@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, CalendarDays, ChevronLeft, ChevronRight, Megaphone, Newspaper } from "lucide-react";
+import { ArrowRight, CalendarDays, ChevronDown, ChevronLeft, ChevronRight, Megaphone, Newspaper } from "lucide-react";
 import type { Article } from "@/db/schema";
 import { articleCoverUrl, type CategoryCount } from "@/lib/articles/service";
 import { normalizeArticleCategory } from "@/lib/articles/categories";
@@ -61,7 +61,7 @@ export function CuratedNewsPage({ featured, articles, categories, activeCategory
                 <Image src="/images/news-reading-mascot-v1.png" alt="" width={38} height={38} className="size-9 rounded-full bg-[#e5f7d7] object-cover" />
                 <div className="min-w-0 text-[11px] leading-5 text-[#6d83a0]"><p className="font-bold text-[#12365a]">Win-Win Back</p><time dateTime={featured.createdAt.toISOString()}>{articleDate(featured.createdAt)}</time></div>
               </div>
-              <Link href={`/bai-viet/${featured.slug}`} className="news-cta-button inline-flex shrink-0 items-center gap-2 rounded-full px-4 py-3 text-xs font-extrabold text-[#173b5e] lg:px-5 lg:text-sm">Đọc ngay <ArrowRight className="size-4" aria-hidden="true" /></Link>
+              <Link href={`/bai-viet/${featured.slug}`} className="ww-btn-cta inline-flex shrink-0 items-center gap-2 rounded-full px-4 py-3 text-xs font-extrabold focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-[#65a935] lg:px-5 lg:text-sm">Đọc ngay <ArrowRight className="size-4" aria-hidden="true" /></Link>
             </div>
           </div>
         </article>
@@ -72,15 +72,28 @@ export function CuratedNewsPage({ featured, articles, categories, activeCategory
           <h2 id="latest-title" className="mt-2 text-balance text-3xl font-black tracking-[-0.025em] text-[#12365a] sm:text-[38px]">Bài viết <span className="text-[#23933b]">mới nhất</span></h2>
           <p className="mt-2 text-sm leading-6 text-[#526f8e] sm:text-base">Thông tin sản phẩm từ các bài đã xuất bản; giá và khoản hoàn dự kiến cần kiểm tra lại trước khi mua.</p>
         </div>
-        <nav aria-label="Lọc bài viết theo danh mục" className="mt-8 flex flex-wrap justify-center gap-2">
-          <Link href="/bai-viet" aria-current={!activeCategory ? "page" : undefined} className={`news-category-chip ${!activeCategory ? "news-category-chip-active" : ""}`}>Tất cả</Link>
-          {categories.map((category) => (
-            <Link key={category.name} href={pageHref(category.name, 1)} aria-current={activeCategory === category.name ? "page" : undefined} className={`news-category-chip ${activeCategory === category.name ? "news-category-chip-active" : ""}`}>
-              {category.name} <span className="ml-1 opacity-70">{category.count}</span>
-            </Link>
-          ))}
-        </nav>
-        <p className="mt-3 text-center text-xs font-semibold text-[#526f8e]" aria-live="polite">{activeCategory ? `${activeCategory} · ` : ""}{total} bài viết</p>
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-2.5">
+          <nav aria-label="Lọc bài viết theo danh mục" className="news-category-tabs flex min-w-0 items-center gap-1">
+            <Link href="/bai-viet" aria-current={!activeCategory ? "page" : undefined} className={`news-category-chip shrink-0 ${!activeCategory ? "news-category-chip-active" : ""}`}>Tất cả</Link>
+            {categories.length > 0 && (
+              <details key={activeCategory ?? "all"} className="news-category-picker group relative min-w-0">
+                <summary className={`news-category-chip flex max-w-[min(14rem,calc(100vw-8rem))] cursor-pointer items-center gap-2 outline-none focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#65a935] ${activeCategory ? "news-category-chip-active" : ""}`}>
+                  <span className="min-w-0 truncate">{activeCategory ?? "Danh mục"}</span>
+                  <ChevronDown className="size-4 shrink-0 transition-transform duration-200 group-open:rotate-180" aria-hidden="true" />
+                </summary>
+                <div className="absolute left-1/2 top-[calc(100%+0.5rem)] z-30 max-h-72 w-[min(20rem,calc(100vw-2.5rem))] -translate-x-1/2 overflow-y-auto rounded-xl bg-white p-1.5 shadow-[0_6px_16px_rgba(17,58,79,0.14)]">
+                  {categories.map((category) => (
+                    <Link key={category.name} href={pageHref(category.name, 1)} aria-current={activeCategory === category.name ? "page" : undefined} className={`flex min-h-11 items-center justify-between gap-3 rounded-lg px-3 py-2 text-sm font-semibold text-[#315674] transition-colors hover:bg-[#edf8e9] hover:text-[#245f32] focus-visible:ring-2 focus-visible:ring-[#65a935] focus-visible:outline-none ${activeCategory === category.name ? "bg-[#e1f2d2] text-[#245f32]" : ""}`}>
+                      <span className="min-w-0 break-words">{category.name}</span>
+                      <span className="shrink-0 text-xs text-[#627e91]">{category.count}</span>
+                    </Link>
+                  ))}
+                </div>
+              </details>
+            )}
+          </nav>
+          <p className="whitespace-nowrap text-xs font-semibold text-[#526f8e]" aria-live="polite">{total} bài viết</p>
+        </div>
         {articles.length > 0 ? (
           <div className="mt-6 grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:gap-5">{articles.map((article) => <ArticleCard key={article.id} article={article} />)}</div>
         ) : total === 0 ? (
@@ -107,7 +120,7 @@ export function CuratedNewsPage({ featured, articles, categories, activeCategory
             Cùng Win-Win Back<br /><span className="text-[#218c38]">Mua sắm thông minh hơn mỗi ngày!</span>
           </h2>
           <p className="mt-3 max-w-[410px] text-sm leading-5 text-[#426483]">Khám phá ngay các ưu đãi mới và bắt đầu nhận hoàn tiền từ những đơn hàng đầu tiên.</p>
-          <Link href="/register" className="news-cta-button mt-3 inline-flex min-h-12 items-center gap-2 rounded-full px-8 py-3 text-sm font-extrabold text-[#173b5e]">
+          <Link href="/register" className="ww-btn-cta mt-3 inline-flex min-h-12 items-center gap-2 rounded-full px-8 py-3 text-sm font-extrabold focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-[#65a935]">
             Bắt đầu mua sắm ngay <ArrowRight className="size-4" aria-hidden="true" />
           </Link>
         </div>
