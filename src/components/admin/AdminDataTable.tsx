@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { Fragment, useEffect, useState, useTransition, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import {
   flexRender,
@@ -61,6 +61,7 @@ type AdminDataTableProps<TData> = {
   mode?: "server" | "client";
   variant?: "default" | "preview";
   getRowHref?: (row: TData) => string;
+  renderExpandedRow?: (row: TData) => ReactNode;
 };
 
 export function AdminDataTable<TData>({
@@ -77,6 +78,7 @@ export function AdminDataTable<TData>({
   mode = "server",
   variant = "default",
   getRowHref,
+  renderExpandedRow,
 }: AdminDataTableProps<TData>) {
   const router = useRouter();
   const isPreview = variant === "preview";
@@ -281,9 +283,10 @@ export function AdminDataTable<TData>({
                 </TableCell>
               ))}
             </TableRow>
-          )) : table.getRowModel().rows.length ? table.getRowModel().rows.map((row) => (
+          )) : table.getRowModel().rows.length ? table.getRowModel().rows.map((row) => {
+            const expandedRow = renderExpandedRow?.(row.original);
+            return <Fragment key={row.id}>
             <TableRow
-              key={row.id}
               tabIndex={getRowHref ? 0 : undefined}
               aria-label={getRowHref ? `Xem chi tiết hàng ${row.index + 1}` : undefined}
               className={getRowHref ? "cursor-pointer focus-visible:bg-[#eef6ff] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#1261ed]" : undefined}
@@ -303,7 +306,13 @@ export function AdminDataTable<TData>({
                 </TableCell>
               ))}
             </TableRow>
-          )) : (
+            {expandedRow != null && <TableRow className="hover:bg-transparent">
+              <TableCell colSpan={table.getVisibleLeafColumns().length} className="p-0 whitespace-normal">
+                {expandedRow}
+              </TableCell>
+            </TableRow>}
+            </Fragment>;
+          }) : (
             <TableRow><TableCell colSpan={table.getVisibleLeafColumns().length} className="h-28 text-center text-sm text-[#587298]">{emptyMessage}</TableCell></TableRow>
           )}
         </TableBody>

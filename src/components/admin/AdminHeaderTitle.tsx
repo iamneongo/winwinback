@@ -10,6 +10,7 @@ const routeTitles = [
   { href: "/admin/rut-tien", title: "Rút tiền" },
   { href: "/admin/nhiem-vu", title: "Nhiệm vụ" },
   { href: "/admin/rut-tham", title: "Rút thăm may mắn" },
+  { href: "/admin/bai-viet/danh-muc", title: "Danh mục bài viết" },
   { href: "/admin/bai-viet", title: "Bài viết" },
   { href: "/admin/integrations", title: "Kết nối sàn" },
 ] as const;
