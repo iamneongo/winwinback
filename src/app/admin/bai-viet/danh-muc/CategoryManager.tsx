@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Pencil, Plus, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { ManagedCategory } from "@/lib/articles/category-service";
 import { createCategoryAction, deleteCategoryAction, renameCategoryAction } from "../actions";
 
@@ -48,11 +49,26 @@ export function CategoryManager({ categories }: { categories: ManagedCategory[] 
               : <div className="min-w-0"><p className="font-bold text-[#11335e]">{category.name}</p><p className="text-xs text-[#58749a]">{category.count} bài viết</p></div>}
             {editing !== category.name && <div className="flex gap-1"><Button type="button" variant="ghost" onClick={() => { setEditing(category.name); setEditName(category.name); setDeleting(null); }} className="h-9 gap-1.5 text-[#234568]"><Pencil className="size-4" /> Sửa</Button><Button type="button" variant="ghost" onClick={() => { setDeleting(deleting === category.name ? null : category.name); setDestination(""); setEditing(null); }} className="h-9 gap-1.5 text-red-700 hover:bg-red-50"><Trash2 className="size-4" /> Xóa</Button></div>}
           </div>
-          {deleting === category.name && <div className="mt-3 rounded-lg bg-[#f4f8fc] p-3 text-sm text-[#234568]">
-            <p className="font-bold">Xóa “{category.name}”?</p>
-            {category.count > 0 ? <><p className="mt-1">Danh mục có {category.count} bài. Chọn nơi chuyển toàn bộ bài trước khi xóa.</p><label htmlFor="move-category" className="mt-3 block text-xs font-bold">Chuyển bài sang</label><select id="move-category" value={destination} onChange={(event) => setDestination(event.target.value)} className="mt-1 h-10 w-full max-w-sm rounded-lg border border-[#cddced] bg-white px-3 text-sm focus-visible:outline-2 focus-visible:outline-[#1261ed]"><option value="">Chọn danh mục đích</option>{categories.filter((item) => item.name !== category.name).map((item) => <option key={item.name} value={item.name}>{item.name}</option>)}</select></>
-              : <p className="mt-1">Danh mục đang trống, có thể xóa ngay sau khi xác nhận.</p>}
-            <div className="mt-3 flex flex-wrap gap-2"><Button type="button" variant="destructive" disabled={pending || (category.count > 0 && !destination) || categories.length < 2} onClick={() => run(() => deleteCategoryAction(category.name, destination || null, true), (moved) => { setDeleting(null); setNotice(moved ? `Đã chuyển ${moved} bài viết và xóa danh mục.` : "Đã xóa danh mục."); })}>Xác nhận xóa</Button><Button type="button" variant="outline" onClick={() => setDeleting(null)}>Hủy</Button></div>
+          {deleting === category.name && <div className="mt-4 rounded-xl border border-[#dfe9f5] bg-[#f7fafc] p-4 text-sm text-[#234568]">
+            <p className="font-bold text-[#11335e]">Xóa danh mục “{category.name}”?</p>
+            {category.count > 0 ? <>
+              <p className="mt-1 text-[#58749a]">{category.count} bài viết sẽ được chuyển sang danh mục bạn chọn trước khi xóa.</p>
+              <div className="mt-4 max-w-md">
+                <label htmlFor="move-category" className="mb-1.5 block text-sm font-semibold text-[#234568]">Chuyển bài viết sang</label>
+                <Select value={destination || null} onValueChange={(value) => setDestination(value ?? "")} disabled={pending}>
+                  <SelectTrigger id="move-category" className="h-11 border-[#cddced] bg-white px-3 text-[#234568] hover:border-[#8eafd4] focus-visible:border-[#1261ed] focus-visible:ring-[#1261ed]/20">
+                    <SelectValue>{destination || "Chọn danh mục đích"}</SelectValue>
+                  </SelectTrigger>
+                  <SelectContent className="max-h-60 border border-[#dfe9f5] shadow-sm">
+                    {categories.filter((item) => item.name !== category.name).map((item) => <SelectItem key={item.name} value={item.name} className="py-2.5 data-highlighted:bg-[#eaf4ff] data-highlighted:text-[#11335e]">{item.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            </> : <p className="mt-1 text-[#58749a]">Danh mục này chưa có bài viết.</p>}
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              <Button type="button" variant="destructive" disabled={pending || (category.count > 0 && !destination) || categories.length < 2} onClick={() => run(() => deleteCategoryAction(category.name, destination || null, true), (moved) => { setDeleting(null); setNotice(moved ? `Đã chuyển ${moved} bài viết và xóa danh mục.` : "Đã xóa danh mục."); })}>Xác nhận xóa</Button>
+              <Button type="button" variant="outline" onClick={() => setDeleting(null)}>Hủy</Button>
+            </div>
           </div>}
         </li>)}
       </ul>

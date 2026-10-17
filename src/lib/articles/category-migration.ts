@@ -1,11 +1,11 @@
 import type pg from "pg";
 import { ARTICLE_CATEGORIES, normalizeArticleCategory } from "./categories";
 
-/** Idempotent migration shared by container startup and the admin-page recovery path. */
+/** Idempotent manual migration for article categories. */
 export async function migrateArticleCategories(client: pg.Client): Promise<void> {
   await client.query("BEGIN");
   try {
-    // Serialize concurrent app instances and startup migrations.
+    // Serialize concurrent manual migration runs.
     await client.query("SELECT pg_advisory_xact_lock(607783215)");
     await client.query(`
       CREATE TABLE IF NOT EXISTS article_categories (

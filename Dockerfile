@@ -85,12 +85,6 @@ RUN if [ -f package-lock.json ]; then \
   echo "No lockfile found." && exit 1; \
   fi
 
-# Bundle the idempotent database migration with the image. The standalone
-# runner does not include TypeScript sources or the tsx CLI.
-RUN ./node_modules/.bin/esbuild ./scripts/migrate-article-categories.ts \
-  --bundle --platform=node --format=cjs --packages=external \
-  --outfile=/app/article-categories-migration.cjs
-
 # ============================================
 # Stage 3: Run the standalone Next.js server
 # ============================================
@@ -109,7 +103,6 @@ ENV HOSTNAME=0.0.0.0
 COPY --from=builder --chown=node:node /app/.next/standalone ./
 COPY --from=builder --chown=node:node /app/.next/static ./.next/static
 COPY --from=builder --chown=node:node /app/public ./public
-COPY --from=builder --chown=node:node /app/article-categories-migration.cjs ./article-categories-migration.cjs
 
 # Switch to non-root user for security best practices
 USER node
@@ -120,4 +113,4 @@ EXPOSE 3000
 # Dokploy's Docker-image deployments can provide runtime configuration as a
 # mounted .env file instead of process environment variables. Prefer that file
 # when it exists, while preserving ordinary platform-injected environments.
-CMD ["sh", "-c", "if [ -f /app/.env ]; then node --env-file=/app/.env article-categories-migration.cjs || echo '[startup] Article category migration failed; starting server for diagnostics'; exec node --env-file=/app/.env server.js; else node article-categories-migration.cjs || echo '[startup] Article category migration failed; starting server for diagnostics'; exec node server.js; fi"]
+CMD ["sh", "-c", "if [ -f /app/.env ]; then exec node --env-file=/app/.env server.js; else exec node server.js; fi"]

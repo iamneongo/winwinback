@@ -47,7 +47,6 @@ GEMINI.md
 # Docs / research (large, not needed at runtime)
 docs
 scripts/*
-!scripts/migrate-article-categories.ts
 
 # Docker files themselves (no need to copy into image)
 Dockerfile
