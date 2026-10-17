@@ -120,4 +120,4 @@ EXPOSE 3000
 # Dokploy's Docker-image deployments can provide runtime configuration as a
 # mounted .env file instead of process environment variables. Prefer that file
 # when it exists, while preserving ordinary platform-injected environments.
-CMD ["sh", "-c", "if [ -f /app/.env ]; then node --env-file=/app/.env article-categories-migration.cjs && exec node --env-file=/app/.env server.js; else node article-categories-migration.cjs && exec node server.js; fi"]
+CMD ["sh", "-c", "if [ -f /app/.env ]; then node --env-file=/app/.env article-categories-migration.cjs || echo '[startup] Article category migration failed; starting server for diagnostics'; exec node --env-file=/app/.env server.js; else node article-categories-migration.cjs || echo '[startup] Article category migration failed; starting server for diagnostics'; exec node server.js; fi"]
