@@ -1,6 +1,6 @@
 import "server-only";
 import sanitizeHtml from "sanitize-html";
-import { and, asc, desc, eq, ilike, inArray, isNull, ne, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, ne, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { articles, type Article } from "@/db/schema";
 import type { Platform } from "@/lib/affiliate/types";
@@ -11,6 +11,7 @@ import { getShopeeProductInfo } from "@/lib/affiliate/shopee/automation-client";
 import { getOpenCollaborationProductsByIds } from "@/lib/affiliate/tiktok/client";
 import { getValidTikTokAccessToken } from "@/lib/affiliate/tiktok/tokens";
 import { normalizeArticleCategory, UNCATEGORIZED } from "@/lib/articles/categories";
+import { resolveArticleCategory } from "@/lib/articles/category-service";
 
 export interface ArticleSection {
   q: string;
@@ -345,6 +346,7 @@ export async function generateAndSaveArticle(
     const c = await buildArticle(input, onProgress);
     if (!c) return null;
 
+    const category = await resolveArticleCategory(c.category);
     const inserted = await db
       .insert(articles)
       .values({
@@ -358,7 +360,7 @@ export async function generateAndSaveArticle(
         sections: JSON.stringify(c.sections),
         contentHtml: c.contentHtml,
         productName: c.productName,
-        category: c.category,
+        category,
         price: c.price,
         imageUrl: c.imageUrl,
         productUrl: input.productUrl,
@@ -408,7 +410,7 @@ export async function regenerateArticle(id: string): Promise<Article | null> {
       sections: JSON.stringify(c.sections),
       contentHtml: c.contentHtml,
       productName: c.productName,
-      category: c.category,
+      category: await resolveArticleCategory(c.category),
       price: c.price,
       imageUrl: c.imageUrl,
       estimatedCashback: c.estimatedCashback,
@@ -527,15 +529,9 @@ export async function getArticleAdminStats(): Promise<{ total: number; published
 
 export { UNCATEGORIZED } from "@/lib/articles/categories";
 
-/** Match old raw marketplace labels and new canonical labels without a DB migration. */
+/** Categories are canonical after the article-categories migration. */
 async function categoryCondition(category: string) {
-  const rawRows = await db.select({ raw: articles.category }).from(articles).groupBy(articles.category);
-  const matches = rawRows.map(({ raw }) => raw).filter((raw) => normalizeArticleCategory(raw) === category);
-  const names = matches.filter((raw): raw is string => raw !== null);
-  const clauses = [];
-  if (names.length) clauses.push(inArray(articles.category, names));
-  if (matches.includes(null)) clauses.push(isNull(articles.category));
-  return or(...clauses) ?? sql`false`;
+  return eq(articles.category, category);
 }
 
 /** Public: published articles, optionally filtered by normalized category. */
@@ -574,7 +570,7 @@ export async function listArticleCategories(excludeSlug?: string): Promise<Categ
     .groupBy(articles.category);
   const counts = new Map<string, number>();
   for (const row of rows) {
-    const name = normalizeArticleCategory(row.raw);
+    const name = row.raw ?? UNCATEGORIZED;
     counts.set(name, (counts.get(name) ?? 0) + Number(row.count));
   }
   return [...counts].map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count);
@@ -599,7 +595,7 @@ export async function listRelatedArticles(
   current: Article,
   limit = 4,
 ): Promise<Article[]> {
-  const category = normalizeArticleCategory(current.category);
+  const category = current.category ?? UNCATEGORIZED;
   const sameCategory = category === UNCATEGORIZED ? sql`false` : await categoryCondition(category);
   return db
     .select()
@@ -666,10 +662,35 @@ export async function updateArticleContent(
       contentHtml: sanitizeArticleHtml(input.html),
       title: input.title,
       metaDescription: input.metaDescription || null,
-      category: normalizeArticleCategory(input.category),
+      category: input.category,
       imageUrl: input.imageUrl || null,
     })
     .where(eq(articles.id, id));
+}
+
+/** Admin-authored article. A synthetic product id keeps the existing unique key intact. */
+export async function createManualArticle(input: {
+  html: string;
+  title: string;
+  metaDescription: string;
+  category: string;
+  imageUrl: string;
+  status: "published" | "hidden";
+}): Promise<Article> {
+  const id = crypto.randomUUID();
+  const [created] = await db.insert(articles).values({
+    id,
+    slug: `${slugify(input.title) || "bai-viet"}-${id.slice(0, 8)}`,
+    platform: "shopee",
+    productId: `manual:${id}`,
+    title: input.title,
+    metaDescription: input.metaDescription || null,
+    contentHtml: sanitizeArticleHtml(input.html),
+    category: input.category,
+    imageUrl: input.imageUrl || null,
+    status: input.status,
+  }).returning();
+  return created;
 }
 
 /** HTML body for rendering — stored content, or built from sections (old rows). */

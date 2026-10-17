@@ -5,6 +5,7 @@ import { requireAdmin } from "@/lib/auth/guards";
 import { getArticleById, articleContentHtml } from "@/lib/articles/service";
 import { ArticleEditor } from "../../ArticleEditor";
 import { AdminPageContainer } from "@/components/admin/AdminPageContainer";
+import { listManagedCategories } from "@/lib/articles/category-service";
 
 export const metadata = { title: "Sửa bài viết — Quản trị" };
 export const dynamic = "force-dynamic";
@@ -18,6 +19,7 @@ export default async function EditArticlePage({
   const { id } = await params;
   const a = await getArticleById(id);
   if (!a) notFound();
+  const categories = await listManagedCategories();
 
   return (
     <AdminPageContainer className="py-6 lg:py-7">
@@ -35,6 +37,7 @@ export default async function EditArticlePage({
         <ArticleEditor
           id={a.id}
           slug={a.slug}
+          categories={categories.map((category) => category.name)}
           initialHtml={articleContentHtml(a)}
           initialTitle={a.title}
           initialDescription={a.metaDescription ?? ""}

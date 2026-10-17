@@ -17,7 +17,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { formatVnd } from "@/lib/config";
 import { platformLabel } from "@/lib/labels";
-import { ARTICLE_CATEGORIES } from "@/lib/articles/categories";
 import { deleteArticleAction, regenerateArticleAction, toggleArticleAction } from "./actions";
 
 export type ArticleTableRow = {
@@ -25,6 +24,7 @@ export type ArticleTableRow = {
   slug: string;
   title: string;
   platform: "shopee" | "tiktok";
+  manual: boolean;
   category: string | null;
   price: number | null;
   views: number;
@@ -34,7 +34,7 @@ export type ArticleTableRow = {
 
 const columns: ColumnDef<ArticleTableRow>[] = [
   { accessorKey: "title", header: "Tiêu đề", size: 320, cell: ({ row }) => <Link href={`/admin/bai-viet/${row.original.id}`} className="line-clamp-2 break-words font-semibold text-[#1261ed] hover:underline">{row.original.title}</Link> },
-  { accessorKey: "platform", header: "Sàn", size: 95, enableSorting: false, cell: ({ row }) => platformLabel[row.original.platform] ?? row.original.platform },
+  { accessorKey: "platform", header: "Nguồn", size: 95, enableSorting: false, cell: ({ row }) => row.original.manual ? "Tự viết" : platformLabel[row.original.platform] ?? row.original.platform },
   { accessorKey: "category", header: "Danh mục", size: 135, enableSorting: false, cell: ({ row }) => <span className="block truncate" title={row.original.category ?? undefined}>{row.original.category ?? "—"}</span> },
   { accessorKey: "price", header: "Giá", size: 115, cell: ({ row }) => row.original.price ? formatVnd(row.original.price) : "—" },
   { accessorKey: "views", header: "Lượt xem", size: 90, cell: ({ row }) => row.original.views },
@@ -55,12 +55,12 @@ const columns: ColumnDef<ArticleTableRow>[] = [
             <DropdownMenuItem render={<Link href={`/admin/bai-viet/${article.id}/sua`} />}>
               <Pencil /> Sửa bài viết
             </DropdownMenuItem>
-            <form action={regenerateArticleAction}>
+            {!article.manual && <form action={regenerateArticleAction}>
               <input type="hidden" name="id" value={article.id} />
               <DropdownMenuItem render={<button type="submit" className="w-full" />}>
                 <RefreshCw /> Tạo lại nội dung
               </DropdownMenuItem>
-            </form>
+            </form>}
             <form action={toggleArticleAction}>
               <input type="hidden" name="id" value={article.id} />
               <input type="hidden" name="status" value={article.status === "published" ? "hidden" : "published"} />
@@ -84,7 +84,7 @@ const columns: ColumnDef<ArticleTableRow>[] = [
   } },
 ];
 
-export function ArticlesTable({ rows, total, page }: { rows: ArticleTableRow[]; total: number; page: number }) {
+export function ArticlesTable({ rows, categories, total, page }: { rows: ArticleTableRow[]; categories: string[]; total: number; page: number }) {
   return <AdminDataTable
     data={rows}
     columns={columns}
@@ -96,7 +96,7 @@ export function ArticlesTable({ rows, total, page }: { rows: ArticleTableRow[]; 
     filters={[
       { key: "platform", label: "Tất cả sàn", options: [{ value: "shopee", label: "Shopee" }, { value: "tiktok", label: "TikTok Shop" }] },
       { key: "status", label: "Mọi trạng thái", options: [{ value: "published", label: "Hiển thị" }, { value: "hidden", label: "Đã ẩn" }] },
-      { key: "category", label: "Mọi danh mục", options: ARTICLE_CATEGORIES.map((name) => ({ value: name, label: name })) },
+      { key: "category", label: "Mọi danh mục", options: categories.map((name) => ({ value: name, label: name })) },
     ]}
     emptyMessage="Không có bài viết phù hợp."
     minWidth="1190px"

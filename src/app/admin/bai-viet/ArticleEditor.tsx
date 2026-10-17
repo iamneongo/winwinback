@@ -2,14 +2,14 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Check, ExternalLink, ImagePlus, Loader2, Save, Trash2 } from "lucide-react";
-import { saveArticleContentAction } from "./actions";
+import { createArticleAction, saveArticleContentAction } from "./actions";
 import { ArticleRichTextEditor } from "./ArticleRichTextEditor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ARTICLE_CATEGORIES, normalizeArticleCategory } from "@/lib/articles/categories";
 
 /**
  * Downscale + compress an image to a JPEG data URL so pasted/large photos don't
@@ -61,24 +61,28 @@ async function compressImageToDataUrl(
 export function ArticleEditor({
   id,
   slug,
+  categories,
   initialHtml,
   initialTitle,
   initialDescription,
   initialCategory,
   initialImageUrl,
 }: {
-  id: string;
-  slug: string;
+  id?: string;
+  slug?: string;
+  categories: string[];
   initialHtml: string;
   initialTitle: string;
   initialDescription: string;
   initialCategory: string;
   initialImageUrl: string;
 }) {
+  const router = useRouter();
   const [html, setHtml] = useState(initialHtml);
   const [title, setTitle] = useState(initialTitle);
   const [metaDescription, setMetaDescription] = useState(initialDescription);
-  const [category, setCategory] = useState(normalizeArticleCategory(initialCategory));
+  const [category, setCategory] = useState(initialCategory || categories[0] || "");
+  const [status, setStatus] = useState<"hidden" | "published">("hidden");
   const [imageUrl, setImageUrl] = useState(initialImageUrl);
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
@@ -92,11 +96,16 @@ export function ArticleEditor({
     }
     startTransition(async () => {
       try {
-        const result = await saveArticleContentAction(id, {
-          html, title, metaDescription, category, imageUrl,
-        });
+        const input = { html, title, metaDescription, category, imageUrl };
+        const result = id
+          ? await saveArticleContentAction(id, input)
+          : await createArticleAction({ ...input, status });
         if (!result.ok) {
           setError(result.error ?? "Không lưu được bài viết.");
+          return;
+        }
+        if (!id && "id" in result && result.id) {
+          router.push(`/admin/bai-viet/${result.id}/sua`);
           return;
         }
         setSaved(true);
@@ -129,13 +138,13 @@ export function ArticleEditor({
   return (
     <div className="space-y-5">
       <div className="mb-3 flex items-center justify-between gap-3">
-        <Link
+        {slug ? <Link
           href={`/bai-viet/${slug}`}
           target="_blank"
           className="inline-flex items-center gap-1 text-sm font-bold text-[#1261ed] hover:underline"
         >
           Xem bài <ExternalLink className="h-3.5 w-3.5" />
-        </Link>
+        </Link> : <span className="text-sm font-semibold text-[#58749a]">Bài mới</span>}
         <Button
           type="button"
           variant="cta"
@@ -150,7 +159,7 @@ export function ArticleEditor({
           ) : (
             <Save className="h-4 w-4" />
           )}
-          {pending ? "Đang lưu…" : saved ? "Đã lưu" : "Lưu bài viết"}
+          {pending ? "Đang lưu…" : saved ? "Đã lưu" : id ? "Lưu bài viết" : status === "published" ? "Xuất bản bài viết" : "Lưu bản nháp"}
         </Button>
       </div>
       {error ? <p role="alert" className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p> : null}
@@ -168,15 +177,16 @@ export function ArticleEditor({
             <Textarea id="article-description" value={metaDescription} onChange={(event) => { setMetaDescription(event.target.value); setSaved(false); }} maxLength={300} rows={3} className="-mt-2 min-h-20 resize-y border-[#cddced] text-sm focus-visible:border-[#1261ed]" />
             <p className="-mt-2 text-xs text-[#6681a7]">{metaDescription.length}/300 ký tự · Nên khoảng 120–160 ký tự, mô tả đúng nội dung bài.</p>
             <label className="block text-sm font-bold text-[#234568]" htmlFor="article-category">Danh mục</label>
-            <Select value={category} onValueChange={(value) => { if (value) { setCategory(normalizeArticleCategory(value)); setSaved(false); } }}>
+            <Select value={category} onValueChange={(value) => { if (value) { setCategory(value); setSaved(false); } }}>
               <SelectTrigger id="article-category" className="-mt-2 h-10 border-[#cddced] text-sm focus-visible:border-[#1261ed]">
                 <SelectValue>{category}</SelectValue>
               </SelectTrigger>
               <SelectContent>
-                {ARTICLE_CATEGORIES.map((name) => <SelectItem key={name} value={name}>{name}</SelectItem>)}
+                {categories.map((name) => <SelectItem key={name} value={name}>{name}</SelectItem>)}
               </SelectContent>
             </Select>
-            <p className="-mt-2 text-xs text-[#6681a7]">Danh mục chung cho cả Shopee và TikTok; bài AI được tự phân loại và có thể chỉnh tại đây.</p>
+            <p className="-mt-2 text-xs text-[#6681a7]">Quản lý danh mục ở trang Danh mục bài viết.</p>
+            {!id && <div className="pt-1"><label className="mb-2 block text-sm font-bold text-[#234568]" htmlFor="article-status">Trạng thái khi lưu</label><Select value={status} onValueChange={(value) => { if (value === "hidden" || value === "published") setStatus(value); }}><SelectTrigger id="article-status" className="h-10 border-[#cddced]"><SelectValue>{status === "hidden" ? "Bản nháp (chưa hiển thị)" : "Xuất bản ngay"}</SelectValue></SelectTrigger><SelectContent><SelectItem value="hidden">Bản nháp (chưa hiển thị)</SelectItem><SelectItem value="published">Xuất bản ngay</SelectItem></SelectContent></Select></div>}
           </div>
           <div>
             <p className="mb-2 text-sm font-bold text-[#234568]">Ảnh đại diện</p>
@@ -197,7 +207,7 @@ export function ArticleEditor({
           </div>
         </div>
         <div className="min-w-0 rounded-lg bg-[#f4f8fc] p-3 text-sm">
-          <p className="truncate text-[#1261ed]">winwinback.com/bai-viet/{slug}</p>
+          <p className="truncate text-[#1261ed]">winwinback.com/bai-viet/{slug ?? "duong-dan-se-duoc-tao-khi-luu"}</p>
           <p className="mt-1 line-clamp-2 font-bold text-[#11335e]">{title || "Tiêu đề bài viết"}</p>
           <p className="mt-1 line-clamp-2 text-[#58749a]">{metaDescription || "Mô tả hiển thị trên kết quả tìm kiếm…"}</p>
         </div>

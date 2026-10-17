@@ -3,7 +3,9 @@ import Link from "next/link";
 import { ArrowRight, CalendarDays, ChevronDown, ChevronLeft, ChevronRight, Megaphone, Newspaper } from "lucide-react";
 import type { Article } from "@/db/schema";
 import { articleCoverUrl, type CategoryCount } from "@/lib/articles/service";
-import { normalizeArticleCategory } from "@/lib/articles/categories";
+import { UNCATEGORIZED } from "@/lib/articles/categories";
+
+const displayArticleCategory = (category: string | null) => category ?? UNCATEGORIZED;
 
 function articleDate(date: Date) {
   return new Intl.DateTimeFormat("vi-VN", { day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Ho_Chi_Minh" }).format(date);
@@ -21,7 +23,7 @@ function Cover({ article, sizes }: { article: Article; sizes: string }) {
 function ArticleCard({ article }: { article: Article }) {
   return <Link href={`/bai-viet/${article.slug}`} className="news-article-card group flex min-w-0 flex-col rounded-xl bg-white p-2.5 transition-transform duration-200 hover:-translate-y-0.5">
     <div className="relative aspect-[2.03] overflow-hidden rounded-[9px]"><Cover article={article} sizes="(max-width: 639px) calc(100vw - 3rem), (max-width: 1023px) 270px, 350px" /></div>
-    <div className="flex flex-1 flex-col px-2 pb-1 pt-3 sm:px-2.5"><Category>{normalizeArticleCategory(article.category)}</Category><h3 className="mt-2.5 line-clamp-3 text-[17px] font-black leading-[1.2] tracking-[-0.02em] text-[#12365a] transition-colors group-hover:text-[#24943c] lg:text-[19px]">{article.title}</h3><p className="mt-2 line-clamp-3 text-[13px] leading-[1.45] text-[#607a97] lg:text-sm">{article.metaDescription ?? article.intro}</p><div className="mt-auto flex items-center gap-2 pt-5 text-[11px] text-[#6a829b]"><CalendarDays className="size-4 shrink-0 text-[#5b80a1]" aria-hidden="true" /><time dateTime={article.createdAt.toISOString()}>{articleDate(article.createdAt)}</time><span className="ml-auto grid size-8 place-items-center rounded-full bg-[#f1f6f8] text-[#1b466a] transition-colors group-hover:bg-[#e7f5df] group-hover:text-[#25833a]"><ArrowRight className="size-4" aria-hidden="true" /></span></div></div>
+    <div className="flex flex-1 flex-col px-2 pb-1 pt-3 sm:px-2.5"><Category>{displayArticleCategory(article.category)}</Category><h3 className="mt-2.5 line-clamp-3 text-[17px] font-black leading-[1.2] tracking-[-0.02em] text-[#12365a] transition-colors group-hover:text-[#24943c] lg:text-[19px]">{article.title}</h3><p className="mt-2 line-clamp-3 text-[13px] leading-[1.45] text-[#607a97] lg:text-sm">{article.metaDescription ?? article.intro}</p><div className="mt-auto flex items-center gap-2 pt-5 text-[11px] text-[#6a829b]"><CalendarDays className="size-4 shrink-0 text-[#5b80a1]" aria-hidden="true" /><time dateTime={article.createdAt.toISOString()}>{articleDate(article.createdAt)}</time><span className="ml-auto grid size-8 place-items-center rounded-full bg-[#f1f6f8] text-[#1b466a] transition-colors group-hover:bg-[#e7f5df] group-hover:text-[#25833a]"><ArrowRight className="size-4" aria-hidden="true" /></span></div></div>
   </Link>;
 }
 
@@ -45,7 +47,7 @@ function pageHref(category: string | null, page: number) {
 
 export function CuratedNewsPage({ featured, articles, categories, activeCategory, page, pageCount, total }: CuratedNewsPageProps) {
   return <main className="news-page news-curated-page">
-    <section className="news-hero relative isolate overflow-hidden"><Image src="/images/landing-sky-v2.webp" alt="" fill priority sizes="100vw" className="-z-20 object-cover object-bottom" aria-hidden="true" /><div className="news-hero-wash absolute inset-0 -z-10" aria-hidden="true" /><div className="marketing-container relative grid min-h-[420px] items-center pb-14 pt-28 sm:pt-16 lg:min-h-[460px] lg:pb-20 lg:pt-24"><div className="relative z-10 max-w-[480px] pb-5 sm:-translate-y-1 sm:pb-0 lg:max-w-[565px]"><span className="inline-flex items-center gap-2 rounded-full bg-white/85 px-3 py-1.5 text-[11px] font-extrabold tracking-[0.08em] text-[#1b5c87] ring-1 ring-white/70"><Megaphone className="size-3.5 text-[#29a848]" aria-hidden="true" />TIN TỨC</span><h1 className="marketing-page-title mt-2.5 text-[#0b3153]">Cập nhật tin tức<br className="hidden sm:block" /> mới nhất từ<span className="block text-[#24943c]">Win-Win Back</span></h1><p className="mt-2 max-w-[480px] text-pretty text-[15px] leading-6 text-[#315674] sm:text-base sm:leading-7">Các bài giới thiệu sản phẩm đã xuất bản, kèm thông tin mua hàng và hoàn tiền để bạn tham khảo.</p></div><div className="pointer-events-none absolute bottom-0 right-[2%] z-0 w-[54%] max-w-[470px] sm:bottom-[20px] sm:right-[2%] lg:bottom-[-24px] lg:right-[1%] lg:w-[48%] lg:max-w-[550px]"><Image src="/images/news-reading-mascot-v1.png" alt="" width={1536} height={1024} priority sizes="(max-width: 639px) 58vw, (max-width: 1023px) 460px, 550px" className="h-auto w-full drop-shadow-[0_12px_12px_rgba(21,86,44,0.15)]" aria-hidden="true" /></div></div></section>
+    <section className="news-hero relative isolate overflow-hidden"><Image src="/images/landing-sky-v2.webp" alt="" fill priority sizes="100vw" className="-z-20 object-cover object-bottom" aria-hidden="true" /><div className="news-hero-wash absolute inset-0 -z-10" aria-hidden="true" /><div className="marketing-container relative grid min-h-[420px] items-center pb-14 pt-28 sm:pt-16 lg:min-h-[460px] lg:pb-20 lg:pt-24"><div className="relative z-10 max-w-[480px] pb-5 sm:-translate-y-1 sm:pb-0 lg:max-w-[565px]"><span className="inline-flex items-center gap-2 rounded-full bg-white/85 px-3 py-1.5 text-[11px] font-extrabold tracking-[0.08em] text-[#1b5c87] ring-1 ring-white/70"><Megaphone className="size-3.5 text-[#29a848]" aria-hidden="true" />TIN TỨC</span><h1 className="marketing-page-title mt-2.5 text-[#0b3153]">Cập nhật tin tức<br className="hidden sm:block" /> mới nhất từ<span className="block text-[#24943c]">Win-Win Back</span></h1><p className="mt-2 max-w-[480px] text-pretty text-[15px] leading-6 text-[#315674] sm:text-base sm:leading-7">Khám phá bài viết, gợi ý mua sắm và thông tin hoàn tiền từ Win-Win Back.</p></div><div className="pointer-events-none absolute bottom-0 right-[2%] z-0 w-[54%] max-w-[470px] sm:bottom-[20px] sm:right-[2%] lg:bottom-[-24px] lg:right-[1%] lg:w-[48%] lg:max-w-[550px]"><Image src="/images/news-reading-mascot-v1.png" alt="" width={1536} height={1024} priority sizes="(max-width: 639px) 58vw, (max-width: 1023px) 460px, 550px" className="h-auto w-full drop-shadow-[0_12px_12px_rgba(21,86,44,0.15)]" aria-hidden="true" /></div></div></section>
     <div className="marketing-container news-main news-curated-main relative z-10">
       {featured && (
         <article className="news-featured-card grid gap-4 overflow-hidden rounded-xl bg-white p-2.5 md:grid-cols-[1fr_1fr] md:gap-7">
@@ -53,7 +55,7 @@ export function CuratedNewsPage({ featured, articles, categories, activeCategory
             <Cover article={featured} sizes="(max-width: 767px) calc(100vw - 3rem), (max-width: 1023px) 393px, 540px" />
           </Link>
           <div className="flex flex-col justify-center px-3 pb-4 pt-1 md:px-1 md:py-4 lg:px-3">
-            <Category>{normalizeArticleCategory(featured.category)}</Category>
+            <Category>{displayArticleCategory(featured.category)}</Category>
             <h2 className="mt-3 line-clamp-3 text-balance text-[28px] font-black leading-[1.06] tracking-[-0.03em] text-[#12365a] md:text-[30px] lg:text-[38px]">{featured.title}</h2>
             <p className="mt-3 line-clamp-3 text-[13px] leading-[1.5] text-[#607a97] lg:text-base">{featured.metaDescription ?? featured.intro}</p>
             <div className="mt-5 flex items-center justify-between gap-3 lg:mt-6">
@@ -70,7 +72,7 @@ export function CuratedNewsPage({ featured, articles, categories, activeCategory
         <div className="mx-auto max-w-[800px] text-center">
           <p className="news-section-kicker">BÀI REVIEW MỚI NHẤT</p>
           <h2 id="latest-title" className="mt-2 text-balance text-3xl font-black tracking-[-0.025em] text-[#12365a] sm:text-[38px]">Bài viết <span className="text-[#23933b]">mới nhất</span></h2>
-          <p className="mt-2 text-sm leading-6 text-[#526f8e] sm:text-base">Thông tin sản phẩm từ các bài đã xuất bản; giá và khoản hoàn dự kiến cần kiểm tra lại trước khi mua.</p>
+          <p className="mt-2 text-sm leading-6 text-[#526f8e] sm:text-base">Khám phá các bài viết mới và chọn nội dung phù hợp với bạn.</p>
         </div>
         <div className="mt-8 flex flex-wrap items-center justify-center gap-2.5">
           <nav aria-label="Lọc bài viết theo danh mục" className="news-category-tabs flex min-w-0 items-center gap-1">

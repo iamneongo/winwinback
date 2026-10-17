@@ -122,7 +122,7 @@ export function RealArticleDetail({
           <div className="relative z-10 max-w-[670px] px-6 pb-44 pt-8 sm:px-12 sm:py-10">
             <h2 id="article-cta-title" className="text-balance text-2xl font-black leading-tight tracking-[-0.025em] sm:text-3xl">Mua sắm cùng Win-Win Back<br /><span className="text-[#218d39]">và kiểm tra tiền hoàn trước khi đặt hàng</span></h2>
             <p className="mt-3 max-w-[500px] text-sm leading-6 text-[#426381] sm:text-base">
-              {article.price ? `Giá ghi nhận lúc đăng: ${formatVnd(article.price)}. ` : ""}Thông tin sản phẩm và mức hoàn tiền có thể thay đổi; hãy kiểm tra lại trên {platform} trước khi thanh toán.
+              {article.productId.startsWith("manual:") ? "Khám phá thêm nội dung và ưu đãi mua sắm trên Win-Win Back." : <>{article.price ? `Giá ghi nhận lúc đăng: ${formatVnd(article.price)}. ` : ""}Thông tin sản phẩm và mức hoàn tiền có thể thay đổi; hãy kiểm tra lại trên {platform} trước khi thanh toán.</>}
             </p>
             <Link href={buyHref ?? "/register"} target={buyHref ? "_blank" : undefined} rel={buyHref ? "noopener noreferrer" : undefined} className="ww-btn-cta mt-5 inline-flex min-h-11 items-center gap-2 rounded-full px-5 py-3 text-sm font-extrabold focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-[#65a935]">{buyHref ? `Xem sản phẩm trên ${platform}` : "Bắt đầu mua sắm ngay"} <ArrowRight className="size-4" aria-hidden="true" /></Link>
           </div>

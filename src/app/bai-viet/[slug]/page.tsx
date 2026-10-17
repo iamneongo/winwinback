@@ -12,7 +12,7 @@ import {
   articleCoverUrl,
 } from "@/lib/articles/service";
 import { platformLabel } from "@/lib/labels";
-import { normalizeArticleCategory } from "@/lib/articles/categories";
+import { UNCATEGORIZED } from "@/lib/articles/categories";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const article = await peekPublishedArticle(slug);
   if (!article) return { title: "Không tìm thấy bài viết — Win-Win Back" };
-  const description = article.metaDescription ?? article.intro ?? `${article.productName} — thông tin sản phẩm và cách mua được hoàn tiền qua Win-Win Back.`;
+  const description = article.metaDescription ?? article.intro ?? `${article.title} — bài viết từ Win-Win Back.`;
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://winwinback.com";
   const canonical = new URL(`/bai-viet/${encodeURIComponent(article.slug)}`, siteUrl).toString();
   const cover = articleCoverUrl(article);
@@ -67,7 +67,7 @@ export default async function ArticlePage({
         eq(affiliateLinks.productId, article.productId),
       )).limit(1)
     : [];
-  const buyHref = sharedLink?.shortCode
+  const buyHref = article.productId.startsWith("manual:") ? null : sharedLink?.shortCode
     ? `/go/${sharedLink.shortCode}`
     : article.affiliateShortCode ? `/go/${article.affiliateShortCode}` : article.productUrl;
 
@@ -76,8 +76,8 @@ export default async function ArticlePage({
       article={article}
       related={related}
       buyHref={buyHref}
-      platform={platformLabel[article.platform] ?? article.platform}
-      category={normalizeArticleCategory(article.category)}
+      platform={article.productId.startsWith("manual:") ? "Bài viết" : platformLabel[article.platform] ?? article.platform}
+      category={article.category ?? UNCATEGORIZED}
       contentHtml={articleContentHtml(article)}
     />
   );
