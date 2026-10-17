@@ -11,6 +11,7 @@ import { cashbackRate, formatVnd } from "@/lib/config";
 import { getRequestBaseUrl } from "@/lib/baseUrl";
 import { platformLabel } from "@/lib/labels";
 import { MetricIcon, StepIcon } from "@/components/dashboard/MetricIcon";
+import { DashboardMetricCard } from "@/components/dashboard/DashboardMetricCard";
 import { RecentOrdersTable } from "@/components/dashboard/RecentOrdersTable";
 import { MyLinksTable } from "@/app/dashboard/MyLinksTable";
 import { ShopeeIcon, TikTokIcon } from "@/components/sections/BrandIcons";
@@ -29,25 +30,7 @@ type MetricProps = {
   tone: "green" | "blue" | "gold" | "purple";
 };
 function Metric({ label, value, href, action, tone }: MetricProps) {
-  return (
-    <div className={`${cardClass} min-h-[8.5rem]`}>
-      <div className="flex items-start gap-3">
-        <MetricIcon tone={tone} />
-        <div className="min-w-0">
-          <p className="text-xs font-medium text-[#536f98]">{label}</p>
-          <p className="mt-1 text-2xl font-black tracking-tight text-[#0d315d]">
-            {value}
-          </p>
-          <Link
-            href={href}
-            className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-[#1766e7] hover:underline"
-          >
-            {action} <ArrowRight className="h-3.5 w-3.5" />
-          </Link>
-        </div>
-      </div>
-    </div>
-  );
+  return <DashboardMetricCard icon={<MetricIcon tone={tone} />} label={label} value={value} href={href} action={action} />;
 }
 
 function PlatformMark({ platform }: { platform: "shopee" | "tiktok" }) {

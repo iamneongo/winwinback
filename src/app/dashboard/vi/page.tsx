@@ -10,6 +10,7 @@ import { DateRangeFilter } from "@/components/dashboard/DateRangeFilter";
 import { formatVnd, minWithdrawal } from "@/lib/config";
 import { txTypeLabel } from "@/lib/labels";
 import { DashboardPageHeader } from "@/components/dashboard/ui";
+import { DashboardMetricCard } from "@/components/dashboard/DashboardMetricCard";
 
 export const metadata = { title: "Ví hoàn tiền — Win-Win Back" };
 export const dynamic = "force-dynamic";
@@ -40,8 +41,8 @@ function qs(params: Record<string, string | undefined>): string {
   return s ? `?${s}` : "";
 }
 
-function WalletStat({ icon: Icon, iconClass, label, value, action, href = "#" }: { icon: typeof Wallet; iconClass: string; label: string; value: string; action: string; href?: string }) {
-  return <article className="min-h-[9.5rem] min-w-0 rounded-xl border border-[#e0eaf6] bg-white p-3.5 shadow-[0_5px_14px_rgba(26,73,124,0.04)] sm:min-h-[10.8rem] sm:p-5"><div className="flex min-w-0 items-center gap-2.5 sm:gap-3"><span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full sm:h-12 sm:w-12 ${iconClass}`}><Icon className="h-5 w-5 sm:h-6 sm:w-6" strokeWidth={2.2} /></span><p className="min-w-0 break-words text-xs font-medium leading-5 text-[#234b7d] sm:text-sm">{label}</p></div><p className="mt-3 break-words text-[22px] font-black leading-tight tracking-tight text-[#12335f] sm:mt-4 sm:text-[26px]">{value}</p><Link href={href} className="mt-3 inline-flex min-h-11 items-center gap-1.5 text-xs font-bold text-[#1261ed] hover:underline sm:mt-5 sm:gap-2 sm:text-sm">{action} <ArrowUpRight className="h-3.5 w-3.5 sm:h-4 sm:w-4" /></Link></article>;
+function WalletStat({ icon: Icon, iconClass, label, value, action, href }: { icon: typeof Wallet; iconClass: string; label: string; value: string; action: string; href: string }) {
+  return <DashboardMetricCard icon={<span className={`flex size-12 shrink-0 items-center justify-center rounded-full ${iconClass}`}><Icon className="size-6" strokeWidth={2.2} aria-hidden="true" /></span>} label={label} value={value} action={action} href={href} />;
 }
 
 export default async function WalletPage({ searchParams }: { searchParams: Promise<{ type?: string; from?: string; to?: string; page?: string }> }) {
@@ -80,17 +81,17 @@ export default async function WalletPage({ searchParams }: { searchParams: Promi
   return <main className="mx-auto w-full max-w-[1440px] px-4 py-6 sm:px-7 lg:px-8 lg:py-7">
     <DashboardPageHeader title="Ví hoàn tiền" description="Theo dõi số dư, lịch sử giao dịch và rút tiền về tài khoản của bạn" />
     <section className="grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1fr)_22.8rem]">
-      <div className="min-w-0"><div className="grid grid-cols-2 gap-3 max-[359px]:grid-cols-1 2xl:grid-cols-4"><WalletStat icon={Wallet} iconClass="bg-[#e7f9df] text-[#33a91f]" label="Số dư khả dụng" value={formatVnd(user.balance)} action="Rút tiền ngay" href="#rut-tien" /><WalletStat icon={Clock3} iconClass="bg-[#fff1d9] text-[#e99a10]" label="Tiền chờ duyệt" value={formatVnd(waitingAmount)} action="Xem chi tiết" href="#lich-su" /><WalletStat icon={ArrowUpRight} iconClass="bg-[#e8f1ff] text-[#287be5]" label="Tổng đã rút" value={formatVnd(withdrawnAmount)} action="Xem lịch sử rút" href="#lich-su" /><WalletStat icon={Landmark} iconClass="bg-[#f6e9ff] text-[#aa34de]" label="Tài khoản ngân hàng" value={linkedBank ? "Đã liên kết" : "Chưa liên kết"} action="Xem tài khoản" href="#tai-khoan" /></div>
+      <div className="min-w-0"><div className="grid gap-3 sm:grid-cols-2 2xl:grid-cols-4"><WalletStat icon={Wallet} iconClass="bg-[#e7f9df] text-[#33a91f]" label="Số dư khả dụng" value={formatVnd(user.balance)} action="Rút tiền ngay" href="#rut-tien" /><WalletStat icon={Clock3} iconClass="bg-[#fff1d9] text-[#e99a10]" label="Tiền chờ duyệt" value={formatVnd(waitingAmount)} action="Xem chi tiết" href="#lich-su" /><WalletStat icon={ArrowUpRight} iconClass="bg-[#e8f1ff] text-[#287be5]" label="Tổng đã rút" value={formatVnd(withdrawnAmount)} action="Xem lịch sử rút" href="#lich-su" /><WalletStat icon={Landmark} iconClass="bg-[#f6e9ff] text-[#aa34de]" label="Tài khoản ngân hàng" value={linkedBank ? "Đã liên kết" : "Chưa liên kết"} action="Xem tài khoản" href="#tai-khoan" /></div>
       <section id="lich-su" className="mt-4 min-w-0 overflow-hidden rounded-xl border border-[#e0eaf6] bg-white shadow-[0_5px_14px_rgba(26,73,124,0.04)]">
         <header className="flex min-w-0 flex-col gap-4 border-b border-[#e5edf7] px-4 py-4 sm:px-5 xl:flex-row xl:items-end xl:justify-between">
           <div className="min-w-0">
             <h2 className="text-base font-bold text-[#173861] sm:text-lg">Lịch sử giao dịch ví</h2>
-            <div className="mt-3 flex flex-wrap gap-1.5 sm:gap-2">
+            <nav aria-label="Lọc giao dịch theo loại" className="mt-3 flex flex-wrap gap-2">
               {TYPE_TABS.map((tab) => {
                 const active = tab.value === activeType;
-                return <Link key={tab.label} href={`/dashboard/vi${qs({ type: tab.value, from: query.from, to: query.to })}`} className={`min-h-11 rounded-full px-2.5 py-2.5 text-xs font-medium sm:px-3 ${active ? "bg-[#eaf9df] font-bold text-[#28711a] ring-1 ring-inset ring-[#b1eb78]" : "border border-[#e0eaf6] text-[#46658e] hover:bg-[#f6f9fd]"}`}>{tab.label}</Link>;
+                return <Link key={tab.label} href={`/dashboard/vi${qs({ type: tab.value, from: query.from, to: query.to })}`} aria-current={active ? "page" : undefined} className={`inline-flex h-11 shrink-0 items-center justify-center whitespace-nowrap rounded-full border px-3 text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#28711a] ${active ? "border-[#b1eb78] bg-[#eaf9df] font-bold text-[#28711a]" : "border-[#e0eaf6] text-[#46658e] hover:border-[#bcd7ad] hover:bg-[#f6fbf3]"}`}>{tab.label}</Link>;
               })}
-            </div>
+            </nav>
           </div>
           <form action="/dashboard/vi" className="grid w-full min-w-0 grid-cols-[minmax(0,1fr)_auto] items-end gap-2 xl:w-auto xl:max-w-[25rem] xl:flex-1">
             {activeType && <input type="hidden" name="type" value={activeType} />}
