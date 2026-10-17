@@ -31,7 +31,7 @@ export default async function AdminLayout({
         style={{ "--sidebar-width-icon": "3.5rem" } as React.CSSProperties}
       >
         <Sidebar variant="admin" />
-        <div className="flex min-h-svh min-w-0 flex-1 flex-col bg-[#f5f8fc] pb-24 lg:pb-0">
+        <div className="flex min-h-svh min-w-0 flex-1 flex-col bg-[#f5f8fc] pb-[calc(6rem+env(safe-area-inset-bottom))] lg:pb-0">
           <header className="flex h-[76px] items-center justify-between border-b border-[#e4edf8] bg-white px-4 sm:px-7 lg:px-8">
             <SidebarTrigger
               aria-label="Thu gọn / mở rộng thanh điều hướng"

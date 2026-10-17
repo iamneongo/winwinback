@@ -8,21 +8,21 @@ import { signIn, signUp, authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 
 const cardClass =
-  "w-full max-w-[26rem] rounded-2xl bg-white p-7 shadow-[0_24px_60px_rgba(4,20,40,0.45)]";
-const labelClass = "block text-sm font-semibold text-[#0d315d]";
+  "auth-card w-full max-w-[27rem] rounded-2xl bg-white px-6 py-7 shadow-[0_12px_32px_rgba(27,77,72,0.13)] sm:px-7 sm:py-8";
+const labelClass = "block text-sm font-bold text-[#0d315d]";
 const inputBase =
-  "h-11 w-full rounded-xl border border-[#dbe7f6] bg-[#f9fbff] px-3.5 text-sm text-[#173861] outline-none transition-colors focus:border-[#9ddd5d] focus:ring-2 focus:ring-[#b7e961]/25";
-const inputClass = `mt-1.5 ${inputBase}`;
+  "h-11 w-full rounded-xl border border-[#d5e4f7] bg-[#edf4fd] px-4 text-sm text-[#0d315d] placeholder:text-[#58749a] outline-none transition-colors focus:border-[#7cc739] focus:ring-2 focus:ring-[#b7e961]/35 sm:h-12";
+const inputClass = `mt-2 ${inputBase}`;
 
 const leftIconClass =
-  "pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8298b6]";
+  "pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#8298b6]";
 
 /** Email input with a leading mail icon. */
 function EmailInput(props: React.ComponentProps<"input">) {
   return (
-    <div className="relative mt-1.5">
+    <div className="relative mt-2">
       <Mail className={`${leftIconClass} h-[18px] w-[18px]`} />
-      <input {...props} className={`${inputBase} pl-11`} />
+      <input {...props} className={`${inputBase} pl-12`} />
     </div>
   );
 }
@@ -31,19 +31,18 @@ function EmailInput(props: React.ComponentProps<"input">) {
 function PasswordInput({ withIcon = true, ...props }: React.ComponentProps<"input"> & { withIcon?: boolean }) {
   const [show, setShow] = useState(false);
   return (
-    <div className="relative mt-1.5">
+    <div className="relative mt-2">
       {withIcon && <Lock className={`${leftIconClass} h-[18px] w-[18px]`} />}
       <input
         {...props}
         type={show ? "text" : "password"}
-        className={`${inputBase} pr-11 ${withIcon ? "pl-11" : ""}`}
+        className={`${inputBase} pr-12 ${withIcon ? "pl-12" : ""}`}
       />
       <button
         type="button"
-        tabIndex={-1}
         onClick={() => setShow((s) => !s)}
         aria-label={show ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
-        className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8298b6] transition-colors hover:text-[#35537c]"
+        className="absolute right-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full text-[#8298b6] transition-colors hover:text-[#35537c] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#72bd33]"
       >
         {show ? <EyeOff className="h-[18px] w-[18px]" /> : <Eye className="h-[18px] w-[18px]" />}
       </button>
@@ -86,7 +85,7 @@ function GoogleButton({ label = "Đăng nhập với Google", returnTo = "/dashb
       type="button"
       onClick={go}
       disabled={loading}
-      className="flex h-11 w-full items-center justify-center gap-2.5 rounded-xl border border-[#dbe7f6] bg-white text-sm font-bold text-[#0d315d] transition-colors hover:bg-[#f7faff] disabled:opacity-60"
+      className="flex h-11 w-full items-center justify-center gap-2.5 rounded-xl border border-[#d5e4f7] bg-white text-sm font-bold text-[#0d315d] transition-colors hover:bg-[#f1f7ff] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#72bd33] disabled:opacity-60 sm:h-12"
     >
       {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <GoogleIcon />}
       {label}
@@ -97,7 +96,7 @@ function GoogleButton({ label = "Đăng nhập với Google", returnTo = "/dashb
 /** A labelled "hoặc" divider. */
 function OrDivider() {
   return (
-    <div className="mt-5 flex items-center gap-3 text-xs font-medium text-[#9db0c8]">
+    <div className="mt-5 flex items-center gap-3 text-xs font-medium text-[#7890af]">
       <span className="h-px flex-1 bg-[#e4ecf6]" />
       hoặc
       <span className="h-px flex-1 bg-[#e4ecf6]" />
@@ -152,9 +151,9 @@ export function LoginForm({ googleEnabled = false, returnTo = "/dashboard" }: { 
 
   return (
     <div className={cardClass}>
-      <h1 className="text-xl font-black tracking-tight text-[#0d315d]">Đăng nhập</h1>
-      <p className="mt-1 text-sm text-[#6681a7]">Chào mừng trở lại Win-Win Back.</p>
-      <form onSubmit={onSubmit} className="mt-5 space-y-4">
+      <h2 className="text-2xl font-black tracking-[-0.03em] text-[#0d315d] sm:text-3xl">Đăng nhập</h2>
+      <p className="mt-1.5 text-sm text-[#5c79a0] sm:text-base">Chào mừng trở lại Win-Win Back.</p>
+      <form onSubmit={onSubmit} className="mt-6 space-y-4">
         <div>
           <label className={labelClass} htmlFor="email">Email</label>
           <EmailInput id="email" name="email" type="email" required autoComplete="email" placeholder="ban@email.com" />
@@ -162,7 +161,7 @@ export function LoginForm({ googleEnabled = false, returnTo = "/dashboard" }: { 
         <div>
           <div className="flex items-center justify-between">
             <label className={labelClass} htmlFor="password">Mật khẩu</label>
-            <Link href="/forgot-password" className="text-xs font-semibold text-[#1766e7] hover:underline">
+            <Link href="/forgot-password" className="text-sm font-semibold text-[#075ed6] hover:underline">
               Quên mật khẩu?
             </Link>
           </div>
@@ -184,7 +183,7 @@ export function LoginForm({ googleEnabled = false, returnTo = "/dashboard" }: { 
               Gửi lại email xác thực
             </button>
           ))}
-        <Button type="submit" variant="cta" disabled={loading} className="h-11 w-full gap-2 rounded-xl font-bold">
+        <Button type="submit" variant="cta" disabled={loading} className="h-11 w-full gap-2 rounded-xl text-sm font-bold sm:h-12">
           {loading && <Loader2 className="h-4 w-4 animate-spin" />}
           {loading ? "Đang đăng nhập…" : "Đăng nhập"}
         </Button>
@@ -197,7 +196,7 @@ export function LoginForm({ googleEnabled = false, returnTo = "/dashboard" }: { 
           </div>
         </>
       )}
-      <p className="mt-5 text-center text-sm text-[#6681a7]">
+      <p className="mt-5 text-center text-sm text-[#5c79a0]">
         Chưa có tài khoản?{" "}
         <Link href={returnTo === "/dashboard" ? "/register" : `/register?next=${encodeURIComponent(returnTo)}`} className="font-bold text-[#1766e7] hover:underline">Đăng ký ngay</Link>
       </p>
@@ -248,23 +247,23 @@ export function RegisterForm({ googleEnabled = false, returnTo = "/dashboard" }:
 
   return (
     <div className={cardClass}>
-      <h1 className="text-xl font-black tracking-tight text-[#0d315d]">Tạo tài khoản</h1>
-      <p className="mt-1 text-sm text-[#6681a7]">Đăng ký để bắt đầu nhận hoàn tiền.</p>
-      <form onSubmit={onSubmit} className="mt-5 space-y-4">
+      <h2 className="text-2xl font-black tracking-[-0.03em] text-[#0d315d] sm:text-3xl">Đăng ký</h2>
+      <p className="mt-1.5 text-sm text-[#5c79a0] sm:text-base">Tạo tài khoản để bắt đầu nhận hoàn tiền.</p>
+      <form onSubmit={onSubmit} className="mt-6 space-y-4">
         <div>
           <label className={labelClass} htmlFor="name">Tên hiển thị</label>
           <input id="name" name="name" type="text" required autoComplete="name" className={inputClass} placeholder="Nguyễn Văn A" />
         </div>
         <div>
           <label className={labelClass} htmlFor="email">Email</label>
-          <input id="email" name="email" type="email" required autoComplete="email" className={inputClass} placeholder="ban@email.com" />
+          <EmailInput id="email" name="email" type="email" required autoComplete="email" placeholder="ban@email.com" />
         </div>
         <div>
           <label className={labelClass} htmlFor="password">Mật khẩu</label>
           <PasswordInput id="password" name="password" required minLength={6} autoComplete="new-password" placeholder="Tối thiểu 6 ký tự" />
         </div>
         {error && <FieldError message={error} />}
-        <Button type="submit" variant="cta" disabled={loading} className="h-11 w-full gap-2 rounded-xl font-bold">
+        <Button type="submit" variant="cta" disabled={loading} className="h-11 w-full gap-2 rounded-xl text-sm font-bold sm:h-12">
           {loading && <Loader2 className="h-4 w-4 animate-spin" />}
           {loading ? "Đang tạo…" : "Đăng ký"}
         </Button>
@@ -277,7 +276,7 @@ export function RegisterForm({ googleEnabled = false, returnTo = "/dashboard" }:
           </div>
         </>
       )}
-      <p className="mt-5 text-center text-sm text-[#6681a7]">
+      <p className="mt-5 text-center text-sm text-[#5c79a0]">
         Đã có tài khoản?{" "}
         <Link href={returnTo === "/dashboard" ? "/login" : `/login?next=${encodeURIComponent(returnTo)}`} className="font-bold text-[#1766e7] hover:underline">Đăng nhập</Link>
       </p>

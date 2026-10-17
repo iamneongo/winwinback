@@ -21,6 +21,7 @@ import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -211,19 +212,21 @@ export function AdminDataTable<TData>({
             <Columns3 className="size-4" /> Cột
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="min-w-48">
-            <DropdownMenuLabel>Hiển thị cột</DropdownMenuLabel>
-            {table.getAllLeafColumns().filter((column) => column.getCanHide()).map((column) => {
-              const label = typeof column.columnDef.header === "string" ? column.columnDef.header : column.id;
-              return (
-                <DropdownMenuCheckboxItem
-                  key={column.id}
-                  checked={column.getIsVisible()}
-                  onCheckedChange={(checked) => column.toggleVisibility(checked === true)}
-                >
-                  {label}
-                </DropdownMenuCheckboxItem>
-              );
-            })}
+            <DropdownMenuGroup>
+              <DropdownMenuLabel>Hiển thị cột</DropdownMenuLabel>
+              {table.getAllLeafColumns().filter((column) => column.getCanHide()).map((column) => {
+                const label = typeof column.columnDef.header === "string" ? column.columnDef.header : column.id;
+                return (
+                  <DropdownMenuCheckboxItem
+                    key={column.id}
+                    checked={column.getIsVisible()}
+                    onCheckedChange={(checked) => column.toggleVisibility(checked === true)}
+                  >
+                    {label}
+                  </DropdownMenuCheckboxItem>
+                );
+              })}
+            </DropdownMenuGroup>
           </DropdownMenuContent>
         </DropdownMenu>
       </div> : null}

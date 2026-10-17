@@ -2,11 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LogOut } from "lucide-react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { signOut } from "@/lib/auth-client";
 import { BrandLogo } from "@/components/BrandLogo";
+import styles from "./Sidebar.module.css";
 import {
   customerNav,
   adminNav,
@@ -31,7 +29,6 @@ export function Sidebar({
   showAdminLink?: boolean;
 }) {
   const pathname = usePathname();
-  const router = useRouter();
   const items: NavItem[] =
     variant === "admin"
       ? adminNav
@@ -42,7 +39,7 @@ export function Sidebar({
   return (
     <SidebarRoot
       collapsible="icon"
-      className="ww-sidebar-shell border-r border-sidebar-border text-white"
+      className="ww-sidebar-shell border-r border-sidebar-border"
     >
       <SidebarHeader className="overflow-hidden px-3 pt-5 pb-0">
         {/* Constant padding => the mark never moves; only the name fades. */}
@@ -52,7 +49,6 @@ export function Sidebar({
           className="flex w-full items-center overflow-hidden px-0 py-2"
         >
           <BrandLogo
-            light
             subtitle={variant === "admin" ? "Admin" : undefined}
             className="[&>span:last-child]:transition-opacity [&>span:last-child]:duration-200 group-data-[collapsible=icon]:[&>span:last-child]:opacity-0"
           />
@@ -70,7 +66,7 @@ export function Sidebar({
                 <SidebarMenuButton
                   isActive={active}
                   tooltip={item.label}
-                  className={`h-10 rounded-lg px-2 text-[13px] font-semibold text-white/75 [&_svg]:size-[18px] hover:bg-white/7 hover:text-white data-active:bg-[#b7e961]/18 data-active:text-[#d9fb89] ${active ? "ring-1 ring-inset ring-[#b7e961]/25" : ""}`}
+                  className={`${styles.navItem} h-10 rounded-xl px-2 text-[13px] font-semibold text-[#315a78] [&_svg]:size-[18px]`}
                   render={
                     <Link
                       href={item.href}
@@ -88,37 +84,22 @@ export function Sidebar({
           })}
         </SidebarMenu>
       </SidebarContent>
-      <SidebarFooter className="gap-3 overflow-hidden px-3 pt-0 pb-5">
-        {/* Keep the promo outside the scrollable navigation so it stays pinned
-            above the account action while only the menu scrolls. */}
-        <div className="ww-sidebar-promo relative h-56 shrink-0 overflow-hidden rounded-2xl bg-[#062c52] p-4 group-data-[collapsible=icon]:hidden">
-          <Image
-            src="/images/dashboard-sidebar-mascot-v2.png"
-            alt=""
-            fill
-            sizes="17rem"
-            className="object-cover object-bottom"
-          />
-          <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-[#062c52] via-[#062c52]/90 to-transparent" />
-          <div className="relative z-10 max-w-[11rem]">
-            <p className="text-base font-bold">Mua sắm thông minh</p>
-            <p className="mt-0.5 font-bold text-[#d9fb89]">Hoàn tiền thật</p>
+      <SidebarFooter className="gap-3 overflow-hidden px-3 pt-4 pb-5">
+        {/* Keep the promo outside the scrollable navigation so it stays pinned. */}
+        <div className="ww-sidebar-promo relative h-56 shrink-0 overflow-hidden rounded-2xl p-4 group-data-[collapsible=icon]:hidden">
+          <div className="relative z-10">
+            <p className="text-lg font-black leading-tight text-[#0d315d]">Mua sắm<br />thông minh</p>
+            <p className="mt-1 text-base font-black leading-tight text-[#198e2d]">Nhận cashback<br />về ví mỗi đơn!</p>
           </div>
-        </div>
-        <div className="ww-sidebar-logout shrink-0">
-          <button
-            type="button"
-            onClick={async () => {
-              await signOut();
-              router.push("/login");
-            }}
-            className="flex h-11 w-full items-center gap-3 overflow-hidden whitespace-nowrap rounded-xl px-2 text-sm font-semibold text-white/75 transition-colors hover:bg-white/8 hover:text-white"
-          >
-            <LogOut className="size-[18px] shrink-0" />
-            <span className="transition-opacity duration-200 group-data-[collapsible=icon]:opacity-0">
-              Đăng xuất
-            </span>
-          </button>
+          <Image
+            src="/images/landing-hero-mascot-v1.webp"
+            alt=""
+            width={420}
+            height={280}
+            sizes="17rem"
+            loading="eager"
+            className="ww-sidebar-promo-art pointer-events-none absolute bottom-[-1.5rem] right-[-2.5rem] h-auto w-[105%] select-none"
+          />
         </div>
       </SidebarFooter>
     </SidebarRoot>

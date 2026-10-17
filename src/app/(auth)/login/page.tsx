@@ -16,7 +16,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
     process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET,
   );
   return (
-    <AuthShell>
+    <AuthShell mode="login">
       <LoginForm googleEnabled={googleEnabled} returnTo={returnTo} />
     </AuthShell>
   );

@@ -21,7 +21,7 @@ export function BrandLogo({
       {showName && (
         <span className="flex flex-col leading-none">
           <span className={`text-lg font-bold ${light ? "text-white" : "text-[#0d315d]"}`}>Win-Win Back</span>
-          {subtitle && <span className="mt-0.5 text-[11px] font-bold tracking-wide text-[#b7e961]">{subtitle}</span>}
+          {subtitle && <span className={`mt-0.5 text-[11px] font-bold tracking-wide ${light ? "text-[#b7e961]" : "text-[#147a31]"}`}>{subtitle}</span>}
         </span>
       )}
     </span>

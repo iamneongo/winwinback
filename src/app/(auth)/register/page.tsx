@@ -16,7 +16,7 @@ export default async function RegisterPage({ searchParams }: { searchParams: Pro
     process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET,
   );
   return (
-    <AuthShell>
+    <AuthShell mode="register">
       <RegisterForm googleEnabled={googleEnabled} returnTo={returnTo} />
     </AuthShell>
   );

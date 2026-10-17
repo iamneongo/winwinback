@@ -76,14 +76,14 @@
   --chart-4: #55a61b;
   --chart-5: #aa34de;
   --radius: 0.625rem;
-  --sidebar: #062f54; /* dark navy branded sidebar */
-  --sidebar-foreground: rgba(255, 255, 255, 0.78);
-  --sidebar-primary: #b7e961;
-  --sidebar-primary-foreground: #0a3b60;
-  --sidebar-accent: #123a5f; /* solid approx of the lime-tint active pill */
-  --sidebar-accent-foreground: #d9fb89;
-  --sidebar-border: rgba(255, 255, 255, 0.06);
-  --sidebar-ring: #b7e961;
+  --sidebar: #e9f7ff;
+  --sidebar-foreground: #315a78;
+  --sidebar-primary: #188437;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #ffffff;
+  --sidebar-accent-foreground: #0d315d;
+  --sidebar-border: #cde7ef;
+  --sidebar-ring: #188437;
 }
 
 .dark {
@@ -110,14 +110,14 @@
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
-  --sidebar: #062f54;
-  --sidebar-foreground: rgba(255, 255, 255, 0.78);
-  --sidebar-primary: #b7e961;
-  --sidebar-primary-foreground: #0a3b60;
-  --sidebar-accent: #123a5f;
-  --sidebar-accent-foreground: #d9fb89;
-  --sidebar-border: rgba(255, 255, 255, 0.06);
-  --sidebar-ring: #b7e961;
+  --sidebar: #e9f7ff;
+  --sidebar-foreground: #315a78;
+  --sidebar-primary: #188437;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #ffffff;
+  --sidebar-accent-foreground: #0d315d;
+  --sidebar-border: #cde7ef;
+  --sidebar-ring: #188437;
 }
 
 @layer base {
@@ -161,6 +161,72 @@
 
 .winwin-root * {
   font-family: inherit;
+}
+
+/* Authentication pages share the marketing artwork and form treatment. */
+.auth-page {
+  min-height: 100svh;
+  background: #d8f3f8 url('/images/landing-sky-v2.webp') center bottom / cover no-repeat;
+}
+
+.auth-main {
+  min-height: calc(100svh - 84px);
+}
+
+.auth-brand-title {
+  font-size: clamp(2.25rem, 4.2vw, 3.75rem);
+  line-height: 1.04;
+  letter-spacing: -0.035em;
+  text-wrap: balance;
+}
+
+.auth-card {
+  color: #0d315d;
+}
+
+@media (max-width: 63.99rem) {
+  .auth-page {
+    background-position: 58% bottom;
+  }
+
+  .auth-main {
+    min-height: 0;
+  }
+
+  .auth-brand {
+    max-width: 31rem;
+    margin-inline: auto;
+  }
+
+  .auth-mascot {
+    position: absolute;
+    right: -1.25rem;
+    bottom: -1.25rem;
+    width: 10rem;
+    opacity: 0.92;
+  }
+
+  .auth-brand > div:first-child {
+    padding-bottom: 2.5rem;
+  }
+}
+
+@media (max-width: 39.99rem) {
+  .auth-page {
+    background-position: 56% bottom;
+  }
+
+  .auth-brand-title {
+    font-size: clamp(2rem, 8.5vw, 2.75rem);
+  }
+
+  .auth-mascot {
+    display: none;
+  }
+
+  .auth-brand > div:first-child {
+    padding-bottom: 0;
+  }
 }
 
 /* Shared H1 scale across the public marketing pages. */
@@ -228,13 +294,20 @@ html:has(.landing-page) {
   }
 }
 
-.ww-sidebar,
-/* shadcn Sidebar: paint the branded gradient on the inner surface
-   (it otherwise fills solid bg-sidebar). */
-.ww-sidebar-shell [data-slot="sidebar-inner"] {
-  background:
-    radial-gradient(circle at 15% 100%, rgba(26, 102, 151, 0.42), transparent 26%),
-    linear-gradient(165deg, #062f54 0%, #042545 100%);
+.ww-sidebar-shell [data-slot="sidebar-inner"],
+[data-slot="sidebar"][data-mobile="true"] {
+  background: linear-gradient(180deg, #e5f6ff 0%, #f2fbff 53%, #eef9f0 100%);
+}
+
+.ww-sidebar-promo {
+  background: url('/images/landing-sky-v2.webp') 45% bottom / cover no-repeat;
+}
+
+.ww-sidebar-promo::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(238, 250, 255, 0.86) 0%, transparent 57%);
 }
 
 .ww-dashboard-link-banner {

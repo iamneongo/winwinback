@@ -1,33 +1,33 @@
-import { ShieldCheck, Tag, TrendingUp } from "lucide-react";
+import Image from "next/image";
 
-const CHIPS = [
-  { icon: TrendingUp, label: "Hoàn tiền dễ dàng" },
-  { icon: Tag, label: "Ưu đãi mỗi ngày" },
-  { icon: ShieldCheck, label: "Minh bạch & an toàn" },
-] as const;
+export function AuthBrandPanel({ mode }: { mode: "login" | "register" }) {
+  const isRegister = mode === "register";
 
-export function AuthBrandPanel() {
   return (
-    <div className="relative max-w-xl">
-      <h1 className="text-5xl font-black leading-[1.05] tracking-tight xl:text-6xl">
-        Đăng nhập vào
-        <br />
-        <span className="text-[#b7e961]">Win-Win Back</span>
-      </h1>
-      <p className="mt-6 max-w-md text-lg leading-relaxed text-white/60">
-        Theo dõi hoàn tiền, khám phá ưu đãi và tối ưu mua sắm mỗi ngày.
-      </p>
-      <div className="mt-9 flex flex-wrap gap-3">
-        {CHIPS.map(({ icon: Icon, label }) => (
-          <span
-            key={label}
-            className="inline-flex items-center gap-2 rounded-xl border border-white/12 bg-white/[0.04] px-4 py-3 text-sm font-semibold text-white/90"
-          >
-            <Icon className="h-[18px] w-[18px] text-[#b7e961]" strokeWidth={2.2} />
-            {label}
-          </span>
-        ))}
+    <div className="auth-brand relative min-w-0 self-stretch">
+      <div className="relative z-10">
+        <span className="inline-flex rounded-full bg-[#e5f8d4] px-3 py-1.5 text-xs font-extrabold uppercase tracking-wide text-[#238d29]">
+          Hoàn tiền dễ dàng
+        </span>
+        <h1 className="auth-brand-title mt-4 font-black text-[#0d315d]">
+          {isRegister ? "Bắt đầu cùng" : "Đăng nhập vào"}
+          <br />
+          <span className="text-[#279d31]">Win-Win Back</span>
+        </h1>
+        <p className="mt-4 max-w-[27rem] text-sm leading-relaxed text-[#4d6d93] sm:text-base">
+          {isRegister
+            ? "Tạo tài khoản để theo dõi hoàn tiền, khám phá ưu đãi và mua sắm thông minh mỗi ngày."
+            : "Theo dõi hoàn tiền, khám phá ưu đãi và tối ưu mua sắm mỗi ngày."}
+        </p>
       </div>
+      <Image
+        src="/images/landing-hero-mascot-v1.webp"
+        alt="Linh vật Win-Win Back cầm điện thoại báo hoàn tiền thành công"
+        width={768}
+        height={512}
+        priority
+        className="auth-mascot pointer-events-none relative z-0 mt-2 h-auto w-full max-w-[29rem] select-none"
+      />
     </div>
   );
 }
