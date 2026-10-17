@@ -87,7 +87,7 @@ RUN if [ -f package-lock.json ]; then \
 
 # Bundle the idempotent database migration with the image. The standalone
 # runner does not include TypeScript sources or the tsx CLI.
-RUN ./node_modules/.bin/esbuild scripts/migrate-article-categories.ts \
+RUN ./node_modules/.bin/esbuild ./scripts/migrate-article-categories.ts \
   --bundle --platform=node --format=cjs --packages=external \
   --outfile=/app/article-categories-migration.cjs
 
