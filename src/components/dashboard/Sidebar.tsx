@@ -92,7 +92,7 @@ export function Sidebar({
             <p className="mt-1 text-base font-black leading-tight text-[#198e2d]">Nhận cashback<br />về ví mỗi đơn!</p>
           </div>
           <Image
-            src="/images/landing-hero-mascot-v1.webp"
+            src="/images/landing-hero-mascot-v3.webp"
             alt=""
             width={420}
             height={280}

@@ -58,7 +58,7 @@ export function PublicPolicyShell({
               <p className="mt-4 max-w-[48ch] text-pretty text-[15px] leading-7 text-[#315674] sm:text-base">{subtitle}</p>
             </div>
             <div className="pointer-events-none absolute bottom-0 right-[-5%] z-0 w-[52%] max-w-[500px] sm:right-[2%] sm:w-[46%] lg:right-[4%] lg:max-w-[500px]" aria-hidden="true">
-              <Image src="/images/landing-hero-mascot-v1.webp" alt="" width={1536} height={1024} priority sizes="(max-width: 639px) 60vw, (max-width: 1023px) 46vw, 560px" className="h-auto w-full drop-shadow-[0_10px_10px_rgba(25,99,59,0.13)]" />
+              <Image src="/images/landing-hero-mascot-v3.webp" alt="" width={1536} height={1024} priority sizes="(max-width: 639px) 60vw, (max-width: 1023px) 46vw, 560px" className="h-auto w-full drop-shadow-[0_10px_10px_rgba(25,99,59,0.13)]" />
               <span className={`${styles.heroEmblem} absolute right-[10%] top-[16%] grid size-12 place-items-center rounded-2xl bg-white/90 text-[#168d36] shadow-md sm:size-16`}>
                 {isPrivacy ? <ShieldCheck className="size-7 sm:size-9" /> : <FileText className="size-7 sm:size-9" />}
               </span>

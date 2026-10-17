@@ -37,7 +37,7 @@ export function HeroSection() {
 
         <div className="relative mx-auto w-full max-w-[670px] self-end lg:translate-x-5 lg:translate-y-8" aria-hidden="true">
           <Image
-            src="/images/landing-hero-mascot-v1.webp"
+            src="/images/landing-hero-mascot-v3.webp"
             width={1536}
             height={1024}
             alt=""

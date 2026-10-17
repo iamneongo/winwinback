@@ -1,5 +1,9 @@
 import type { LucideIcon } from "lucide-react";
 
+/** Desktop frame shared by the customer and admin dashboard shells. */
+export const dashboardFrameClass =
+  "flex min-h-svh min-w-0 flex-1 flex-col bg-white pb-[calc(6rem+env(safe-area-inset-bottom))] lg:m-3 lg:min-h-[calc(100svh-1.5rem)] lg:rounded-2xl lg:border lg:border-[#dce6f0] lg:pb-0 lg:shadow-[0_2px_8px_rgba(27,54,84,0.07)]";
+
 /** Shared surface for panels across the dashboard pages. */
 export const cardClass =
   "rounded-xl border border-[#e1eaf6] bg-white p-4 shadow-[0_5px_14px_rgba(26,73,124,0.04)] sm:p-5";

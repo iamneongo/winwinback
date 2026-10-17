@@ -92,7 +92,6 @@ export interface DockIconProps extends Omit<
   MotionProps & React.HTMLAttributes<HTMLDivElement>,
   "children"
 > {
-  width?: number
   size?: number
   magnification?: number
   disableMagnification?: boolean
@@ -104,7 +103,6 @@ export interface DockIconProps extends Omit<
 }
 
 const DockIcon = ({
-  width,
   size = DEFAULT_SIZE,
   magnification = DEFAULT_MAGNIFICATION,
   disableMagnification,
@@ -141,7 +139,7 @@ const DockIcon = ({
   return (
     <motion.div
       ref={ref}
-      style={{ width: width ?? scaleSize, height: scaleSize, padding }}
+      style={{ width: scaleSize, height: scaleSize, padding }}
       className={cn(
         "flex aspect-square cursor-pointer items-center justify-center rounded-full",
         disableMagnification && "hover:bg-muted-foreground transition-colors",

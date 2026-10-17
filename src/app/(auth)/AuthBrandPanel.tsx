@@ -21,7 +21,7 @@ export function AuthBrandPanel({ mode }: { mode: "login" | "register" }) {
         </p>
       </div>
       <Image
-        src="/images/landing-hero-mascot-v1.webp"
+        src="/images/landing-hero-mascot-v3.webp"
         alt="Linh vật Win-Win Back cầm điện thoại báo hoàn tiền thành công"
         width={768}
         height={512}

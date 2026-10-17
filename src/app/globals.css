@@ -84,6 +84,7 @@
   --sidebar-accent-foreground: #0d315d;
   --sidebar-border: #cde7ef;
   --sidebar-ring: #188437;
+  --ww-sidebar-surface: linear-gradient(180deg, #e5f6ff 0%, #f2fbff 53%, #eef9f0 100%);
 }
 
 .dark {
@@ -296,7 +297,17 @@ html:has(.landing-page) {
 
 .ww-sidebar-shell [data-slot="sidebar-inner"],
 [data-slot="sidebar"][data-mobile="true"] {
-  background: linear-gradient(180deg, #e5f6ff 0%, #f2fbff 53%, #eef9f0 100%);
+  background: var(--ww-sidebar-surface);
+}
+
+.ww-dashboard-shell {
+  background: #fff;
+}
+
+@media (min-width: 64rem) {
+  .ww-dashboard-shell {
+    background: var(--ww-sidebar-surface);
+  }
 }
 
 .ww-sidebar-promo {

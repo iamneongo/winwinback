@@ -72,7 +72,7 @@ export function NavBar({ variant = 'overlay', active = null }: { variant?: 'over
             <Link href="/lien-he" onClick={closeMobileMenu} aria-current={active === 'contact' ? 'page' : undefined} className={mobileLinkClass('contact')}><Headset className="size-5 shrink-0 text-[#258e3c]" aria-hidden="true" />Liên hệ</Link>
           </nav>
           <div className="mt-auto flex flex-col items-center pt-6">
-            <Image src="/images/landing-hero-mascot-v1.webp" alt="" width={1536} height={1024} sizes="230px" className={`${styles.mobileMascot} h-auto w-full max-w-[230px]`} aria-hidden="true" />
+            <Image src="/images/landing-hero-mascot-v3.webp" alt="" width={1536} height={1024} sizes="230px" className={`${styles.mobileMascot} h-auto w-full max-w-[230px]`} aria-hidden="true" />
             <Button variant="cta" nativeButton={false} className="h-auto min-h-12 w-full gap-2 rounded-full px-5 py-3 text-sm font-bold" render={<a href="/login" onClick={closeMobileMenu} />}>
               Đăng nhập để bắt đầu <ArrowRight className="size-4" aria-hidden="true" />
             </Button>
