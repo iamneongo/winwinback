@@ -14,6 +14,7 @@ import {
   ClipboardCheck,
   Ticket,
   FileText,
+  Mail,
   type LucideIcon,
 } from "lucide-react";
 
@@ -30,7 +31,7 @@ export type NavItem = {
 export type ProfileNavItem = {
   href: string;
   label: string;
-  icon: "ticket" | "settings" | "clipboard-check" | "file-text" | "plug" | "shield-check";
+  icon: "ticket" | "settings" | "clipboard-check" | "file-text" | "plug" | "shield-check" | "mail";
 };
 
 /** Customer dashboard navigation. */
@@ -60,6 +61,7 @@ export const adminNav: NavItem[] = [
   { href: "/admin/nhiem-vu", icon: ClipboardCheck, label: "Duyệt nhiệm vụ", short: "Nhiệm vụ" },
   { href: "/admin/rut-tham", icon: Ticket, label: "Rút thăm may mắn", short: "Rút thăm" },
   { href: "/admin/bai-viet", icon: FileText, label: "Bài viết SEO", short: "Bài viết" },
+  { href: "/admin/lien-he", icon: Mail, label: "Yêu cầu liên hệ", short: "Liên hệ" },
   { href: "/admin/integrations", icon: Plug, label: "Kết nối sàn", short: "Kết nối" },
 ];
 
@@ -68,6 +70,7 @@ export const adminMobileMoreNav: ProfileNavItem[] = [
   { href: "/admin/nhiem-vu", icon: "clipboard-check", label: "Duyệt nhiệm vụ" },
   { href: "/admin/rut-tham", icon: "ticket", label: "Rút thăm may mắn" },
   { href: "/admin/bai-viet", icon: "file-text", label: "Bài viết SEO" },
+  { href: "/admin/lien-he", icon: "mail", label: "Yêu cầu liên hệ" },
   { href: "/admin/integrations", icon: "plug", label: "Kết nối sàn" },
 ];
 

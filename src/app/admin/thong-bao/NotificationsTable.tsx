@@ -13,6 +13,7 @@ const typeLabels: Record<string, string> = {
   withdrawal_request: "Yêu cầu rút tiền",
   order: "Đơn hàng",
   reward: "Phần thưởng",
+  contact: "Yêu cầu liên hệ",
   system: "Hệ thống",
 };
 

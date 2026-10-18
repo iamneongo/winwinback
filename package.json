@@ -23,6 +23,7 @@
     "db:migrate-article-categories": "tsx scripts/migrate-article-categories.ts",
     "db:migrate-article-progress": "node scripts/migrate-article-progress.mjs",
     "db:migrate-notifications": "node --env-file=.env.local scripts/create-notifications-table.mjs",
+    "db:migrate-contact-messages": "node scripts/migrate-contact-messages.mjs",
     "db:migrate-missions": "node scripts/migrate-missions.mjs",
     "db:migrate-bank-accounts": "node scripts/migrate-bank-accounts.mjs",
     "set-role": "node --env-file=.env.local scripts/set-role.mjs"

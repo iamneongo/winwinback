@@ -8,6 +8,7 @@ import {
   Check,
   Coins,
   Gift,
+  Mail,
   Info,
   Package,
   RotateCcw,
@@ -25,6 +26,7 @@ const notificationMeta = {
   withdrawal_request: { label: "Yêu cầu rút tiền", Icon: ArrowDownLeft, tone: "bg-[#fff3dc] text-[#b7791f]" },
   order: { label: "Đơn hàng", Icon: Package, tone: "bg-[#f0ecff] text-[#6b4de0]" },
   reward: { label: "Phần thưởng", Icon: Gift, tone: "bg-[#eafbe0] text-[#3f8a2e]" },
+  contact: { label: "Yêu cầu liên hệ", Icon: Mail, tone: "bg-[#e8f4ff] text-[#1863a8]" },
   system: { label: "Hệ thống", Icon: Info, tone: "bg-[#eef2f8] text-[#526b90]" },
 } as const;
 
@@ -37,6 +39,7 @@ const filterOptions: { label: string; value: NotificationFilter }[] = [
   { label: "Yêu cầu rút", value: "withdrawal_request" },
   { label: "Đơn hàng", value: "order" },
   { label: "Phần thưởng", value: "reward" },
+  { label: "Liên hệ", value: "contact" },
   { label: "Hệ thống", value: "system" },
 ];
 

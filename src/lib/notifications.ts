@@ -11,6 +11,7 @@ export const notificationTypes = [
   "withdrawal_request",
   "order",
   "reward",
+  "contact",
   "system",
 ] as const;
 

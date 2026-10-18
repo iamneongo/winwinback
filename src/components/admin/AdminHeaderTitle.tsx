@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 
 const routeTitles = [
   { href: "/admin/thong-bao", title: "Thông báo" },
+  { href: "/admin/lien-he", title: "Liên hệ" },
   { href: "/admin/nguoi-dung", title: "Người dùng" },
   { href: "/admin/don-hang", title: "Đơn hàng" },
   { href: "/admin/yeu-cau-hoan-tien", title: "Hoàn tiền" },

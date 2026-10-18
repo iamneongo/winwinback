@@ -370,6 +370,27 @@ export const notifications = pgTable(
   ],
 );
 
+// Messages submitted through the public contact form. Keep them separate from
+// per-admin notifications so the inbox remains the source of truth.
+export const contactMessages = pgTable(
+  "contact_messages",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    name: text("name").notNull(),
+    email: text("email").notNull(),
+    topic: text("topic").notNull(),
+    message: text("message").notNull(),
+    // new | read | resolved
+    status: text("status").notNull().default("new"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("contact_messages_status_created_idx").on(t.status, t.createdAt),
+    index("contact_messages_email_created_idx").on(t.email, t.createdAt),
+  ],
+);
+
 // ---------------------------------------------------------------------------
 // Customer missions and their reward history
 // ---------------------------------------------------------------------------

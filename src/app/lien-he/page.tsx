@@ -57,7 +57,7 @@ export default function ContactPage() {
           <div className="rounded-2xl bg-white p-6 shadow-[0_6px_20px_rgba(18,54,90,0.06)] sm:p-8">
             <p className="inline-flex rounded-full bg-[#e3f4d9] px-3 py-1 text-[11px] font-extrabold uppercase tracking-[0.04em] text-[#28783d]">Gửi yêu cầu hỗ trợ</p>
             <h2 className="mt-3 text-balance text-2xl font-black tracking-[-0.025em] text-[#0b3153] sm:text-3xl">Biểu mẫu liên hệ</h2>
-            <p className="mt-2 text-sm leading-6 text-[#526f8e]">Điền thông tin bên dưới để soạn email gửi cho đội ngũ hỗ trợ.</p>
+            <p className="mt-2 text-sm leading-6 text-[#526f8e]">Điền thông tin bên dưới để gửi yêu cầu trực tiếp tới đội ngũ hỗ trợ.</p>
             <ContactForm />
           </div>
         </section>

@@ -22,6 +22,7 @@ import {
   FileText,
   Plug,
   Ticket,
+  Mail,
 } from "lucide-react";
 import {
   Popover,
@@ -56,6 +57,7 @@ const typeIcon: Record<string, React.ComponentType<{ className?: string }>> = {
   withdrawal_request: Banknote,
   order: Package,
   reward: Gift,
+  contact: Mail,
   system: Info,
 };
 
@@ -66,6 +68,7 @@ const typeTone: Record<string, string> = {
   withdrawal_request: "bg-[#fff3dc] text-[#b7791f]",
   order: "bg-[#f0ecff] text-[#6b4de0]",
   reward: "bg-[#eafbe0] text-[#3f8a2e]",
+  contact: "bg-[#e8f4ff] text-[#1863a8]",
   system: "bg-[#eef2f8] text-[#526b90]",
 };
 
@@ -76,6 +79,7 @@ const profileNavIcon = {
   "file-text": FileText,
   plug: Plug,
   "shield-check": ShieldCheck,
+  mail: Mail,
 } satisfies Record<ProfileNavItem["icon"], React.ComponentType<{ className?: string }>>;
 
 /** Format an ISO timestamp as a short Vietnamese relative time. */
