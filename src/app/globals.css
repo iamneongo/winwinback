@@ -325,33 +325,33 @@ html:has(.landing-page) {
   background: linear-gradient(90deg, rgba(238, 250, 255, 0.32) 0%, rgba(238, 250, 255, 0.12) 48%, transparent 76%), url('/images/dashboard-link-panorama-v1.webp') center bottom / cover no-repeat;
 }
 
-.ww-clipboard-notice {
-  animation: ww-clipboard-notice-in 240ms cubic-bezier(0.16, 1, 0.3, 1);
+.ww-link-error-notice {
+  animation: ww-link-error-notice-in 240ms cubic-bezier(0.16, 1, 0.3, 1);
   transition: opacity 180ms ease-out, transform 180ms ease-out;
 }
 
-.ww-clipboard-notice--closing {
+.ww-link-error-notice--closing {
   opacity: 0;
   transform: translateY(8px);
 }
 
-.ww-clipboard-notice-icon {
-  animation: ww-clipboard-icon-in 320ms cubic-bezier(0.16, 1, 0.3, 1);
+.ww-link-error-notice-icon {
+  animation: ww-link-error-icon-in 320ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-@keyframes ww-clipboard-notice-in {
+@keyframes ww-link-error-notice-in {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes ww-clipboard-icon-in {
+@keyframes ww-link-error-icon-in {
   from { opacity: 0; transform: rotate(-12deg) scale(0.82); }
   to { opacity: 1; transform: rotate(0) scale(1); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ww-clipboard-notice,
-  .ww-clipboard-notice-icon {
+  .ww-link-error-notice,
+  .ww-link-error-notice-icon {
     animation: none;
     transition: none;
   }

@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Link2, ArrowRight, LoaderCircle, ClipboardPaste } from 'lucide-react';
 import { TikTokIcon, ShopeeIcon } from './BrandIcons';
 import { Button } from '@/components/ui/button';
 import { detectPlatform } from '@/lib/affiliate/platform';
+import { LinkErrorNotice } from '@/components/ui/LinkErrorNotice';
 
 type Platform = 'tiktok' | 'shopee';
 
@@ -41,20 +42,25 @@ export function HeroLinkForm() {
   const [active, setActive] = useState<Platform>('shopee');
   const [inputValue, setInputValue] = useState('');
   const [navigating, setNavigating] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<{ id: number; title: string; message: string } | null>(null);
+  const noticeId = useRef(0);
+
+  function showError(title: string, message: string) {
+    setNotice({ id: ++noticeId.current, title, message });
+  }
 
   async function handlePaste() {
     try {
       const pasted = await navigator.clipboard.readText();
       if (!pasted.trim()) {
-        setError('Clipboard đang trống. Hãy sao chép link sản phẩm trước nhé.');
+        showError('Chưa có link để dán', 'Clipboard đang trống. Hãy sao chép link sản phẩm trước nhé.');
         return;
       }
       setInputValue(pasted.trim());
       setNavigating(false);
-      setError(null);
+      setNotice(null);
     } catch {
-      setError('Không thể đọc clipboard. Hãy dán link vào ô nhập.');
+      showError('Không thể dán tự động', 'Không thể đọc clipboard. Hãy dán link vào ô nhập.');
     }
   }
 
@@ -68,15 +74,15 @@ export function HeroLinkForm() {
     const url = inputValue.trim();
     if (!url) {
       e.preventDefault();
-      setError('Vui lòng dán link sản phẩm trước khi kiểm tra.');
+      showError('Chưa có link sản phẩm', 'Vui lòng dán link sản phẩm trước khi kiểm tra.');
       return;
     }
     if (!detectPlatform(url)) {
       e.preventDefault();
-      setError('Chỉ hỗ trợ link Shopee hoặc TikTok Shop hợp lệ.');
+      showError('Link chưa hợp lệ', 'Chỉ hỗ trợ link Shopee hoặc TikTok Shop hợp lệ.');
       return;
     }
-    setError(null);
+    setNotice(null);
     setNavigating(true);
   }
 
@@ -113,7 +119,7 @@ export function HeroLinkForm() {
           name="url"
           type="text"
           value={inputValue}
-          onChange={(e) => { setInputValue(e.target.value); setNavigating(false); setError(null); }}
+          onChange={(e) => { setInputValue(e.target.value); setNavigating(false); setNotice(null); }}
           placeholder="Dán link sản phẩm TikTok Shop hoặc Shopee..."
           className="min-w-0 flex-1 truncate bg-transparent py-1.5 text-base text-gray-700 outline-none placeholder:text-gray-500"
         />
@@ -139,7 +145,7 @@ export function HeroLinkForm() {
           </Button>
         )}
       </form>
-      {error ? <p role="alert" className="mt-2 px-1 text-sm font-medium text-red-700">{error}</p> : null}
+      {notice && <LinkErrorNotice key={notice.id} title={notice.title} message={notice.message} onClose={() => setNotice(null)} />}
       <p aria-live="polite" className="sr-only">{navigating ? 'Đang mở trang kiểm tra link' : ''}</p>
     </div>
   );

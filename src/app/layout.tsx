@@ -22,10 +22,10 @@ export const metadata: Metadata = {
     description: seoDescription,
     images: [
       {
-        url: "/images/og-image.png",
-        width: 1512,
-        height: 756,
-        alt: seoTitle,
+        url: "/images/og-image-v6.png",
+        width: 1200,
+        height: 630,
+        alt: "Win-Win Back — Mua sắm thông minh, nhận hoàn tiền về ví cùng linh vật mũi tên xanh",
       },
     ],
     type: "website",
@@ -35,7 +35,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: seoTitle,
     description: seoDescription,
-    images: ["/images/og-image.png"],
+    images: ["/images/og-image-v6.png"],
   },
 };
 
