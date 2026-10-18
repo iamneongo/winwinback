@@ -28,7 +28,7 @@ export default function ContactPage() {
               <p className="mt-2 max-w-[47ch] text-pretty text-[15px] leading-6 text-[#315674] sm:text-base sm:leading-7">Đội ngũ Win-Win Back luôn sẵn sàng lắng nghe, giải đáp thắc mắc và hỗ trợ bạn trong quá trình sử dụng dịch vụ.</p>
             </div>
             <div className="pointer-events-none absolute bottom-3 right-0 z-0 w-[78%] max-w-[350px] sm:bottom-0 sm:right-[1%] sm:w-[44%] sm:max-w-[460px] lg:right-[5%] lg:max-w-[480px]" aria-hidden="true">
-              <Image src="/images/contact-support-mascot-v3.png" alt="" width={1374} height={1145} priority sizes="(max-width: 639px) 78vw, (max-width: 1023px) 44vw, 480px" className="h-auto w-full drop-shadow-[0_12px_12px_rgba(27,93,55,0.13)]" />
+              <Image src="/images/contact-support-mascot-v4.webp" alt="" width={1100} height={917} sizes="(max-width: 639px) 78vw, (max-width: 1023px) 44vw, 480px" className="h-auto w-full drop-shadow-[0_12px_12px_rgba(27,93,55,0.13)]" />
             </div>
           </div>
         </section>

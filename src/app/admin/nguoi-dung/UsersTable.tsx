@@ -22,7 +22,7 @@ export type UserTableRow = {
 };
 
 const columns: ColumnDef<UserTableRow>[] = [
-  { accessorKey: "name", header: "Người dùng", size: 180, cell: ({ row }) => <Link href={`/admin/nguoi-dung/${row.original.id}`} className="flex items-center gap-2 hover:underline"><span className="grid size-8 shrink-0 place-items-center overflow-hidden rounded-full bg-[#e5effe] font-bold text-[#3676cb]">{row.original.image ? <Image src={row.original.image} alt="" width={32} height={32} className="size-full object-cover" /> : row.original.name.charAt(0)}</span><b className="truncate text-[#1261ed]">{row.original.name}</b></Link> },
+  { accessorKey: "name", header: "Người dùng", size: 180, cell: ({ row }) => <Link href={`/admin/nguoi-dung/${row.original.id}`} className="flex items-center gap-2 hover:underline"><span className="grid size-8 shrink-0 place-items-center overflow-hidden rounded-full bg-[#e5effe] font-bold text-[#3676cb]">{row.original.image ? <Image src={row.original.image} unoptimized alt="" width={32} height={32} className="size-full object-cover" /> : row.original.name.charAt(0)}</span><b className="truncate text-[#1261ed]">{row.original.name}</b></Link> },
   { accessorKey: "email", header: "Email", size: 210, cell: ({ row }) => <span className="break-all">{row.original.email}</span> },
   { accessorKey: "role", header: "Vai trò", size: 110, cell: ({ row }) => <Badge variant={row.original.role === "admin" ? "info" : "default"}>{row.original.role === "admin" ? "Quản trị" : "Người dùng"}</Badge> },
   { accessorKey: "emailVerified", header: "Xác thực", size: 125, enableSorting: false, cell: ({ row }) => <Badge variant={row.original.emailVerified ? "success" : "warning"}>{row.original.emailVerified ? "Đã xác thực" : "Chưa xác thực"}</Badge> },

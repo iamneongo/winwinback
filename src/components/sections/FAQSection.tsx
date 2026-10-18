@@ -31,9 +31,9 @@ export function FAQSection() {
       <div className="marketing-container grid items-center gap-6 md:grid-cols-[190px_minmax(0,1fr)] lg:grid-cols-[225px_400px_minmax(0,1fr)] lg:gap-6">
         <Image
           data-animate
-          src="/images/landing-faq-illustration-v1.png"
-          width={1536}
-          height={1024}
+          src="/images/landing-faq-illustration-v2.webp"
+          width={640}
+          height={427}
           alt="Minh họa bong bóng trò chuyện và dấu hỏi"
           className="hidden h-auto w-full max-w-[245px] justify-self-center md:block"
           sizes="(max-width: 1023px) 190px, 245px"

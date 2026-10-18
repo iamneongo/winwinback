@@ -104,7 +104,7 @@ export function PublicPolicyShell({
         <section id="cau-hoi-thuong-gap" className="scroll-mt-6 bg-[#f2faef] py-12 sm:py-16" aria-labelledby="policy-faq-title">
           <div className="marketing-container grid items-start gap-8 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:gap-12">
             <div className="flex items-start gap-4">
-              <Image src="/images/landing-faq-illustration-v1.png" alt="" width={112} height={112} sizes="112px" className="size-20 shrink-0 object-contain sm:size-24" aria-hidden="true" />
+              <Image src="/images/landing-faq-illustration-v2.webp" alt="" width={112} height={112} sizes="112px" className="size-20 shrink-0 object-contain sm:size-24" aria-hidden="true" />
               <div>
                 <p className="inline-flex rounded-full bg-[#e0f3d8] px-3 py-1 text-[11px] font-extrabold text-[#27813c]">CÂU HỎI THƯỜNG GẶP</p>
                 <h2 id="policy-faq-title" className="mt-3 max-w-[18ch] text-balance text-2xl font-black leading-[1.1] tracking-[-0.025em] text-[#12365a] sm:text-3xl">Một số câu hỏi thường gặp</h2>

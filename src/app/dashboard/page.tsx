@@ -51,22 +51,6 @@ function PlatformMark({ platform }: { platform: "shopee" | "tiktok" }) {
 export default async function OverviewPage({ searchParams }: { searchParams: Promise<{ url?: string; intent?: string; q?: string; trang?: string; linkPage?: string; sort?: string; dir?: string; platform?: string }> }) {
   const { url: prefillUrl, intent, q, trang, linkPage: legacyLinkPage, sort, dir, platform } = await searchParams;
   const user = await requireUser();
-  const [linkSummary, orderRows] = await Promise.all([
-    db
-      .select({
-        total: count(),
-        clicks: sql<number>`coalesce(sum(${affiliateLinks.clicks}), 0)::int`,
-      })
-      .from(affiliateLinks)
-      .where(eq(affiliateLinks.userId, user.id)),
-    db
-      .select()
-      .from(orders)
-      .where(eq(orders.userId, user.id))
-      .orderBy(desc(orders.orderedAt))
-      .limit(20),
-  ]);
-  const totalLinks = linkSummary[0]?.total ?? 0;
   const linkConditions = [eq(affiliateLinks.userId, user.id)];
   const searchTerm = q?.trim();
   if (searchTerm) {
@@ -80,11 +64,27 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
   }
   const selectedPlatform = platform === "shopee" || platform === "tiktok" ? platform : "";
   if (selectedPlatform) linkConditions.push(eq(affiliateLinks.platform, selectedPlatform));
-  const filteredLinkSummary = await db
-    .select({ total: count() })
-    .from(affiliateLinks)
-    .where(and(...linkConditions));
-  const filteredLinkCount = filteredLinkSummary[0]?.total ?? 0;
+  const [linkSummary, orderRows, filteredLinkSummary, baseUrl] = await Promise.all([
+    db
+      .select({
+        total: count(),
+        clicks: sql<number>`coalesce(sum(${affiliateLinks.clicks}), 0)::int`,
+      })
+      .from(affiliateLinks)
+      .where(eq(affiliateLinks.userId, user.id)),
+    db
+      .select()
+      .from(orders)
+      .where(eq(orders.userId, user.id))
+      .orderBy(desc(orders.orderedAt))
+      .limit(20),
+    searchTerm || selectedPlatform
+      ? db.select({ total: count() }).from(affiliateLinks).where(and(...linkConditions))
+      : Promise.resolve(null),
+    getRequestBaseUrl(),
+  ]);
+  const totalLinks = linkSummary[0]?.total ?? 0;
+  const filteredLinkCount = filteredLinkSummary?.[0]?.total ?? totalLinks;
   const linkPages = Math.max(1, Math.ceil(filteredLinkCount / LINKS_PER_PAGE));
   const linkPage = Math.min(Math.max(1, Number(trang ?? legacyLinkPage) || 1), linkPages);
   const descending = dir !== "asc";
@@ -109,7 +109,6 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
     .reduce((sum, order) => sum + order.cashbackAmount, 0);
   const clicks = linkSummary[0]?.clicks ?? 0;
   const recentOrders = orderRows.slice(0, 5);
-  const baseUrl = await getRequestBaseUrl();
   return (
     <main className="mx-auto w-full max-w-[1440px] px-4 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-7">
       <section className="ww-dashboard-link-banner relative isolate flex items-center overflow-hidden rounded-xl px-4 py-5 text-[#0a3151] sm:min-h-[13.75rem] sm:px-7 sm:py-6">
@@ -118,8 +117,7 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
           alt=""
           width={1536}
           height={1024}
-          priority
-          sizes="(max-width: 1279px) 0px, 330px"
+          sizes="330px"
           className="pointer-events-none absolute bottom-0 right-[2%] z-0 hidden h-auto w-[330px] max-w-none xl:block"
         />
         <div className="relative z-10 w-full max-w-[44rem]">
@@ -301,7 +299,7 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
         </div>
         <div className="relative min-h-40 overflow-hidden rounded-xl bg-[#062c52] p-5 text-white xl:h-full">
           <Image
-            src="/images/dashboard-overview-wallet-promo-v4.png"
+            src="/images/dashboard-overview-wallet-promo-v5.webp"
             alt=""
             fill
             sizes="(max-width: 1280px) 100vw, 25rem"

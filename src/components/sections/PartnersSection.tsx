@@ -5,7 +5,7 @@ const cards = [
     key: 'tiktok',
     name: 'TikTok Shop',
     tagline: 'Hoàn tiền mỗi đơn deal bạn săn được',
-    logo: '/images/logo-tiktok.png',
+    logo: '/images/logo-tiktok-128.png',
     logoW: 48,
     logoH: 48,
     bg: '#f4f4f4',

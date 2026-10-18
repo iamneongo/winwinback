@@ -30,7 +30,7 @@ const callbacks: Record<string, { text: string; ok: boolean }> = {
 };
 
 function MarketplaceLogo({ platform, size = 40 }: { platform: "shopee" | "tiktok"; size?: number }) {
-  const src = platform === "shopee" ? "/images/logo-shopee.png" : "/images/logo-tiktok.png";
+  const src = platform === "shopee" ? "/images/logo-shopee.png" : "/images/logo-tiktok-128.png";
   return <Image src={src} alt={platform === "shopee" ? "Shopee" : "TikTok Shop"} width={size} height={size} className="shrink-0 rounded-lg object-contain" />;
 }
 

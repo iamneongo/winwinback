@@ -1,7 +1,14 @@
 import type { Metadata, Viewport } from "next";
+import { Arimo } from "next/font/google";
 import { PwaProvider } from "@/components/pwa/PwaProvider";
 import "./globals.css";
 import { ScrollReveal } from "@/components/ScrollReveal";
+
+const arimo = Arimo({
+  subsets: ["latin", "vietnamese"],
+  display: "swap",
+  variable: "--font-arimo",
+});
 
 const seoTitle =
   "Win-Win Back | Hoàn Tiền Mua Sắm - cashback | Shopee back | Tiktok back";
@@ -47,14 +54,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="vi" className="h-full antialiased">
+    <html lang="vi" className={`${arimo.variable} h-full antialiased`}>
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Arimo:ital,wght@0,400..700;1,400..700&display=swap"
-          rel="stylesheet"
-        />
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
         <link rel="icon" href="/favicon.png" type="image/png" />
       </head>

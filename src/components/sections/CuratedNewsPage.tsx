@@ -17,7 +17,7 @@ function Category({ children }: { children: string }) {
 
 function Cover({ article, sizes }: { article: Article; sizes: string }) {
   const src = articleCoverUrl(article);
-  return src ? <Image src={src} alt={article.productName ?? article.title} fill sizes={sizes} className="object-cover" /> : <div className="grid size-full place-items-center bg-[#e8f4df]"><Newspaper className="size-10 text-[#76ad60]" aria-hidden="true" /></div>;
+  return src ? <Image src={src} unoptimized alt={article.productName ?? article.title} fill sizes={sizes} className="object-cover" /> : <div className="grid size-full place-items-center bg-[#e8f4df]"><Newspaper className="size-10 text-[#76ad60]" aria-hidden="true" /></div>;
 }
 
 function ArticleCard({ article }: { article: Article }) {
@@ -47,7 +47,7 @@ function pageHref(category: string | null, page: number) {
 
 export function CuratedNewsPage({ featured, articles, categories, activeCategory, page, pageCount, total }: CuratedNewsPageProps) {
   return <main className="news-page news-curated-page">
-    <section className="news-hero relative isolate overflow-hidden"><Image src="/images/landing-sky-v2.webp" alt="" fill priority sizes="100vw" className="-z-20 object-cover object-bottom" aria-hidden="true" /><div className="news-hero-wash absolute inset-0 -z-10" aria-hidden="true" /><div className="marketing-container relative grid min-h-[420px] items-center pb-14 pt-28 sm:pt-16 lg:min-h-[460px] lg:pb-20 lg:pt-24"><div className="relative z-10 max-w-[480px] pb-5 sm:-translate-y-1 sm:pb-0 lg:max-w-[565px]"><span className="inline-flex items-center gap-2 rounded-full bg-white/85 px-3 py-1.5 text-[11px] font-extrabold tracking-[0.08em] text-[#1b5c87] ring-1 ring-white/70"><Megaphone className="size-3.5 text-[#29a848]" aria-hidden="true" />TIN TỨC</span><h1 className="marketing-page-title mt-2.5 text-[#0b3153]">Cập nhật tin tức<br className="hidden sm:block" /> mới nhất từ<span className="block text-[#24943c]">Win-Win Back</span></h1><p className="mt-2 max-w-[480px] text-pretty text-[15px] leading-6 text-[#315674] sm:text-base sm:leading-7">Khám phá bài viết, gợi ý mua sắm và thông tin hoàn tiền từ Win-Win Back.</p></div><div className="pointer-events-none absolute bottom-0 right-[2%] z-0 w-[54%] max-w-[470px] sm:bottom-[20px] sm:right-[2%] lg:bottom-[-24px] lg:right-[1%] lg:w-[48%] lg:max-w-[550px]"><Image src="/images/news-reading-mascot-v1.png" alt="" width={1536} height={1024} priority sizes="(max-width: 639px) 58vw, (max-width: 1023px) 460px, 550px" className="h-auto w-full drop-shadow-[0_12px_12px_rgba(21,86,44,0.15)]" aria-hidden="true" /></div></div></section>
+    <section className="news-hero relative isolate overflow-hidden"><Image src="/images/landing-sky-v2.webp" alt="" fill priority sizes="100vw" className="-z-20 object-cover object-bottom" aria-hidden="true" /><div className="news-hero-wash absolute inset-0 -z-10" aria-hidden="true" /><div className="marketing-container relative grid min-h-[420px] items-center pb-14 pt-28 sm:pt-16 lg:min-h-[460px] lg:pb-20 lg:pt-24"><div className="relative z-10 max-w-[480px] pb-5 sm:-translate-y-1 sm:pb-0 lg:max-w-[565px]"><span className="inline-flex items-center gap-2 rounded-full bg-white/85 px-3 py-1.5 text-[11px] font-extrabold tracking-[0.08em] text-[#1b5c87] ring-1 ring-white/70"><Megaphone className="size-3.5 text-[#29a848]" aria-hidden="true" />TIN TỨC</span><h1 className="marketing-page-title mt-2.5 text-[#0b3153]">Cập nhật tin tức<br className="hidden sm:block" /> mới nhất từ<span className="block text-[#24943c]">Win-Win Back</span></h1><p className="mt-2 max-w-[480px] text-pretty text-[15px] leading-6 text-[#315674] sm:text-base sm:leading-7">Khám phá bài viết, gợi ý mua sắm và thông tin hoàn tiền từ Win-Win Back.</p></div><div className="pointer-events-none absolute bottom-0 right-[2%] z-0 w-[54%] max-w-[470px] sm:bottom-[20px] sm:right-[2%] lg:bottom-[-24px] lg:right-[1%] lg:w-[48%] lg:max-w-[550px]"><Image src="/images/news-reading-mascot-v2.webp" alt="" width={1536} height={1024} priority sizes="(max-width: 639px) 58vw, (max-width: 1023px) 460px, 550px" className="h-auto w-full drop-shadow-[0_12px_12px_rgba(21,86,44,0.15)]" aria-hidden="true" /></div></div></section>
     <div className="marketing-container news-main news-curated-main relative z-10">
       {featured && (
         <article className="news-featured-card grid gap-4 overflow-hidden rounded-xl bg-white p-2.5 md:grid-cols-[1fr_1fr] md:gap-7">
@@ -60,7 +60,7 @@ export function CuratedNewsPage({ featured, articles, categories, activeCategory
             <p className="mt-3 line-clamp-3 text-[13px] leading-[1.5] text-[#607a97] lg:text-base">{featured.metaDescription ?? featured.intro}</p>
             <div className="mt-5 flex items-center justify-between gap-3 lg:mt-6">
               <div className="flex min-w-0 items-center gap-2.5">
-                <Image src="/images/news-reading-mascot-v1.png" alt="" width={38} height={38} className="size-9 rounded-full bg-[#e5f7d7] object-cover" />
+                <Image src="/images/news-reading-mascot-v2.webp" alt="" width={38} height={38} className="size-9 rounded-full bg-[#e5f7d7] object-cover" />
                 <div className="min-w-0 text-[11px] leading-5 text-[#6d83a0]"><p className="font-bold text-[#12365a]">Win-Win Back</p><time dateTime={featured.createdAt.toISOString()}>{articleDate(featured.createdAt)}</time></div>
               </div>
               <Link href={`/bai-viet/${featured.slug}`} className="ww-btn-cta inline-flex shrink-0 items-center gap-2 rounded-full px-4 py-3 text-xs font-extrabold focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-[#65a935] lg:px-5 lg:text-sm">Đọc ngay <ArrowRight className="size-4" aria-hidden="true" /></Link>
@@ -112,9 +112,9 @@ export function CuratedNewsPage({ featured, articles, categories, activeCategory
         )}
       </section>
       <section className="news-cta news-curated-cta relative isolate mt-8 overflow-hidden rounded-xl sm:mt-[30px]" aria-labelledby="news-cta-title">
-        <Image src="/images/news-cta-shopping-banner-v1.png" alt="" fill sizes="(max-width: 1280px) 100vw, 1280px" className="-z-20 hidden object-cover object-center sm:block" aria-hidden="true" />
+        <Image src="/images/news-cta-shopping-banner-v2.webp" alt="" fill sizes="(max-width: 1280px) 100vw, 1280px" className="-z-20 hidden object-cover object-center sm:block" aria-hidden="true" />
         <div className="news-curated-cta-mobile-art pointer-events-none absolute inset-x-0 bottom-0 h-[190px] sm:hidden" aria-hidden="true">
-          <Image src="/images/news-cta-shopping-banner-v1.png" alt="" fill sizes="100vw" className="object-cover object-[70%_center]" />
+          <Image src="/images/news-cta-shopping-banner-v2.webp" alt="" fill sizes="100vw" className="object-cover object-[70%_center]" />
         </div>
         <div className="news-cta-wash absolute inset-0 -z-10" aria-hidden="true" />
         <div className="relative z-10 max-w-[400px] px-6 pb-44 pt-7 sm:py-6 sm:pl-[68px] sm:pr-4 lg:max-w-[650px]">

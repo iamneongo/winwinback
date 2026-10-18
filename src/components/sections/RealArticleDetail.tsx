@@ -32,7 +32,7 @@ function RelatedCard({ article }: { article: Article }) {
   return (
     <Link href={`/bai-viet/${article.slug}`} className="group grid min-w-0 overflow-hidden rounded-xl bg-white shadow-[0_4px_12px_rgba(27,72,64,0.07)] sm:grid-cols-[38%_1fr]">
       <div className="relative aspect-[1.8] overflow-hidden bg-[#e8f4df] sm:aspect-auto">
-        {cover ? <Image src={cover} alt={article.productName ?? article.title} fill sizes="(max-width: 639px) 100vw, 300px" className="object-cover transition-transform duration-300 group-hover:scale-[1.03]" /> : <div className="grid size-full place-items-center"><Newspaper className="size-9 text-[#76ad60]" aria-hidden="true" /></div>}
+        {cover ? <Image src={cover} unoptimized alt={article.productName ?? article.title} fill sizes="(max-width: 639px) 100vw, 300px" className="object-cover transition-transform duration-300 group-hover:scale-[1.03]" /> : <div className="grid size-full place-items-center"><Newspaper className="size-9 text-[#76ad60]" aria-hidden="true" /></div>}
       </div>
       <div className="flex min-w-0 flex-col px-4 py-4">
         <h3 className="line-clamp-2 text-balance text-base font-extrabold leading-snug text-[#12365a] group-hover:text-[#238b39]">{article.title}</h3>
@@ -86,7 +86,7 @@ export function RealArticleDetail({
           {summary && <p className="mt-3 max-w-[760px] text-pretty text-base leading-6 text-[#426381] sm:text-lg sm:leading-7">{summary}</p>}
           <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-[#5c7894] sm:text-sm">
             <div className="flex items-center gap-2.5">
-              <Image src="/images/news-reading-mascot-v1.png" alt="" width={44} height={44} className="size-11 rounded-full bg-[#e8f8dc] object-cover" />
+              <Image src="/images/news-reading-mascot-v2.webp" alt="" width={44} height={44} className="size-11 rounded-full bg-[#e8f8dc] object-cover" />
               <div className="leading-5"><p className="font-bold text-[#12365a]">Win-Win Back</p><time dateTime={article.createdAt.toISOString()}>{articleDate(article.createdAt)}</time></div>
             </div>
             <span className="hidden text-[#2e6e96] sm:inline" aria-hidden="true">·</span>
@@ -98,7 +98,7 @@ export function RealArticleDetail({
       <div className="marketing-container relative z-10 -mt-10 pb-12 sm:-mt-14">
         <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(250px,1fr)] lg:gap-8">
           <div className="relative aspect-[1.72] overflow-hidden rounded-xl bg-[#e8f4df] sm:aspect-[2.1] lg:col-start-1 lg:row-start-1">
-            {cover ? <Image src={cover} alt={article.productName ?? article.title} fill priority sizes="(max-width: 1023px) 100vw, 900px" className="object-cover" /> : <div className="grid size-full place-items-center"><Newspaper className="size-16 text-[#76ad60]" aria-hidden="true" /></div>}
+            {cover ? <Image src={cover} unoptimized alt={article.productName ?? article.title} fill priority sizes="(max-width: 1023px) 100vw, 900px" className="object-cover" /> : <div className="grid size-full place-items-center"><Newspaper className="size-16 text-[#76ad60]" aria-hidden="true" /></div>}
           </div>
           <aside className="rounded-xl bg-white px-5 py-6 shadow-[0_4px_14px_rgba(27,72,64,0.07)] lg:sticky lg:top-6 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:max-h-[calc(100dvh-3rem)] lg:overflow-y-auto" aria-label="Mục lục và chia sẻ bài viết">
             {body.toc.length > 0 && <>
@@ -116,7 +116,7 @@ export function RealArticleDetail({
 
         <section className="news-article-cta relative isolate mt-12 overflow-hidden rounded-xl sm:mt-16" aria-labelledby="article-cta-title">
           <div className="news-article-cta-art pointer-events-none absolute inset-x-0 bottom-0 -z-20 h-44 sm:inset-0 sm:h-full" aria-hidden="true">
-            <Image src="/images/news-cta-shopping-banner-v1.png" alt="" fill sizes="(max-width: 639px) 100vw, (max-width: 1280px) 100vw, 1280px" className="object-cover object-[70%_center] sm:object-center" />
+            <Image src="/images/news-cta-shopping-banner-v2.webp" alt="" fill sizes="(max-width: 639px) 100vw, (max-width: 1280px) 100vw, 1280px" className="object-cover object-[70%_center] sm:object-center" />
           </div>
           <div className="news-cta-wash absolute inset-0 -z-10" aria-hidden="true" />
           <div className="relative z-10 max-w-[670px] px-6 pb-44 pt-8 sm:px-12 sm:py-10">

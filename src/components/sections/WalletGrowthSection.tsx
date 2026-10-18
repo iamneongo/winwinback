@@ -11,10 +11,10 @@ export function WalletGrowthSection() {
       <div className="marketing-container grid items-center gap-4 pt-12 lg:min-h-[320px] lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.16fr)_minmax(130px,0.45fr)] lg:gap-8 lg:pt-0">
         <div data-animate className="relative order-2 mx-auto h-[255px] w-full max-w-[360px] lg:order-1 lg:h-[320px] lg:max-w-none" aria-hidden="true">
           <Image
-            src="/images/landing-wallet-growth-phone-v3.png"
+            src="/images/landing-wallet-growth-phone-v4.webp"
             alt=""
-            width={1121}
-            height={1403}
+            width={800}
+            height={1001}
             className="absolute left-1/2 top-[-12px] h-[340px] w-auto max-w-none -translate-x-1/2 object-contain lg:left-[-28px] lg:top-[-40px] lg:h-[430px] lg:translate-x-0"
             sizes="(max-width: 1023px) 272px, 345px"
           />

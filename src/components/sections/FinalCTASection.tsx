@@ -29,17 +29,17 @@ export function FinalCTASection() {
             <span>Mua sắm thông minh. Hoàn tiền thật!</span>
           </div>
           <Image
-            src="/images/landing-final-cta-mascot-v1.png"
-            width={1847}
-            height={852}
+            src="/images/landing-final-cta-mascot-v2.webp"
+            width={1200}
+            height={554}
             alt="Linh vật Win-Win Back vui mừng bên túi mua sắm, hộp quà và những đồng tiền hoàn"
             className="pointer-events-none absolute -bottom-8 right-[10%] z-10 hidden h-auto w-[460px] max-w-none object-contain sm:block lg:right-[12%] lg:w-[520px]"
             sizes="(max-width: 1023px) 460px, 520px"
           />
           <Image
-            src="/images/landing-final-cta-mascot-v1.png"
-            width={1847}
-            height={852}
+            src="/images/landing-final-cta-mascot-v2.webp"
+            width={1200}
+            height={554}
             alt=""
             aria-hidden="true"
             className="pointer-events-none mx-auto -mb-8 -mt-3 h-auto w-full max-w-[300px] object-contain sm:hidden"
