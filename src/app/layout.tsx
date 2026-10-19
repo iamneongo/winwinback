@@ -3,6 +3,8 @@ import { Arimo } from "next/font/google";
 import { PwaProvider } from "@/components/pwa/PwaProvider";
 import "./globals.css";
 import { ScrollReveal } from "@/components/ScrollReveal";
+import { Suspense } from "react";
+import { MetaPixel } from "@/components/MetaPixel";
 
 const arimo = Arimo({
   subsets: ["latin", "vietnamese"],
@@ -62,6 +64,19 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
         <ScrollReveal />
         <PwaProvider>{children}</PwaProvider>
+        <Suspense fallback={null}>
+          <MetaPixel />
+        </Suspense>
+        <noscript>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            height="1"
+            width="1"
+            style={{ display: "none" }}
+            src="https://www.facebook.com/tr?id=1090504986953204&ev=PageView&noscript=1"
+            alt=""
+          />
+        </noscript>
       </body>
     </html>
   );
