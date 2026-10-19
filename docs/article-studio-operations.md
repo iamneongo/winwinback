@@ -5,7 +5,9 @@
 - Development Neon migration `20261019_article_studio_v1` was applied and the database integration test passed.
 - Dokploy production received a full `pg_dump -Fc` backup at `/var/lib/postgresql/18/docker/article-studio-backups/before-studio-20261019.dump`. Its table of contents was verified; a separate restore test remains to be done.
 - The same migration was applied to production. The post-migration check found 42 articles, 42 reserved historical slugs, one default outro and all new tables.
-- The named volume `winwinback-article-media` is configured at `/app/storage/article-media`. It takes effect on the next application deployment; confirm UID/GID 1000 write access and persistence after redeploy.
+- The named volume `winwinback-article-media` is mounted at `/app/storage/article-media`. The deployed app runs as UID/GID 1000 and can write to it; a file checksum stayed unchanged after a second Dokploy redeploy.
+- Production deployment of `d0329d4` completed. The public article list and an existing article loaded, the admin list/editor/SEO panel loaded, and NVIDIA returned an AI proposal. Dismissing that proposal left the new article empty.
+- An isolated database restore, off-host backup of the database and media volume, and authenticated end-to-end editing/preview/publishing remain unverified. Do not treat the smoke checks above as substitutes.
 
 ## Required order
 
