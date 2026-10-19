@@ -4,6 +4,7 @@ const nextConfig: NextConfig = {
   // Server runtime (not static export) — required for the database-backed
   // dashboard, auth, affiliate redirects and webhooks.
   output: "standalone",
+  outputFileTracingExcludes: { "/*": ["./.env*", "./.article-studio-backups/**/*", "./storage/**/*"] },
   experimental: {
     serverActions: { bodySizeLimit: "3mb" },
   },

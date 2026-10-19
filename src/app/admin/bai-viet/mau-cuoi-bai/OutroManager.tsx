@@ -1,0 +1,21 @@
+"use client";
+import { useState } from "react";
+import type { ColumnDef } from "@tanstack/react-table";
+import { AdminDataTable } from "@/components/admin/AdminDataTable";
+import type { articleOutros } from "@/db/schema";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { MediaPicker } from "../MediaPicker";
+import { StudioDialog } from "../StudioDialog";
+import { listOutrosAction, saveOutroAction, outroUsageAction } from "../studio-actions";
+type Outro = typeof articleOutros.$inferSelect;
+export function OutroManager({ initial }: { initial: Outro[] }) {
+  const [items, setItems] = useState(initial); const [edit, setEdit] = useState<Outro | null>(null); const [media, setMedia] = useState(false); const [busy, setBusy] = useState(false); const [error, setError] = useState(""); const [confirmCount, setConfirmCount] = useState<number | null>(null);
+  const columns: ColumnDef<Outro>[] = [{ accessorKey: "name", header: "Mẫu" }, { accessorKey: "title", header: "Tiêu đề" }, { id: "actions", header: "Thao tác", cell: ({ row }) => <Button type="button" variant="outline" onClick={() => { setEdit(row.original); setError(""); }}>Chỉnh sửa</Button> }];
+  return <div className="space-y-4"><Button type="button" variant="cta" onClick={() => setEdit({ id: crypto.randomUUID(), name: "Mẫu mới", title: "", body: "", imageUrl: "", buttonLabel: "Tìm hiểu thêm", buttonUrl: "/register", links: [], revision: 0 })}>Thêm mẫu</Button><AdminDataTable data={items} columns={columns} totalRows={items.length} page={1} pageSize={20} mode="client" minWidth="600px" ariaLabel="Mẫu cuối bài" searchPlaceholder="Tìm mẫu…" />
+    {edit && <StudioDialog title="Chỉnh mẫu cuối bài" onClose={() => { if (!busy) setEdit(null); }}><div className="space-y-3">{([['name', 'Tên mẫu'], ['title', 'Tiêu đề'], ['buttonLabel', 'Nhãn nút'], ['buttonUrl', 'Link nút']] as const).map(([key, label]) => <label key={key} className="block text-sm">{label}<Input value={edit[key]} onChange={(e) => setEdit({ ...edit, [key]: e.target.value })} /></label>)}<label className="block text-sm">Nội dung<Textarea value={edit.body} onChange={(e) => setEdit({ ...edit, body: e.target.value })} /></label><Button type="button" variant="outline" onClick={() => setMedia(true)}>Chọn ảnh nền</Button><p className="truncate text-xs">{edit.imageUrl}</p><h3 className="text-sm font-semibold">Liên kết cuối bài</h3>{edit.links.map((link, index) => <div key={index} className="flex gap-2"><Input aria-label="Tên liên kết" value={link.label} onChange={(e) => setEdit({ ...edit, links: edit.links.map((l, i) => i === index ? { ...l, label: e.target.value } : l) })} /><Input aria-label="URL liên kết" value={link.url} onChange={(e) => setEdit({ ...edit, links: edit.links.map((l, i) => i === index ? { ...l, url: e.target.value } : l) })} /><Button type="button" variant="ghost" onClick={() => setEdit({ ...edit, links: edit.links.filter((_, i) => i !== index) })}>Gỡ</Button></div>)}<Button type="button" variant="outline" disabled={edit.links.length >= 10} onClick={() => setEdit({ ...edit, links: [...edit.links, { label: "", url: "/" }] })}>Thêm liên kết</Button>{error && <p role="alert" className="text-sm text-red-700">{error}</p>}<Button type="button" variant="cta" disabled={busy} onClick={async () => { setBusy(true); try { setConfirmCount(await outroUsageAction(edit.id)); } catch { setError("Không kiểm tra được số bài sử dụng mẫu."); } finally { setBusy(false); } }}>Lưu mẫu</Button></div></StudioDialog>}
+    {confirmCount !== null && edit && <StudioDialog title="Xác nhận cập nhật mẫu" onClose={() => setConfirmCount(null)}><p className="mb-4 text-sm">Có {confirmCount} bài đang sử dụng mẫu này. Nội dung cuối các bài đó sẽ được cập nhật.</p><Button type="button" variant="cta" disabled={busy} onClick={async () => { setBusy(true); try { await saveOutroAction(edit, true); setItems(await listOutrosAction()); setConfirmCount(null); setEdit(null); } catch { setError("Không lưu được. Kiểm tra nội dung, URL hoặc tải lại nếu mẫu đã thay đổi."); setConfirmCount(null); } finally { setBusy(false); } }}>Xác nhận cập nhật</Button></StudioDialog>}
+    {media && edit && <MediaPicker onClose={() => setMedia(false)} onSelect={(url) => setEdit({ ...edit, imageUrl: url })} />}
+  </div>;
+}

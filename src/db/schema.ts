@@ -9,7 +9,9 @@ import {
   pgEnum,
   index,
   uniqueIndex,
+  jsonb,
 } from "drizzle-orm/pg-core";
+import type { ArticleDocument, ArticleSeo } from "@/lib/articles/document";
 
 // ---------------------------------------------------------------------------
 // Enums
@@ -566,6 +568,9 @@ export const articles = pgTable(
     sections: text("sections"),
     // Rich HTML body (admin-editable in the WYSIWYG editor; primary content).
     contentHtml: text("content_html"),
+    seo: jsonb("seo").$type<ArticleSeo>(),
+    revision: integer("revision").notNull().default(0),
+    updatedAt: timestamp("updated_at", { withTimezone: true }),
     productName: text("product_name"),
     // Cross-marketplace article category; older rows may retain raw marketplace labels.
     category: text("category").references(() => articleCategories.name, { onDelete: "restrict", onUpdate: "cascade" }),
@@ -594,6 +599,43 @@ export const articles = pgTable(
 
 // A referred customer can earn one invitation bonus for each side, once their
 // qualifying order is completed; unique referred_user_id is the payout guard.
+export const articleDrafts = pgTable("article_drafts", {
+  articleId: uuid("article_id").primaryKey().references(() => articles.id, { onDelete: "cascade" }),
+  document: jsonb("document").$type<ArticleDocument>().notNull(),
+  revision: integer("revision").notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+export const articleVersions = pgTable("article_versions", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  articleId: uuid("article_id").notNull().references(() => articles.id, { onDelete: "cascade" }),
+  document: jsonb("document").$type<ArticleDocument>().notNull(),
+  label: text("label").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+export const articleSlugs = pgTable("article_slugs", {
+  slug: text("slug").primaryKey(),
+  articleId: uuid("article_id").notNull().references(() => articles.id, { onDelete: "cascade" }),
+});
+export const articleMedia = pgTable("article_media", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  name: text("name").notNull(),
+  width: integer("width").notNull(),
+  height: integer("height").notNull(),
+  bytes: integer("bytes").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+export const articleOutros = pgTable("article_outros", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  title: text("title").notNull(),
+  body: text("body").notNull(),
+  imageUrl: text("image_url").notNull(),
+  buttonLabel: text("button_label").notNull(),
+  buttonUrl: text("button_url").notNull(),
+  links: jsonb("links").$type<{ label: string; url: string }[]>().notNull().default([]),
+  revision: integer("revision").notNull().default(0),
+});
+
 export const referralRewards = pgTable("referral_rewards", {
   referredUserId: uuid("referred_user_id")
     .primaryKey()

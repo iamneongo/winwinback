@@ -6,6 +6,7 @@ import { getArticleById, articleContentHtml } from "@/lib/articles/service";
 import { ArticleEditor } from "../../ArticleEditor";
 import { AdminPageContainer } from "@/components/admin/AdminPageContainer";
 import { listManagedCategories } from "@/lib/articles/category-service";
+import { loadStudio } from "@/lib/articles/studio";
 
 export const metadata = { title: "Sửa bài viết — Quản trị" };
 export const dynamic = "force-dynamic";
@@ -19,11 +20,12 @@ export default async function EditArticlePage({
   const { id } = await params;
   const a = await getArticleById(id);
   if (!a) notFound();
+  const studio = await loadStudio(id);
   const categories = await listManagedCategories();
 
   return (
     <AdminPageContainer className="py-6 lg:py-7">
-      <div className="mx-auto w-full max-w-4xl">
+      <div className="mx-auto w-full max-w-7xl">
         <Link
           href="/admin/bai-viet"
           className="mb-4 inline-flex items-center gap-1 text-sm font-bold text-[#34527d] hover:underline"
@@ -36,6 +38,8 @@ export default async function EditArticlePage({
         <p className="mb-5 mt-1 text-sm text-[#58749a]">{a.title}</p>
         <ArticleEditor
           id={a.id}
+          initialDocument={studio?.document}
+          initialRevision={studio?.revision}
           slug={a.slug}
           categories={categories.map((category) => category.name)}
           initialHtml={articleContentHtml(a)}

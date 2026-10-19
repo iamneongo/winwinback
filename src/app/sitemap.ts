@@ -18,9 +18,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const articles = await listPublishedArticles({ limit: 50_000 });
     return [
       ...staticPages,
-      ...articles.map((article) => ({
+      ...articles.filter((article) => !article.seo?.noindex && (!article.seo?.canonical || article.seo.canonical === `${siteUrl}/bai-viet/${article.slug}`)).map((article) => ({
         url: `${siteUrl}/bai-viet/${article.slug}`,
-        lastModified: article.createdAt,
+        lastModified: article.updatedAt || article.createdAt,
         changeFrequency: "monthly" as const,
         priority: 0.6,
       })),

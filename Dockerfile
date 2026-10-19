@@ -105,6 +105,7 @@ COPY --from=builder --chown=node:node /app/.next/static ./.next/static
 COPY --from=builder --chown=node:node /app/public ./public
 
 # Switch to non-root user for security best practices
+RUN mkdir -p /app/storage/article-media && chown -R node:node /app/storage
 USER node
 
 # Expose port 3000 to allow HTTP traffic

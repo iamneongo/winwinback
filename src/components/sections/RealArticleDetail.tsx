@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, CalendarDays, ChevronRight, Clock3, Newspaper } from "lucide-react";
-import type { Article } from "@/db/schema";
+import type { Article, articleOutros } from "@/db/schema";
 import { articleCoverUrl } from "@/lib/articles/service";
 import { formatVnd } from "@/lib/config";
 import { ArticleShareActions } from "./ArticleShareActions";
@@ -24,7 +24,7 @@ function prepareBody(html: string, hasCover: boolean): { html: string; toc: TocI
     toc.push({ id, title });
     return `<h2${attrs} id="${id}">${heading}</h2>`;
   });
-  return { html: withAnchors, toc };
+  return { html: withAnchors.replace(/<table\b[\s\S]*?<\/table>/gi, (table) => `<div class="article-table-scroll">${table}</div>`), toc };
 }
 
 function RelatedCard({ article }: { article: Article }) {
@@ -54,6 +54,7 @@ export function RealArticleDetail({
   platform,
   category,
   contentHtml,
+  outro,
 }: {
   article: Article;
   related: Article[];
@@ -61,12 +62,13 @@ export function RealArticleDetail({
   platform: string;
   category: string;
   contentHtml: string;
+  outro?: typeof articleOutros.$inferSelect | null;
 }) {
   const cover = articleCoverUrl(article);
   const body = prepareBody(contentHtml, Boolean(cover));
   const wordCount = contentHtml.replace(/<[^>]*>/g, " ").trim().split(/\s+/).length;
   const readingMinutes = Math.max(1, Math.ceil(wordCount / 220));
-  const summary = article.metaDescription ?? article.intro;
+  const summary = article.intro ?? article.metaDescription;
 
   return (
     <main className="news-detail-page min-h-screen bg-[#f8fbf6] text-[#12365a]">
@@ -114,19 +116,21 @@ export function RealArticleDetail({
           <article className="article-body news-real-article-body mt-4 max-w-[990px] lg:col-start-1 lg:row-start-2 lg:mt-2" dangerouslySetInnerHTML={{ __html: body.html }} />
         </div>
 
-        <section className="news-article-cta relative isolate mt-12 overflow-hidden rounded-xl sm:mt-16" aria-labelledby="article-cta-title">
+        {outro !== null && <section className="news-article-cta relative isolate mt-12 overflow-hidden rounded-xl sm:mt-16" aria-labelledby="article-cta-title">
           <div className="news-article-cta-art pointer-events-none absolute inset-x-0 bottom-0 -z-20 h-44 sm:inset-0 sm:h-full" aria-hidden="true">
-            <Image src="/images/news-cta-shopping-banner-v2.webp" alt="" fill sizes="(max-width: 639px) 100vw, (max-width: 1280px) 100vw, 1280px" className="object-cover object-[70%_center] sm:object-center" />
+            <Image src={outro?.imageUrl || "/images/news-cta-shopping-banner-v2.webp"} unoptimized alt="" fill sizes="(max-width: 639px) 100vw, (max-width: 1280px) 100vw, 1280px" className="object-cover object-[70%_center] sm:object-center" />
           </div>
           <div className="news-cta-wash absolute inset-0 -z-10" aria-hidden="true" />
           <div className="relative z-10 max-w-[670px] px-6 pb-44 pt-8 sm:px-12 sm:py-10">
-            <h2 id="article-cta-title" className="text-balance text-2xl font-black leading-tight tracking-[-0.025em] sm:text-3xl">Mua sắm cùng Win-Win Back<br /><span className="text-[#218d39]">và kiểm tra tiền hoàn trước khi đặt hàng</span></h2>
+            <h2 id="article-cta-title" className="text-balance text-2xl font-black leading-tight tracking-[-0.025em] sm:text-3xl">{outro?.title || "Mua sắm cùng Win-Win Back và kiểm tra tiền hoàn trước khi đặt hàng"}</h2>
+            {outro?.body && <p className="mt-3 text-sm leading-6 text-[#426381]">{outro.body}</p>}
             <p className="mt-3 max-w-[500px] text-sm leading-6 text-[#426381] sm:text-base">
               {article.productId.startsWith("manual:") ? "Khám phá thêm nội dung và ưu đãi mua sắm trên Win-Win Back." : <>{article.price ? `Giá ghi nhận lúc đăng: ${formatVnd(article.price)}. ` : ""}Thông tin sản phẩm và mức hoàn tiền có thể thay đổi; hãy kiểm tra lại trên {platform} trước khi thanh toán.</>}
             </p>
-            <Link href={buyHref ?? "/register"} target={buyHref ? "_blank" : undefined} rel={buyHref ? "noopener noreferrer" : undefined} className="ww-btn-cta mt-5 inline-flex min-h-11 items-center gap-2 rounded-full px-5 py-3 text-sm font-extrabold focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-[#65a935]">{buyHref ? `Xem sản phẩm trên ${platform}` : "Bắt đầu mua sắm ngay"} <ArrowRight className="size-4" aria-hidden="true" /></Link>
+            <Link href={buyHref ?? outro?.buttonUrl ?? "/register"} target={buyHref ? "_blank" : undefined} rel={buyHref ? "noopener noreferrer sponsored" : undefined} className="ww-btn-cta mt-5 inline-flex min-h-11 items-center gap-2 rounded-full px-5 py-3 text-sm font-extrabold focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-[#65a935]">{buyHref ? `Xem sản phẩm trên ${platform}` : outro?.buttonLabel || "Bắt đầu mua sắm ngay"} <ArrowRight className="size-4" aria-hidden="true" /></Link>
+            {!!outro?.links.length && <ul className="mt-4 flex flex-wrap gap-4 text-sm">{outro.links.map((link) => <li key={link.url}><Link href={link.url} className="underline">{link.label}</Link></li>)}</ul>}
           </div>
-        </section>
+        </section>}
 
         <section className="mt-10 sm:mt-12" aria-labelledby="related-title">
           <div className="flex flex-wrap items-center justify-between gap-3">

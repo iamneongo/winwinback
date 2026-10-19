@@ -1,9 +1,12 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState, type ReactNode } from "react";
-import { EditorContent, useEditor, useEditorState } from "@tiptap/react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { EditorContent, useEditor, useEditorState, type Editor } from "@tiptap/react";
+import { TableKit } from "@tiptap/extension-table";
+import { EditorTools, ArticleImage } from "./EditorTools";
+import { uploadArticleImage } from "./MediaPicker";
+import { sanitizeArticleHtml } from "@/lib/articles/sanitize";
 import StarterKit from "@tiptap/starter-kit";
-import ImageExtension from "@tiptap/extension-image";
 import TextAlign from "@tiptap/extension-text-align";
 import { TextStyleKit } from "@tiptap/extension-text-style";
 import Highlight from "@tiptap/extension-highlight";
@@ -20,7 +23,6 @@ import {
   Highlighter,
   ImagePlus,
   Italic,
-  Link2,
   List,
   ListOrdered,
   Minus,
@@ -46,12 +48,12 @@ import {
 
 const extensions = [
   StarterKit.configure({
-    heading: { levels: [1, 2, 3, 4] },
+    heading: { levels: [2, 3, 4] },
     link: { openOnClick: false, defaultProtocol: "https", autolink: true },
   }),
-  ImageExtension.configure({
+  TableKit.configure({ table: { resizable: true } }),
+  ArticleImage.configure({
     allowBase64: true,
-    resize: { enabled: true, alwaysPreserveAspectRatio: true, minWidth: 80, minHeight: 60 },
   }),
   TextAlign.configure({ types: ["heading", "paragraph"] }),
   TextStyleKit,
@@ -61,6 +63,15 @@ const extensions = [
   Youtube.configure({ controls: true, nocookie: true, width: 640, height: 360, HTMLAttributes: { class: "article-video" } }),
   Placeholder.configure({ placeholder: "Bắt đầu soạn nội dung bài viết…" }),
 ];
+
+function cleanPastedHtml(html: string): string {
+  const template = document.createElement("template");
+  template.innerHTML = html;
+  template.content.querySelectorAll("img").forEach((img) => {
+    if (img.getAttribute("src")?.startsWith("data:")) img.remove();
+  });
+  return sanitizeArticleHtml(template.innerHTML);
+}
 
 function normalizeLegacyQuillHtml(html: string): string {
   const withoutQuillUi = html.replace(/<span\b(?=[^>]*\bclass=(['"])[^'"]*\bql-ui\b[^'"]*\1)[^>]*>[\s\S]*?<\/span>/gi, "");
@@ -105,42 +116,6 @@ function normalizeLegacyQuillHtml(html: string): string {
   });
 }
 
-async function compressImageToDataUrl(file: File, maxDim = 1600, maxBytes = 150_000): Promise<string> {
-  const dataUrl = await new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => typeof reader.result === "string" ? resolve(reader.result) : reject(new Error("read failed"));
-    reader.onerror = () => reject(new Error("read failed"));
-    reader.readAsDataURL(file);
-  });
-  const image = await new Promise<HTMLImageElement>((resolve, reject) => {
-    const element = new Image();
-    element.onload = () => resolve(element);
-    element.onerror = () => reject(new Error("decode failed"));
-    element.src = dataUrl;
-  });
-
-  const scale = Math.min(1, maxDim / Math.max(image.width, image.height));
-  const width = Math.max(1, Math.round(image.width * scale));
-  const height = Math.max(1, Math.round(image.height * scale));
-  const canvas = document.createElement("canvas");
-  canvas.width = width;
-  canvas.height = height;
-  const context = canvas.getContext("2d");
-  if (!context) throw new Error("no canvas");
-  context.fillStyle = "#ffffff";
-  context.fillRect(0, 0, width, height);
-  context.drawImage(image, 0, 0, width, height);
-
-  let quality = 0.82;
-  let output = canvas.toDataURL("image/jpeg", quality);
-  while (output.length > maxBytes * 1.37 && quality > 0.32) {
-    quality -= 0.1;
-    output = canvas.toDataURL("image/jpeg", quality);
-  }
-  if (output.length > maxBytes * 1.37 * 1.15) throw new Error("image too large");
-  return output;
-}
-
 function ToolButton({
   label,
   active = false,
@@ -179,17 +154,20 @@ function ToolbarDivider() {
 export function ArticleRichTextEditor({
   initialHtml,
   onChange,
+  onReady,
 }: {
   initialHtml: string;
   onChange: (html: string) => void;
+  onReady?: (editor: Editor) => void;
 }) {
   const imageInputRef = useRef<HTMLInputElement>(null);
+  const editorRef = useRef<Editor | null>(null);
   const [error, setError] = useState("");
   const [hasChanged, setHasChanged] = useState(false);
   const [textColor, setTextColor] = useState("#173b5e");
   const [highlightColor, setHighlightColor] = useState("#fff2a8");
   const openImagePicker = useCallback(() => imageInputRef.current?.click(), []);
-  const normalizedHtml = useMemo(() => normalizeLegacyQuillHtml(initialHtml), [initialHtml]);
+  const normalizedHtml = useMemo(() => normalizeLegacyQuillHtml(initialHtml).replace(/<(\/?)h1\b/gi, "<$1h2"), [initialHtml]);
   const initialWordCount = normalizedHtml
     .replace(/<[^>]*>/g, " ")
     .replace(/&(?:nbsp|#160);/gi, " ")
@@ -202,11 +180,33 @@ export function ArticleRichTextEditor({
     extensions,
     content: normalizedHtml,
     immediatelyRender: false,
+    editorProps: {
+      attributes: { id: "content", "aria-label": "Nội dung bài viết" },
+      transformPastedHTML: cleanPastedHtml,
+      handlePaste: (view, event) => {
+        const image = Array.from(event.clipboardData?.files ?? []).find((file) => file.type.startsWith("image/"));
+        if (!image) return false;
+        const position = view.state.selection.from;
+        setError("");
+        void uploadArticleImage(image).then(({ url }) => {
+          editorRef.current?.chain().focus().insertContentAt(position, {
+            type: "image",
+            attrs: { src: url, alt: image.name.replace(/\.[^.]+$/, "") || "Ảnh bài viết" },
+          }).run();
+        }).catch(() => setError("Ảnh dán không xử lý được hoặc quá lớn. Vui lòng chọn ảnh khác."));
+        return true;
+      },
+    },
     onUpdate: ({ editor: current }) => {
       setHasChanged(true);
       onChange(current.getHTML());
     },
   });
+  useEffect(() => {
+    editorRef.current = editor;
+    if (editor) onReady?.(editor);
+    return () => { editorRef.current = null; };
+  }, [editor, onReady]);
   const toolbarState = useEditorState({
     editor,
     selector: ({ editor: current }) => ({
@@ -262,7 +262,7 @@ export function ArticleRichTextEditor({
     }
     try {
       setError("");
-      const src = await compressImageToDataUrl(file);
+      const { url: src } = await uploadArticleImage(file);
       editor.chain().focus().setImage({ src, alt: file.name.replace(/\.[^.]+$/, "") }).run();
     } catch {
       setError("Ảnh không xử lý được hoặc quá lớn. Vui lòng chọn ảnh khác.");
@@ -293,7 +293,6 @@ export function ArticleRichTextEditor({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="paragraph">Đoạn văn</SelectItem>
-            <SelectItem value="h1">Tiêu đề chính</SelectItem>
             <SelectItem value="h2">Tiêu đề 2</SelectItem>
             <SelectItem value="h3">Tiêu đề 3</SelectItem>
             <SelectItem value="h4">Tiêu đề 4</SelectItem>
@@ -335,10 +334,6 @@ export function ArticleRichTextEditor({
         <ToolButton label="Khối mã" active={active("codeBlock")} onClick={command(() => editor.chain().focus().toggleCodeBlock().run())}><Code2 className="size-4" /></ToolButton>
         <ToolButton label="Đường kẻ ngang" onClick={command(() => editor.chain().focus().setHorizontalRule().run())}><Minus className="size-4" /></ToolButton>
         <ToolbarDivider />
-        <ToolButton label="Thêm liên kết" active={active("link")} onClick={command(() => {
-          const href = window.prompt("Nhập đường dẫn liên kết:", editor.getAttributes("link").href ?? "https://");
-          if (href?.trim()) editor.chain().focus().extendMarkRange("link").setLink({ href: href.trim() }).run();
-        })}><Link2 className="size-4" /></ToolButton>
         <ToolButton label="Gỡ liên kết" disabled={!active("link")} onClick={command(() => editor.chain().focus().unsetLink().run())}><Unlink className="size-4" /></ToolButton>
         <ToolButton label="Chèn ảnh" onClick={openImagePicker}><ImagePlus className="size-4" /></ToolButton>
         <input ref={imageInputRef} type="file" accept="image/*" className="sr-only" onChange={(event) => { void addImage(event.target.files?.[0]); event.target.value = ""; }} />
@@ -351,10 +346,11 @@ export function ArticleRichTextEditor({
         <ToolButton label="Làm lại" disabled={!editor.can().redo()} onClick={command(() => editor.chain().focus().redo().run())}><Redo2 className="size-4" /></ToolButton>
         <ToolButton label="Xóa định dạng" onClick={command(() => editor.chain().focus().unsetAllMarks().clearNodes().run())}><RemoveFormatting className="size-4" /></ToolButton>
       </div>
+      <EditorTools editor={editor} />
       <EditorContent editor={editor} className="article-editor-content" />
       {error ? <p role="alert" className="border-t border-red-100 bg-red-50 px-4 py-2.5 text-sm text-red-700">{error}</p> : null}
       <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[#e5edf6] bg-[#fbfdff] px-4 py-2 text-xs text-[#587298]">
-        <p>Chọn văn bản để định dạng · Ảnh tự động nén · Bấm ảnh để thay đổi kích thước</p>
+        <p>Chọn văn bản để định dạng hoặc dùng AI · Chọn ảnh để chỉnh thông tin</p>
         <p aria-live="polite">{hasChanged ? state.wordCount : initialWordCount} từ</p>
       </div>
     </div>

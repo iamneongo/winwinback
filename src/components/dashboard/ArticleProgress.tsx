@@ -102,7 +102,7 @@ export function ArticleProgress({ code, initial, allowRetry = false, showFullArt
             {progress.status === "failed" || stalled
               ? "Link hoàn tiền vẫn dùng được. Bạn có thể thử tạo bài lại trong Bài viết của bạn."
               : progress.status === "unavailable"
-                ? "Bài viết đã được ẩn. Link hoàn tiền vẫn dùng được."
+                ? "Bài viết chưa công khai hoặc đang chờ kiểm tra. Link hoàn tiền vẫn dùng được."
               : progress.status === "published"
                 ? showFullArticle
                   ? "Đây là nội dung bài đã lưu trên trang Tin tức. Cuộn xuống để đọc toàn bộ."

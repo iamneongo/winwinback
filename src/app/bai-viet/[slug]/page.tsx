@@ -13,6 +13,7 @@ import {
 } from "@/lib/articles/service";
 import { platformLabel } from "@/lib/labels";
 import { UNCATEGORIZED } from "@/lib/articles/categories";
+import { getOutro } from "@/lib/articles/studio";
 
 export const dynamic = "force-dynamic";
 
@@ -24,24 +25,25 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   if (!article) return { title: "Không tìm thấy bài viết — Win-Win Back" };
   const description = article.metaDescription ?? article.intro ?? `${article.title} — bài viết từ Win-Win Back.`;
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://winwinback.com";
-  const canonical = new URL(`/bai-viet/${encodeURIComponent(article.slug)}`, siteUrl).toString();
+  const canonical = article.seo?.canonical || new URL(`/bai-viet/${encodeURIComponent(article.slug)}`, siteUrl).toString();
   const cover = articleCoverUrl(article);
-  const image = cover ? new URL(cover, siteUrl).toString() : undefined;
+  const image = article.seo?.socialImage ? new URL(article.seo.socialImage, siteUrl).toString() : cover ? new URL(cover, siteUrl).toString() : undefined;
   return {
-    title: `${article.title} | Win-Win Back`,
+    title: `${article.seo?.title || article.title} | Win-Win Back`,
+    robots: { index: !article.seo?.noindex, follow: true },
     description,
     alternates: { canonical },
     openGraph: {
-      title: article.title,
-      description,
+      title: article.seo?.socialTitle || article.seo?.title || article.title,
+      description: article.seo?.socialDescription || description,
       url: canonical,
       images: image ? [{ url: image, alt: article.title }] : undefined,
       type: "article",
     },
     twitter: {
       card: "summary_large_image",
-      title: article.title,
-      description,
+      title: article.seo?.socialTitle || article.seo?.title || article.title,
+      description: article.seo?.socialDescription || description,
       images: image ? [image] : undefined,
     },
   };
@@ -71,14 +73,23 @@ export default async function ArticlePage({
     ? `/go/${sharedLink.shortCode}`
     : article.affiliateShortCode ? `/go/${article.affiliateShortCode}` : article.productUrl;
 
-  return (
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://winwinback.com";
+  const url = new URL(`/bai-viet/${article.slug}`, siteUrl).toString();
+  const cover = articleCoverUrl(article);
+  const structured = { "@context": "https://schema.org", "@graph": [
+    { "@type": "Article", headline: article.title, description: article.metaDescription || article.intro, datePublished: article.createdAt.toISOString(), dateModified: (article.updatedAt || article.createdAt).toISOString(), mainEntityOfPage: article.seo?.canonical || url, author: { "@type": "Organization", name: "Win-Win Back", url: siteUrl }, publisher: { "@type": "Organization", name: "Win-Win Back", url: siteUrl }, ...(cover ? { image: new URL(cover, siteUrl).toString() } : {}) },
+    { "@type": "BreadcrumbList", itemListElement: [{ "@type": "ListItem", position: 1, name: "Trang chủ", item: siteUrl }, { "@type": "ListItem", position: 2, name: "Tin tức", item: `${siteUrl}/bai-viet` }, { "@type": "ListItem", position: 3, name: article.title, item: url }] },
+  ] };
+  return (<>
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structured).replace(/</g, "\\u003c") }} />
     <RealArticleDetail
       article={article}
+      outro={await getOutro(article.seo?.outro)}
       related={related}
       buyHref={buyHref}
       platform={article.productId.startsWith("manual:") ? "Bài viết" : platformLabel[article.platform] ?? article.platform}
       category={article.category ?? UNCATEGORIZED}
       contentHtml={articleContentHtml(article)}
-    />
+    /></>
   );
 }

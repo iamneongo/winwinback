@@ -2,6 +2,18 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
+/* Article studio and published tables share the same responsive behavior. */
+.article-editor-content .tableWrapper, .article-table-scroll { max-width: 100%; overflow-x: auto; margin-block: 1rem; }
+.article-editor-content table, .article-body table { border-collapse: collapse; width: 100%; min-width: 360px; table-layout: fixed; }
+.article-editor-content td, .article-editor-content th, .article-body td, .article-body th { border: 1px solid #d7e4f2; padding: .65rem; vertical-align: top; overflow-wrap: anywhere; position: relative; }
+.article-editor-content th, .article-body th { background: #f3f8fd; font-weight: 600; }
+.article-editor-content .selectedCell { background: #e2f1ff; }
+.article-editor-content .column-resize-handle { position: absolute; right: -2px; top: 0; bottom: 0; width: 4px; background: #3577c5; }
+.article-editor-content figure img, .article-body figure img { max-width: 100%; height: auto; }
+.article-editor-content figure[data-align="center"] img, .article-body figure[data-align="center"] img { margin-inline: auto; }
+.article-editor-content figure[data-align="right"] img, .article-body figure[data-align="right"] img { margin-left: auto; }
+.article-editor-content figcaption, .article-body figcaption { margin-top: .5rem; font-size: .875rem; color: #526f8e; text-align: center; }
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {

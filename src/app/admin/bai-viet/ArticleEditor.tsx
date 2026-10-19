@@ -1,222 +1,127 @@
 "use client";
-
-import { useState, useTransition } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import type { Editor } from "@tiptap/react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { Check, ExternalLink, ImagePlus, Loader2, Save, Trash2 } from "lucide-react";
-import { createArticleAction, saveArticleContentAction } from "./actions";
-import { ArticleRichTextEditor } from "./ArticleRichTextEditor";
+import { CheckCircle2, CircleAlert, Loader2, SlidersHorizontal, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ArticleRichTextEditor } from "./ArticleRichTextEditor";
+import { defaultSeo, seoChecks, type ArticleDocument } from "@/lib/articles/document";
+import { saveStudioAction, versionsAction, assistArticleAction, listOutrosAction } from "./studio-actions";
+import { MediaPicker } from "./MediaPicker";
+import { StudioDialog } from "./StudioDialog";
 
-/**
- * Downscale + compress an image to a JPEG data URL so pasted/large photos don't
- * produce an oversized base64 string (which can break storage/rendering).
- */
-async function compressImageToDataUrl(
-  file: File,
-  maxDim = 1600,
-  maxBytes = 700_000,
-): Promise<string> {
-  const dataUrl = await new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = () => reject(new Error("read failed"));
-    reader.readAsDataURL(file);
-  });
-  const img = await new Promise<HTMLImageElement>((resolve, reject) => {
-    const image = new Image();
-    image.onload = () => resolve(image);
-    image.onerror = () => reject(new Error("decode failed"));
-    image.src = dataUrl;
-  });
-
-  const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
-  const width = Math.max(1, Math.round(img.width * scale));
-  const height = Math.max(1, Math.round(img.height * scale));
-  const canvas = document.createElement("canvas");
-  canvas.width = width;
-  canvas.height = height;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) throw new Error("no canvas");
-  ctx.fillStyle = "#ffffff";
-  ctx.fillRect(0, 0, width, height);
-  ctx.drawImage(img, 0, 0, width, height);
-
-  let quality = 0.85;
-  let out = canvas.toDataURL("image/jpeg", quality);
-  // base64 length ≈ 1.37 × byte size; shrink quality until under the cap.
-  while (out.length > maxBytes * 1.37 && quality > 0.35) {
-    quality -= 0.1;
-    out = canvas.toDataURL("image/jpeg", quality);
-  }
-  if (out.length > maxBytes * 1.37 * 2) {
-    throw new Error("image too large");
-  }
-  return out;
-}
-
-export function ArticleEditor({
-  id,
-  slug,
-  categories,
-  initialHtml,
-  initialTitle,
-  initialDescription,
-  initialCategory,
-  initialImageUrl,
-}: {
-  id?: string;
-  slug?: string;
-  categories: string[];
-  initialHtml: string;
-  initialTitle: string;
-  initialDescription: string;
-  initialCategory: string;
-  initialImageUrl: string;
-}) {
-  const router = useRouter();
-  const [html, setHtml] = useState(initialHtml);
-  const [title, setTitle] = useState(initialTitle);
-  const [metaDescription, setMetaDescription] = useState(initialDescription);
-  const [category, setCategory] = useState(initialCategory || categories[0] || "");
-  const [status, setStatus] = useState<"hidden" | "published">("hidden");
-  const [imageUrl, setImageUrl] = useState(initialImageUrl);
-  const [error, setError] = useState("");
-  const [saved, setSaved] = useState(false);
-  const [pending, startTransition] = useTransition();
-
-  function save() {
-    setError("");
-    if (html.length > 600_000) {
-      setError("Nội dung quá dài để lưu. Hãy giảm bớt ảnh hoặc nội dung trong bài viết.");
-      return;
-    }
-    startTransition(async () => {
-      try {
-        const input = { html, title, metaDescription, category, imageUrl };
-        const result = id
-          ? await saveArticleContentAction(id, input)
-          : await createArticleAction({ ...input, status });
-        if (!result.ok) {
-          setError(result.error ?? "Không lưu được bài viết.");
-          return;
-        }
-        if (!id && "id" in result && result.id) {
-          router.push(`/admin/bai-viet/${result.id}/sua`);
-          return;
-        }
-        setSaved(true);
-        setTimeout(() => setSaved(false), 2500);
-      } catch {
-        setError("Không lưu được bài viết. Vui lòng thử lại.");
-      }
-    });
-  }
-
-  async function selectCover(file: File | undefined) {
-    if (!file) return;
-    if (!file.type.startsWith("image/")) {
-      setError("Vui lòng chọn tệp ảnh.");
-      return;
-    }
+const tasks = { outline: "Lập dàn ý", draft: "Viết bản nháp", rewrite: "Viết lại đoạn chọn", shorten: "Rút gọn đoạn chọn", expand: "Mở rộng đoạn chọn", metadata: "Tiêu đề SEO & mô tả", headings: "Gợi ý heading", faq: "Câu hỏi thường gặp", table: "Bảng so sánh", links: "Liên kết nội bộ", alt: "Alt theo mô tả ảnh" };
+type Task = keyof typeof tasks;
+type Proposal = { html: string; title: string; description: string; before: string; from: number; to: number; task: Task; source: string };
+export function ArticleEditor(props: { id?: string; slug?: string; categories: string[]; initialHtml: string; initialTitle: string; initialDescription: string; initialCategory: string; initialImageUrl: string; initialDocument?: ArticleDocument; initialRevision?: number }) {
+  const initial = useRef<ArticleDocument>(props.initialDocument ?? { title: props.initialTitle, slug: props.slug || "", html: props.initialHtml, intro: "", metaDescription: props.initialDescription, category: props.initialCategory || props.categories[0] || "", imageUrl: props.initialImageUrl, seo: defaultSeo() });
+  const [doc, setDoc] = useState(initial.current); const latest = useRef(doc); latest.current = doc;
+  const [id, setId] = useState(props.id); const idRef = useRef(props.id); const revision = useRef(props.initialRevision || 0);
+  const [tab, setTab] = useState<"article" | "seo" | "ai">("article"); const [mobileSettings, setMobileSettings] = useState(false);
+  const [error, setError] = useState(""); const [status, setStatus] = useState("Chưa có thay đổi"); const [saving, setSaving] = useState(false); const savingRef = useRef(false); const [blocked, setBlocked] = useState(false);
+  const [media, setMedia] = useState<"cover" | "social" | null>(null); const [history, setHistory] = useState<Awaited<ReturnType<typeof versionsAction>> | null>(null);
+  const [outros, setOutros] = useState<{ id: string; name: string }[]>([]);
+  const [task, setTask] = useState<Task>("outline"); const [instruction, setInstruction] = useState(""); const [aiBusy, setAiBusy] = useState(false); const [proposal, setProposal] = useState<Proposal | null>(null);
+  const editorRef = useRef<Editor | null>(null); const [editorKey, setEditorKey] = useState(0); const editorHtml = useRef(initial.current.html); const saved = useRef(JSON.stringify(initial.current));
+  const settingsButtonRef = useRef<HTMLButtonElement>(null);
+  const settingsCloseRef = useRef<HTMLButtonElement>(null);
+  const onReady = useCallback((editor: Editor) => { editorRef.current = editor; }, []);
+  const update = (key: keyof ArticleDocument, value: string) => setDoc((d) => ({ ...d, [key]: value }));
+  const updateSeo = (key: keyof ArticleDocument["seo"], value: string | boolean) => setDoc((d) => ({ ...d, seo: { ...d.seo, [key]: value } }));
+  const save = useCallback(async (publish = false) => {
+    if (savingRef.current) return;
+    savingRef.current = true; setSaving(true); setError(""); setStatus(publish ? "Đang xuất bản…" : "Đang lưu bản nháp…");
+    const snapshot = latest.current;
     try {
-      setError("");
-      setImageUrl(await compressImageToDataUrl(file, 1200, 160_000));
-      setSaved(false);
-    } catch {
-      setError("Ảnh không xử lý được hoặc quá lớn. Vui lòng chọn ảnh khác.");
-    }
+      const result = await saveStudioAction({ id: idRef.current, revision: revision.current, document: snapshot, publish });
+      if (!result.ok) { setError(result.error); setStatus("Chưa lưu được"); setBlocked(true); return; }
+      revision.current = result.revision; idRef.current = result.id; setId(result.id); saved.current = JSON.stringify(snapshot);
+      setStatus(publish ? "Đã xuất bản" : "Đã lưu bản nháp"); setBlocked(false);
+    } catch { setError("Không lưu được. Nội dung vẫn nằm trong trình soạn thảo; hãy thử lại."); setStatus("Chưa lưu được"); setBlocked(true); }
+    finally { savingRef.current = false; setSaving(false); }
+  }, []);
+  useEffect(() => { if (blocked || saving || JSON.stringify(doc) === saved.current) return; const timer = setTimeout(() => void save(), 1800); return () => clearTimeout(timer); }, [doc, saving, blocked, save]);
+  useEffect(() => { const handler = (event: BeforeUnloadEvent) => { if (JSON.stringify(latest.current) !== saved.current) { event.preventDefault(); event.returnValue = ""; } }; window.addEventListener("beforeunload", handler); return () => window.removeEventListener("beforeunload", handler); }, []);
+  useEffect(() => { listOutrosAction().then(setOutros).catch(() => setError("Không tải được mẫu cuối bài. Hãy kiểm tra migration.")); }, []);
+  useEffect(() => {
+    if (!mobileSettings) return;
+    const previousOverflow = document.body.style.overflow;
+    const returnFocus = settingsButtonRef.current;
+    document.body.style.overflow = "hidden";
+    settingsCloseRef.current?.focus();
+    const onKeyDown = (event: KeyboardEvent) => { if (event.key === "Escape") setMobileSettings(false); };
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = previousOverflow;
+      returnFocus?.focus();
+    };
+  }, [mobileSettings]);
+  const checks = seoChecks(doc);
+  async function requestAi() {
+    const editor = editorRef.current; const selection = editor?.state.selection; const from = selection?.from || 0; const to = selection?.to || 0;
+    const selected = editor && from !== to ? editor.state.doc.textBetween(from, to, "\n") : "";
+    if (["rewrite", "shorten", "expand"].includes(task) && !selected) { setError("Hãy chọn đoạn văn trong bài trước khi dùng chức năng này."); return; }
+    const source = editor?.getHTML() || "";
+    setAiBusy(true); setError("");
+    try {
+      const result = await assistArticleAction({ task, context: (selected || editor?.getText() || doc.title).slice(0, 24000), instruction, keyword: doc.seo.keyword });
+      if (!result.ok) { setError(result.error); return; }
+      setProposal({ ...result, before: selected || (task === "metadata" ? `${doc.seo.title}\n${doc.metaDescription}` : ""), from, to, task, source });
+    } catch { setError("Không kết nối được AI. Bạn vẫn có thể tiếp tục viết."); } finally { setAiBusy(false); }
   }
-
-  const coverSrc = imageUrl.startsWith("data:") || imageUrl.startsWith("/")
-    ? imageUrl
-    : imageUrl ? `/api/img?url=${encodeURIComponent(imageUrl)}` : "";
-
-  return (
-    <div className="space-y-5">
-      <div className="mb-3 flex items-center justify-between gap-3">
-        {slug ? <Link
-          href={`/bai-viet/${slug}`}
-          target="_blank"
-          className="inline-flex items-center gap-1 text-sm font-bold text-[#1261ed] hover:underline"
-        >
-          Xem bài <ExternalLink className="h-3.5 w-3.5" />
-        </Link> : <span className="text-sm font-semibold text-[#58749a]">Bài mới</span>}
-        <Button
-          type="button"
-          variant="cta"
-          onClick={save}
-          disabled={pending}
-          className="gap-1.5 px-4 text-sm font-bold text-[#173b5e]"
-        >
-          {pending ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : saved ? (
-            <Check className="h-4 w-4" />
-          ) : (
-            <Save className="h-4 w-4" />
-          )}
-          {pending ? "Đang lưu…" : saved ? "Đã lưu" : id ? "Lưu bài viết" : status === "published" ? "Xuất bản bài viết" : "Lưu bản nháp"}
-        </Button>
+  function applyProposal() {
+    if (!proposal) return;
+    if (proposal.task === "metadata") setDoc((d) => ({ ...d, metaDescription: proposal.description, seo: { ...d.seo, title: proposal.title } }));
+    else {
+      const editor = editorRef.current;
+      if (!editor || editor.getHTML() !== proposal.source) { setError("Bài đã thay đổi sau khi gọi AI. Hãy tạo lại đề xuất để tránh thay nhầm đoạn."); return; }
+      if (proposal.task === "alt") {
+        if (editor.state.doc.nodeAt(proposal.from)?.type.name !== "image") { setError("Chọn ảnh cần áp dụng alt trước khi gọi AI."); return; }
+        editor.chain().focus().setNodeSelection(proposal.from).updateAttributes("image", { alt: proposal.html.replace(/<[^>]+>/g, "").trim() }).run();
+      } else if (["rewrite", "shorten", "expand"].includes(proposal.task)) editor.chain().focus().insertContentAt({ from: proposal.from, to: proposal.to }, proposal.html).run();
+      else editor.chain().focus("end").insertContent(proposal.html).run();
+    }
+    setProposal(null);
+  }
+  const field = (key: "intro" | "metaDescription" | "slug", label: string, multiline = false) => <label className="block space-y-2 text-sm font-medium" htmlFor={key}>{label}{multiline ? <Textarea id={key} value={doc[key]} rows={3} onChange={(e) => update(key, e.target.value)} /> : <Input id={key} value={doc[key]} onChange={(e) => update(key, e.target.value)} />}</label>;
+  const seoField = (key: "title" | "keyword" | "secondaryKeywords" | "canonical" | "socialTitle" | "socialDescription", label: string) => <label className="block space-y-2 text-sm font-medium" htmlFor={`seo-${key}`}>{label}<Input id={`seo-${key}`} value={doc.seo[key]} onChange={(e) => updateSeo(key, e.target.value)} /></label>;
+  return <div className="space-y-4 text-[#173b5e]">
+    <div className="flex flex-wrap items-center justify-between gap-3 border-b pb-4"><p role="status" className="flex items-center gap-2 text-sm text-[#526f8e]">{saving && <Loader2 className="size-4 animate-spin" />}{status}</p><div className="flex flex-wrap gap-2">
+      {id && <><Link href={`/admin/bai-viet/${id}/preview`} target="_blank" className="inline-flex items-center rounded-lg border px-3 text-sm">Xem bản đã lưu</Link><Button type="button" variant="outline" onClick={() => { versionsAction(id).then(setHistory).catch(() => setError("Không tải được lịch sử.")); }}>Lịch sử</Button></>}
+      <Button type="button" variant="outline" disabled={saving} onClick={() => void save()}>Lưu nháp</Button><Button type="button" variant="cta" disabled={saving} onClick={() => void save(true)}>Xuất bản / Cập nhật</Button>
+    </div></div>
+    {error && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}
+    <Button ref={settingsButtonRef} type="button" variant="outline" className="lg:hidden" onClick={() => setMobileSettings(true)}><SlidersHorizontal className="mr-2 size-4" />Bài viết, SEO & AI</Button>
+    <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+      <div className="min-w-0 space-y-4"><label className="block text-sm font-medium" htmlFor="article-title">Tiêu đề bài viết</label><Input id="article-title" placeholder="Đặt tiêu đề bài viết…" maxLength={180} value={doc.title} onChange={(e) => update("title", e.target.value)} className="h-12 text-lg font-semibold" />
+        <ArticleRichTextEditor key={editorKey} initialHtml={editorHtml.current} onChange={(html) => setDoc((d) => ({ ...d, html }))} onReady={onReady} />
       </div>
-      {error ? <p role="alert" className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p> : null}
-      <section className="space-y-5 rounded-xl border border-[#dfe9f5] bg-white p-4 sm:p-6" aria-label="Thông tin bài viết và SEO">
-        <div>
-          <h2 className="text-lg font-black text-[#11335e]">Thông tin bài viết & SEO</h2>
-          <p className="mt-1 text-sm text-[#58749a]">Tiêu đề và mô tả dùng cho trang bài viết, kết quả tìm kiếm và khi chia sẻ link.</p>
-        </div>
-        <div className="grid gap-5 md:grid-cols-[minmax(0,1fr)_260px]">
-          <div className="space-y-4">
-            <label className="block text-sm font-bold text-[#234568]" htmlFor="article-title">Tiêu đề bài viết</label>
-            <Input id="article-title" value={title} onChange={(event) => { setTitle(event.target.value); setSaved(false); }} maxLength={180} className="-mt-2 h-10 border-[#cddced] text-sm focus-visible:border-[#1261ed]" />
-            <p className="-mt-2 text-xs text-[#6681a7]">{title.length}/180 ký tự · Nên khoảng 50–65 ký tự. URL bài viết giữ nguyên để không gãy liên kết cũ.</p>
-            <label className="block text-sm font-bold text-[#234568]" htmlFor="article-description">Mô tả SEO</label>
-            <Textarea id="article-description" value={metaDescription} onChange={(event) => { setMetaDescription(event.target.value); setSaved(false); }} maxLength={300} rows={3} className="-mt-2 min-h-20 resize-y border-[#cddced] text-sm focus-visible:border-[#1261ed]" />
-            <p className="-mt-2 text-xs text-[#6681a7]">{metaDescription.length}/300 ký tự · Nên khoảng 120–160 ký tự, mô tả đúng nội dung bài.</p>
-            <label className="block text-sm font-bold text-[#234568]" htmlFor="article-category">Danh mục</label>
-            <Select value={category} onValueChange={(value) => { if (value) { setCategory(value); setSaved(false); } }}>
-              <SelectTrigger id="article-category" className="-mt-2 h-10 border-[#cddced] text-sm focus-visible:border-[#1261ed]">
-                <SelectValue>{category}</SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map((name) => <SelectItem key={name} value={name}>{name}</SelectItem>)}
-              </SelectContent>
-            </Select>
-            <p className="-mt-2 text-xs text-[#6681a7]">Quản lý danh mục ở trang Danh mục bài viết.</p>
-            {!id && <div className="pt-1"><label className="mb-2 block text-sm font-bold text-[#234568]" htmlFor="article-status">Trạng thái khi lưu</label><Select value={status} onValueChange={(value) => { if (value === "hidden" || value === "published") setStatus(value); }}><SelectTrigger id="article-status" className="h-10 border-[#cddced]"><SelectValue>{status === "hidden" ? "Bản nháp (chưa hiển thị)" : "Xuất bản ngay"}</SelectValue></SelectTrigger><SelectContent><SelectItem value="hidden">Bản nháp (chưa hiển thị)</SelectItem><SelectItem value="published">Xuất bản ngay</SelectItem></SelectContent></Select></div>}
-          </div>
-          <div>
-            <p className="mb-2 text-sm font-bold text-[#234568]">Ảnh đại diện</p>
-            <div className="aspect-[16/10] overflow-hidden rounded-lg border border-[#dfe9f5] bg-[#f0f5fa]">
-              {coverSrc ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={coverSrc} alt="Ảnh đại diện bài viết" className="h-full w-full object-cover" />
-              ) : <div className="flex h-full items-center justify-center text-sm text-[#6681a7]">Chưa có ảnh</div>}
-            </div>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-[#cddced] px-3 py-2 text-xs font-bold text-[#234568] hover:bg-[#f4f8fc]">
-                <ImagePlus className="size-4" /> Tải ảnh mới
-                <input type="file" accept="image/*" className="sr-only" onChange={(event) => { void selectCover(event.target.files?.[0]); event.target.value = ""; }} />
-              </label>
-              {imageUrl ? <Button type="button" variant="ghost" onClick={() => { setImageUrl(""); setSaved(false); }} className="h-9 gap-1 px-2 text-xs font-bold text-red-700 hover:bg-red-50"><Trash2 className="size-4" /> Xóa ảnh</Button> : null}
-            </div>
-            <p className="mt-2 text-xs leading-5 text-[#6681a7]">Ảnh tự nén thành JPEG; dùng ở trang Tin tức và ảnh chia sẻ. Ảnh trong nội dung bài viết chỉnh riêng bên dưới.</p>
-          </div>
-        </div>
-        <div className="min-w-0 rounded-lg bg-[#f4f8fc] p-3 text-sm">
-          <p className="truncate text-[#1261ed]">winwinback.com/bai-viet/{slug ?? "duong-dan-se-duoc-tao-khi-luu"}</p>
-          <p className="mt-1 line-clamp-2 font-bold text-[#11335e]">{title || "Tiêu đề bài viết"}</p>
-          <p className="mt-1 line-clamp-2 text-[#58749a]">{metaDescription || "Mô tả hiển thị trên kết quả tìm kiếm…"}</p>
-        </div>
-      </section>
-      <h2 className="text-lg font-black text-[#11335e]">Nội dung bài viết</h2>
-      <ArticleRichTextEditor initialHtml={initialHtml} onChange={(nextHtml) => { setHtml(nextHtml); setSaved(false); }} />
-      <p className="mt-2 text-xs text-[#7790b1]">
-        Ảnh chèn vào sẽ được tự động nén để không làm bài viết quá nặng.
-      </p>
+      <aside className={`${mobileSettings ? "fixed inset-0 z-50 overflow-y-auto bg-white p-5" : "hidden"} min-w-0 lg:static lg:block lg:self-start lg:rounded-xl lg:border lg:p-4`} aria-label="Cài đặt bài viết" role={mobileSettings ? "dialog" : undefined} aria-modal={mobileSettings || undefined}>
+        <div className="mb-4 flex items-center justify-between lg:hidden"><h2 className="font-semibold">Cài đặt bài viết</h2><Button ref={settingsCloseRef} type="button" variant="outline" onClick={() => setMobileSettings(false)}>Xong</Button></div>
+        <div className="mb-5 flex border-b" role="tablist" aria-label="Bảng biên tập">{([['article', 'Bài viết'], ['seo', 'SEO'], ['ai', 'AI']] as const).map(([value, label]) => <button key={value} type="button" role="tab" aria-selected={tab === value} onClick={() => setTab(value)} className={`flex-1 px-3 py-3 text-sm font-semibold ${tab === value ? "border-b-2 border-green-600 text-green-700" : "text-[#526f8e]"}`}>{label}</button>)}</div>
+        {tab === "article" && <div className="space-y-5">{field("intro", "Đoạn giới thiệu", true)}<label className="block space-y-2 text-sm font-medium">Danh mục<Select value={doc.category} onValueChange={(v) => { if (v) update("category", v); }}><SelectTrigger><SelectValue>{doc.category}</SelectValue></SelectTrigger><SelectContent>{props.categories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent></Select></label>
+          <div className="space-y-2"><p className="text-sm font-medium">Ảnh bìa</p>{doc.imageUrl && <>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={doc.imageUrl.startsWith("https:") ? `/api/img?url=${encodeURIComponent(doc.imageUrl)}` : doc.imageUrl} alt="Ảnh bìa" className="aspect-video w-full rounded-lg object-cover" /></>}<div className="flex gap-2"><Button type="button" variant="outline" onClick={() => setMedia("cover")}>Chọn ảnh</Button>{doc.imageUrl && <Button type="button" variant="ghost" onClick={() => update("imageUrl", "")}>Gỡ ảnh</Button>}</div></div>
+          <label className="block space-y-2 text-sm font-medium">Mẫu cuối bài<Select value={doc.seo.outro} onValueChange={(v) => { if (v) updateSeo("outro", v); }}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{outros.map((o) => <SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>)}<SelectItem value="off">Không hiển thị</SelectItem></SelectContent></Select></label><Link href="/admin/bai-viet/mau-cuoi-bai" className="inline-block text-sm text-blue-700 underline">Quản lý mẫu cuối bài</Link>
+        </div>}
+        {tab === "seo" && <div className="space-y-5">{seoField("title", "Tiêu đề SEO (để trống dùng tiêu đề bài)")}{field("metaDescription", "Mô tả SEO", true)}{field("slug", "Đường dẫn bài viết")}<p className="text-xs text-[#526f8e]">Đổi URL khi xuất bản sẽ giữ chuyển hướng từ URL cũ.</p>{seoField("keyword", "Từ khóa chính")}{seoField("secondaryKeywords", "Từ khóa phụ")}
+          <div className="rounded-lg bg-[#f4f8fc] p-3"><p className="text-xs">Xem trước tìm kiếm</p><p className="mt-2 truncate text-xs">winwinback.com/bai-viet/{doc.slug || "duong-dan"}</p><p className="mt-1 text-base text-blue-800">{doc.seo.title || doc.title || "Tiêu đề bài viết"}</p><p className="mt-1 line-clamp-3 text-sm">{doc.metaDescription || "Mô tả nội dung bài viết…"}</p></div>
+          <div><h3 className="mb-2 text-sm font-semibold">Checklist · {checks.filter((c) => c.ok).length}/{checks.length}</h3><p className="mb-3 text-xs text-[#526f8e]">Gợi ý biên tập, không phải cam kết thứ hạng.</p><ul className="space-y-3">{checks.map((c) => <li key={c.text}><button type="button" className="flex gap-2 text-left text-xs leading-5" onClick={() => { setMobileSettings(false); const target = c.field === "keyword" ? "seo-keyword" : c.field; document.getElementById(target)?.focus(); if (target === "content") editorRef.current?.commands.focus(); }}>{c.ok ? <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-green-700" /> : <CircleAlert className="mt-0.5 size-4 shrink-0 text-amber-700" />}{c.text}</button></li>)}</ul></div>
+          <details><summary className="cursor-pointer text-sm font-semibold">Chia sẻ mạng xã hội</summary><div className="mt-3 space-y-3">{seoField("socialTitle", "Tiêu đề chia sẻ")}{seoField("socialDescription", "Mô tả chia sẻ")}<Button type="button" variant="outline" onClick={() => setMedia("social")}>Chọn ảnh chia sẻ</Button><Button type="button" variant="ghost" onClick={() => updateSeo("socialImage", "")}>Dùng ảnh bìa</Button><div className="rounded-lg border p-3">{(doc.seo.socialImage || doc.imageUrl) && <>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={doc.seo.socialImage || doc.imageUrl} alt="Xem trước ảnh chia sẻ" className="aspect-video w-full object-cover" /></>}<p className="mt-2 text-sm font-semibold">{doc.seo.socialTitle || doc.seo.title || doc.title}</p><p className="text-xs">{doc.seo.socialDescription || doc.metaDescription}</p></div></div></details>
+          <details><summary className="cursor-pointer text-sm font-semibold">SEO nâng cao</summary><div className="mt-3 space-y-3">{seoField("canonical", "Canonical tùy chỉnh (HTTPS)")}<label className="flex gap-2 text-sm"><input type="checkbox" checked={doc.seo.noindex} onChange={(e) => updateSeo("noindex", e.target.checked)} />Không cho công cụ tìm kiếm lập chỉ mục</label></div></details>
+        </div>}
+        {tab === "ai" && <div className="space-y-4"><p className="text-sm leading-6">AI đề xuất, bạn quyết định. Kiểm tra lại dữ kiện trước khi xuất bản.</p><Select value={task} onValueChange={(v) => { if (v) setTask(v as Task); }}><SelectTrigger aria-label="Tác vụ AI"><SelectValue>{tasks[task]}</SelectValue></SelectTrigger><SelectContent>{Object.entries(tasks).map(([value, label]) => <SelectItem key={value} value={value}>{label}</SelectItem>)}</SelectContent></Select><label className="block space-y-2 text-sm">Yêu cầu / thông tin nguồn<Textarea value={instruction} maxLength={4000} rows={6} onChange={(e) => setInstruction(e.target.value)} placeholder="Chủ đề, đối tượng đọc, dữ liệu chính xác cần dùng…" /></label><Button type="button" variant="cta" disabled={aiBusy} onClick={() => void requestAi()} className="w-full">{aiBusy ? <Loader2 className="mr-2 size-4 animate-spin" /> : <Sparkles className="mr-2 size-4" />}{aiBusy ? "Đang tạo đề xuất…" : "Tạo đề xuất"}</Button><p className="text-xs text-[#526f8e]">Nội dung được gửi tới NVIDIA để xử lý. Không nhập thông tin cá nhân hoặc dữ liệu khách hàng.</p></div>}
+      </aside>
     </div>
-  );
+    {media && <MediaPicker onClose={() => setMedia(null)} onSelect={(url) => { if (media === "cover") update("imageUrl", url); else updateSeo("socialImage", url); }} />}
+    {history && <StudioDialog title="Lịch sử phiên bản" onClose={() => setHistory(null)}><p className="mb-4 text-sm">Khôi phục vào bản nháp, không thay đổi bài công khai. Giữ 50 phiên bản gần nhất.</p><ul className="space-y-2">{history.map((v) => <li key={v.id} className="flex items-center justify-between gap-3 border-b py-3 text-sm"><span>{v.label}<br /><span className="text-xs">{new Date(v.createdAt).toLocaleString("vi-VN")}</span></span><Button type="button" variant="outline" onClick={() => { if (!window.confirm("Thay nội dung đang viết bằng phiên bản này?")) return; editorHtml.current = v.document.html; setDoc(v.document); setEditorKey((k) => k + 1); setHistory(null); }}>Khôi phục</Button></li>)}</ul></StudioDialog>}
+    {proposal && <StudioDialog title={`Đề xuất AI · ${tasks[proposal.task]}`} onClose={() => setProposal(null)}><div className="space-y-4">{proposal.before && <div><h3 className="text-sm font-semibold">Trước</h3><p className="mt-2 whitespace-pre-wrap text-sm">{proposal.before}</p></div>}<div><h3 className="text-sm font-semibold">Đề xuất</h3>{proposal.task === "metadata" ? <div className="mt-2 text-sm"><p>{proposal.title}</p><p>{proposal.description}</p></div> : <div className="article-body mt-2 max-h-80 overflow-auto text-sm" dangerouslySetInnerHTML={{ __html: proposal.html }} />}</div><p className="text-xs">Nội dung mới được chèn cuối bài; chỉ thao tác sửa đoạn mới thay thế vùng đã chọn.</p><div className="flex gap-2"><Button type="button" variant="cta" onClick={applyProposal}>Áp dụng</Button><Button type="button" variant="outline" onClick={() => setProposal(null)}>Bỏ qua</Button></div></div></StudioDialog>}
+  </div>;
 }

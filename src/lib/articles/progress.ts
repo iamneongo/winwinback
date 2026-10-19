@@ -43,6 +43,8 @@ export async function runArticleGeneration(shortCode: string): Promise<void> {
         articlePreview: article.intro ?? article.title,
         articleSlug: article.slug,
       });
+    } else if (article) {
+      await update({ articleStatus: "unavailable", articlePreview: "Bài cần quản trị viên kiểm tra trước khi công khai.", articleSlug: null });
     } else {
       await update({ articleStatus: "failed" });
     }
