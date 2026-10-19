@@ -14,6 +14,7 @@ import {
 import { platformLabel } from "@/lib/labels";
 import { UNCATEGORIZED } from "@/lib/articles/categories";
 import { getOutro } from "@/lib/articles/studio";
+import { resolvePublicArticleSeo } from "@/lib/articles/seo-public";
 
 export const dynamic = "force-dynamic";
 
@@ -22,29 +23,27 @@ const REMOVED_FEATURED_SLUG = "bo-3-mon-thia-dua-dia-lua-mach-inox-304-co-nen-mu
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const article = await peekPublishedArticle(slug);
-  if (!article) return { title: "Không tìm thấy bài viết — Win-Win Back" };
-  const description = article.metaDescription ?? article.intro ?? `${article.title} — bài viết từ Win-Win Back.`;
+  if (!article) return { title: "Không tìm thấy bài viết — Win-Win Back", robots: { index: false, follow: false } };
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://winwinback.com";
-  const canonical = article.seo?.canonical || new URL(`/bai-viet/${encodeURIComponent(article.slug)}`, siteUrl).toString();
   const cover = articleCoverUrl(article);
-  const image = article.seo?.socialImage ? new URL(article.seo.socialImage, siteUrl).toString() : cover ? new URL(cover, siteUrl).toString() : undefined;
+  const seo = resolvePublicArticleSeo(article, siteUrl, cover);
   return {
-    title: `${article.seo?.title || article.title} | Win-Win Back`,
-    robots: { index: !article.seo?.noindex, follow: true },
-    description,
-    alternates: { canonical },
+    title: `${seo.title} | Win-Win Back`,
+    robots: { index: seo.index, follow: seo.follow },
+    description: seo.description,
+    alternates: { canonical: seo.canonical },
     openGraph: {
-      title: article.seo?.socialTitle || article.seo?.title || article.title,
-      description: article.seo?.socialDescription || description,
-      url: canonical,
-      images: image ? [{ url: image, alt: article.title }] : undefined,
-      type: "article",
+      title: seo.socialTitle,
+      description: seo.socialDescription,
+      url: seo.canonical,
+      images: seo.image ? [{ url: seo.image, alt: article.title }] : undefined,
+      type: seo.seo.schemaType === "Article" ? "article" : "website",
     },
     twitter: {
       card: "summary_large_image",
-      title: article.seo?.socialTitle || article.seo?.title || article.title,
-      description: article.seo?.socialDescription || description,
-      images: image ? [image] : undefined,
+      title: seo.socialTitle,
+      description: seo.socialDescription,
+      images: seo.image ? [seo.image] : undefined,
     },
   };
 }
@@ -74,11 +73,11 @@ export default async function ArticlePage({
     : article.affiliateShortCode ? `/go/${article.affiliateShortCode}` : article.productUrl;
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://winwinback.com";
-  const url = new URL(`/bai-viet/${article.slug}`, siteUrl).toString();
   const cover = articleCoverUrl(article);
+  const seo = resolvePublicArticleSeo(article, siteUrl, cover);
   const structured = { "@context": "https://schema.org", "@graph": [
-    { "@type": "Article", headline: article.title, description: article.metaDescription || article.intro, datePublished: article.createdAt.toISOString(), dateModified: (article.updatedAt || article.createdAt).toISOString(), mainEntityOfPage: article.seo?.canonical || url, author: { "@type": "Organization", name: "Win-Win Back", url: siteUrl }, publisher: { "@type": "Organization", name: "Win-Win Back", url: siteUrl }, ...(cover ? { image: new URL(cover, siteUrl).toString() } : {}) },
-    { "@type": "BreadcrumbList", itemListElement: [{ "@type": "ListItem", position: 1, name: "Trang chủ", item: siteUrl }, { "@type": "ListItem", position: 2, name: "Tin tức", item: `${siteUrl}/bai-viet` }, { "@type": "ListItem", position: 3, name: article.title, item: url }] },
+    seo.seo.schemaType === "Article" ? { "@type": "Article", headline: article.title, description: seo.description, datePublished: article.createdAt.toISOString(), dateModified: (article.updatedAt || article.createdAt).toISOString(), mainEntityOfPage: seo.canonical, author: { "@type": "Organization", name: "Win-Win Back", url: siteUrl }, publisher: { "@type": "Organization", name: "Win-Win Back", url: siteUrl }, ...(seo.image ? { image: seo.image } : {}) } : { "@type": "WebPage", name: seo.title, description: seo.description, url: seo.canonical },
+    { "@type": "BreadcrumbList", itemListElement: [{ "@type": "ListItem", position: 1, name: "Trang chủ", item: siteUrl }, { "@type": "ListItem", position: 2, name: "Tin tức", item: `${siteUrl}/bai-viet` }, { "@type": "ListItem", position: 3, name: article.title, item: seo.articleUrl }] },
   ] };
   return (<>
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structured).replace(/</g, "\\u003c") }} />

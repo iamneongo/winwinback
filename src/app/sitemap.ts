@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { listPublishedArticles } from "@/lib/articles/service";
+import { resolvePublicArticleSeo } from "@/lib/articles/seo-public";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +19,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const articles = await listPublishedArticles({ limit: 50_000 });
     return [
       ...staticPages,
-      ...articles.filter((article) => !article.seo?.noindex && (!article.seo?.canonical || article.seo.canonical === `${siteUrl}/bai-viet/${article.slug}`)).map((article) => ({
+      ...articles.filter((article) => resolvePublicArticleSeo(article, siteUrl).inSitemap).map((article) => ({
         url: `${siteUrl}/bai-viet/${article.slug}`,
         lastModified: article.updatedAt || article.createdAt,
         changeFrequency: "monthly" as const,

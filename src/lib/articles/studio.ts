@@ -2,17 +2,17 @@ import "server-only";
 import { and, desc, eq, ne, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { articles, articleDrafts, articleVersions, articleSlugs, articleCategories, articleOutros, type Article } from "@/db/schema";
-import { articleSlug, defaultSeo, documentSchema, publicationErrors, type ArticleDocument } from "./document";
+import { articleSlug, documentSchema, publicationErrors, seoSchema, type ArticleDocument } from "./document";
 import { articleContentHtml, sanitizeArticleHtml } from "./service";
 
 export function documentFromArticle(a: Article): ArticleDocument {
-  return { title: a.title, slug: a.slug, html: articleContentHtml(a), intro: a.intro ?? a.metaDescription ?? "", metaDescription: a.metaDescription ?? "", category: a.category ?? "", imageUrl: a.imageUrl ?? "", seo: { ...defaultSeo(), ...a.seo } };
+  return { title: a.title, slug: a.slug, html: articleContentHtml(a), intro: a.intro ?? a.metaDescription ?? "", metaDescription: a.metaDescription ?? "", category: a.category ?? "", imageUrl: a.imageUrl ?? "", seo: seoSchema.parse(a.seo ?? {}) };
 }
 export async function loadStudio(id: string) {
   const [article] = await db.select().from(articles).where(eq(articles.id, id));
   if (!article) return null;
   const [draft] = await db.select().from(articleDrafts).where(eq(articleDrafts.articleId, id));
-  return { article, document: draft?.document ?? documentFromArticle(article), revision: article.revision };
+  return { article, document: draft ? { ...draft.document, seo: seoSchema.parse(draft.document.seo ?? {}) } : documentFromArticle(article), revision: article.revision };
 }
 
 // The article row is the lock/version authority for drafts AND publication.
@@ -66,7 +66,8 @@ export async function saveDocument(input: { id?: string; revision: number; docum
   });
 }
 export async function listVersions(id: string) {
-  return db.select().from(articleVersions).where(eq(articleVersions.articleId, id)).orderBy(desc(articleVersions.createdAt)).limit(50);
+  const versions = await db.select().from(articleVersions).where(eq(articleVersions.articleId, id)).orderBy(desc(articleVersions.createdAt)).limit(50);
+  return versions.map((version) => ({ ...version, document: { ...version.document, seo: seoSchema.parse(version.document.seo ?? {}) } }));
 }
 export async function getOutro(id: string | undefined) {
   if (id === "off") return null;

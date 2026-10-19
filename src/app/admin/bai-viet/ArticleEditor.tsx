@@ -2,25 +2,27 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Editor } from "@tiptap/react";
 import Link from "next/link";
-import { CheckCircle2, CircleAlert, Loader2, SlidersHorizontal, Sparkles } from "lucide-react";
+import { Loader2, SlidersHorizontal, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArticleRichTextEditor } from "./ArticleRichTextEditor";
-import { defaultSeo, seoChecks, type ArticleDocument } from "@/lib/articles/document";
+import { defaultSeo, type ArticleDocument, type ArticleSeo } from "@/lib/articles/document";
 import { saveStudioAction, versionsAction, assistArticleAction, listOutrosAction } from "./studio-actions";
 import { MediaPicker } from "./MediaPicker";
 import { StudioDialog } from "./StudioDialog";
+import { SeoPanel } from "./SeoPanel";
 
 const tasks = { outline: "Lập dàn ý", draft: "Viết bản nháp", rewrite: "Viết lại đoạn chọn", shorten: "Rút gọn đoạn chọn", expand: "Mở rộng đoạn chọn", metadata: "Tiêu đề SEO & mô tả", headings: "Gợi ý heading", faq: "Câu hỏi thường gặp", table: "Bảng so sánh", links: "Liên kết nội bộ", alt: "Alt theo mô tả ảnh" };
 type Task = keyof typeof tasks;
 type Proposal = { html: string; title: string; description: string; before: string; from: number; to: number; task: Task; source: string };
-export function ArticleEditor(props: { id?: string; slug?: string; categories: string[]; initialHtml: string; initialTitle: string; initialDescription: string; initialCategory: string; initialImageUrl: string; initialDocument?: ArticleDocument; initialRevision?: number }) {
+export function ArticleEditor(props: { id?: string; slug?: string; categories: string[]; initialHtml: string; initialTitle: string; initialDescription: string; initialCategory: string; initialImageUrl: string; initialDocument?: ArticleDocument; initialRevision?: number; initialPublished?: boolean }) {
   const initial = useRef<ArticleDocument>(props.initialDocument ?? { title: props.initialTitle, slug: props.slug || "", html: props.initialHtml, intro: "", metaDescription: props.initialDescription, category: props.initialCategory || props.categories[0] || "", imageUrl: props.initialImageUrl, seo: defaultSeo() });
   const [doc, setDoc] = useState(initial.current); const latest = useRef(doc); latest.current = doc;
   const [id, setId] = useState(props.id); const idRef = useRef(props.id); const revision = useRef(props.initialRevision || 0);
   const [tab, setTab] = useState<"article" | "seo" | "ai">("article"); const [mobileSettings, setMobileSettings] = useState(false);
+  const [published, setPublished] = useState(props.initialPublished ?? false);
   const [error, setError] = useState(""); const [status, setStatus] = useState("Chưa có thay đổi"); const [saving, setSaving] = useState(false); const savingRef = useRef(false); const [blocked, setBlocked] = useState(false);
   const [media, setMedia] = useState<"cover" | "social" | null>(null); const [history, setHistory] = useState<Awaited<ReturnType<typeof versionsAction>> | null>(null);
   const [outros, setOutros] = useState<{ id: string; name: string }[]>([]);
@@ -30,7 +32,7 @@ export function ArticleEditor(props: { id?: string; slug?: string; categories: s
   const settingsCloseRef = useRef<HTMLButtonElement>(null);
   const onReady = useCallback((editor: Editor) => { editorRef.current = editor; }, []);
   const update = (key: keyof ArticleDocument, value: string) => setDoc((d) => ({ ...d, [key]: value }));
-  const updateSeo = (key: keyof ArticleDocument["seo"], value: string | boolean) => setDoc((d) => ({ ...d, seo: { ...d.seo, [key]: value } }));
+  const updateSeo = <K extends keyof ArticleSeo>(key: K, value: ArticleSeo[K]) => setDoc((d) => ({ ...d, seo: { ...d.seo, [key]: value } }));
   const save = useCallback(async (publish = false) => {
     if (savingRef.current) return;
     savingRef.current = true; setSaving(true); setError(""); setStatus(publish ? "Đang xuất bản…" : "Đang lưu bản nháp…");
@@ -39,6 +41,7 @@ export function ArticleEditor(props: { id?: string; slug?: string; categories: s
       const result = await saveStudioAction({ id: idRef.current, revision: revision.current, document: snapshot, publish });
       if (!result.ok) { setError(result.error); setStatus("Chưa lưu được"); setBlocked(true); return; }
       revision.current = result.revision; idRef.current = result.id; setId(result.id); saved.current = JSON.stringify(snapshot);
+      if (publish) setPublished(true);
       setStatus(publish ? "Đã xuất bản" : "Đã lưu bản nháp"); setBlocked(false);
     } catch { setError("Không lưu được. Nội dung vẫn nằm trong trình soạn thảo; hãy thử lại."); setStatus("Chưa lưu được"); setBlocked(true); }
     finally { savingRef.current = false; setSaving(false); }
@@ -60,7 +63,6 @@ export function ArticleEditor(props: { id?: string; slug?: string; categories: s
       returnFocus?.focus();
     };
   }, [mobileSettings]);
-  const checks = seoChecks(doc);
   async function requestAi() {
     const editor = editorRef.current; const selection = editor?.state.selection; const from = selection?.from || 0; const to = selection?.to || 0;
     const selected = editor && from !== to ? editor.state.doc.textBetween(from, to, "\n") : "";
@@ -88,7 +90,6 @@ export function ArticleEditor(props: { id?: string; slug?: string; categories: s
     setProposal(null);
   }
   const field = (key: "intro" | "metaDescription" | "slug", label: string, multiline = false) => <label className="block space-y-2 text-sm font-medium" htmlFor={key}>{label}{multiline ? <Textarea id={key} value={doc[key]} rows={3} onChange={(e) => update(key, e.target.value)} /> : <Input id={key} value={doc[key]} onChange={(e) => update(key, e.target.value)} />}</label>;
-  const seoField = (key: "title" | "keyword" | "secondaryKeywords" | "canonical" | "socialTitle" | "socialDescription", label: string) => <label className="block space-y-2 text-sm font-medium" htmlFor={`seo-${key}`}>{label}<Input id={`seo-${key}`} value={doc.seo[key]} onChange={(e) => updateSeo(key, e.target.value)} /></label>;
   return <div className="space-y-4 text-[#173b5e]">
     <div className="flex flex-wrap items-center justify-between gap-3 border-b pb-4"><p role="status" className="flex items-center gap-2 text-sm text-[#526f8e]">{saving && <Loader2 className="size-4 animate-spin" />}{status}</p><div className="flex flex-wrap gap-2">
       {id && <><Link href={`/admin/bai-viet/${id}/preview`} target="_blank" className="inline-flex items-center rounded-lg border px-3 text-sm">Xem bản đã lưu</Link><Button type="button" variant="outline" onClick={() => { versionsAction(id).then(setHistory).catch(() => setError("Không tải được lịch sử.")); }}>Lịch sử</Button></>}
@@ -109,14 +110,7 @@ export function ArticleEditor(props: { id?: string; slug?: string; categories: s
             <img src={doc.imageUrl.startsWith("https:") ? `/api/img?url=${encodeURIComponent(doc.imageUrl)}` : doc.imageUrl} alt="Ảnh bìa" className="aspect-video w-full rounded-lg object-cover" /></>}<div className="flex gap-2"><Button type="button" variant="outline" onClick={() => setMedia("cover")}>Chọn ảnh</Button>{doc.imageUrl && <Button type="button" variant="ghost" onClick={() => update("imageUrl", "")}>Gỡ ảnh</Button>}</div></div>
           <label className="block space-y-2 text-sm font-medium">Mẫu cuối bài<Select value={doc.seo.outro} onValueChange={(v) => { if (v) updateSeo("outro", v); }}><SelectTrigger><SelectValue>{doc.seo.outro === "off" ? "Không hiển thị" : outros.find((o) => o.id === doc.seo.outro)?.name || "Mẫu thương hiệu mặc định"}</SelectValue></SelectTrigger><SelectContent>{outros.map((o) => <SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>)}<SelectItem value="off">Không hiển thị</SelectItem></SelectContent></Select></label><Link href="/admin/bai-viet/mau-cuoi-bai" className="inline-block text-sm text-blue-700 underline">Quản lý mẫu cuối bài</Link>
         </div>}
-        {tab === "seo" && <div className="space-y-5">{seoField("title", "Tiêu đề SEO (để trống dùng tiêu đề bài)")}{field("metaDescription", "Mô tả SEO", true)}{field("slug", "Đường dẫn bài viết")}<p className="text-xs text-[#526f8e]">Đổi URL khi xuất bản sẽ giữ chuyển hướng từ URL cũ.</p>{seoField("keyword", "Từ khóa chính")}{seoField("secondaryKeywords", "Từ khóa phụ")}
-          <div className="rounded-lg bg-[#f4f8fc] p-3"><p className="text-xs">Xem trước tìm kiếm</p><p className="mt-2 truncate text-xs">winwinback.com/bai-viet/{doc.slug || "duong-dan"}</p><p className="mt-1 text-base text-blue-800">{doc.seo.title || doc.title || "Tiêu đề bài viết"}</p><p className="mt-1 line-clamp-3 text-sm">{doc.metaDescription || "Mô tả nội dung bài viết…"}</p></div>
-          <div><h3 className="mb-2 text-sm font-semibold">Checklist · {checks.filter((c) => c.ok).length}/{checks.length}</h3><p className="mb-3 text-xs text-[#526f8e]">Gợi ý biên tập, không phải cam kết thứ hạng.</p><ul className="space-y-3">{checks.map((c) => <li key={c.text}><button type="button" className="flex gap-2 text-left text-xs leading-5" onClick={() => { setMobileSettings(false); const target = c.field === "keyword" ? "seo-keyword" : c.field; document.getElementById(target)?.focus(); if (target === "content") editorRef.current?.commands.focus(); }}>{c.ok ? <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-green-700" /> : <CircleAlert className="mt-0.5 size-4 shrink-0 text-amber-700" />}{c.text}</button></li>)}</ul></div>
-          <details><summary className="cursor-pointer text-sm font-semibold">Chia sẻ mạng xã hội</summary><div className="mt-3 space-y-3">{seoField("socialTitle", "Tiêu đề chia sẻ")}{seoField("socialDescription", "Mô tả chia sẻ")}<Button type="button" variant="outline" onClick={() => setMedia("social")}>Chọn ảnh chia sẻ</Button><Button type="button" variant="ghost" onClick={() => updateSeo("socialImage", "")}>Dùng ảnh bìa</Button><div className="rounded-lg border p-3">{(doc.seo.socialImage || doc.imageUrl) && <>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={doc.seo.socialImage || doc.imageUrl} alt="Xem trước ảnh chia sẻ" className="aspect-video w-full object-cover" /></>}<p className="mt-2 text-sm font-semibold">{doc.seo.socialTitle || doc.seo.title || doc.title}</p><p className="text-xs">{doc.seo.socialDescription || doc.metaDescription}</p></div></div></details>
-          <details><summary className="cursor-pointer text-sm font-semibold">SEO nâng cao</summary><div className="mt-3 space-y-3">{seoField("canonical", "Canonical tùy chỉnh (HTTPS)")}<label className="flex gap-2 text-sm"><input type="checkbox" checked={doc.seo.noindex} onChange={(e) => updateSeo("noindex", e.target.checked)} />Không cho công cụ tìm kiếm lập chỉ mục</label></div></details>
-        </div>}
+        {tab === "seo" && <SeoPanel key={editorKey} doc={doc} published={published} update={update} updateSeo={updateSeo} chooseSocialImage={() => setMedia("social")} focusEditor={() => { setMobileSettings(false); requestAnimationFrame(() => editorRef.current?.commands.focus()); }} />}
         {tab === "ai" && <div className="space-y-4"><p className="text-sm leading-6">AI đề xuất, bạn quyết định. Kiểm tra lại dữ kiện trước khi xuất bản.</p><Select value={task} onValueChange={(v) => { if (v) setTask(v as Task); }}><SelectTrigger aria-label="Tác vụ AI"><SelectValue>{tasks[task]}</SelectValue></SelectTrigger><SelectContent>{Object.entries(tasks).map(([value, label]) => <SelectItem key={value} value={value}>{label}</SelectItem>)}</SelectContent></Select><label className="block space-y-2 text-sm">Yêu cầu / thông tin nguồn<Textarea value={instruction} maxLength={4000} rows={6} onChange={(e) => setInstruction(e.target.value)} placeholder="Chủ đề, đối tượng đọc, dữ liệu chính xác cần dùng…" /></label><Button type="button" variant="cta" disabled={aiBusy} onClick={() => void requestAi()} className="w-full">{aiBusy ? <Loader2 className="mr-2 size-4 animate-spin" /> : <Sparkles className="mr-2 size-4" />}{aiBusy ? "Đang tạo đề xuất…" : "Tạo đề xuất"}</Button><p className="text-xs text-[#526f8e]">Nội dung được gửi tới NVIDIA để xử lý. Không nhập thông tin cá nhân hoặc dữ liệu khách hàng.</p></div>}
       </aside>
     </div>

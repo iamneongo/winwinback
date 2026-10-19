@@ -25,7 +25,9 @@
     "db:migrate-notifications": "node --env-file=.env.local scripts/create-notifications-table.mjs",
     "db:migrate-contact-messages": "node scripts/migrate-contact-messages.mjs",
     "db:migrate-article-studio": "node scripts/migrate-article-studio.mjs",
+    "db:migrate-seo-p0": "node scripts/migrate-seo-p0.mjs",
     "test:articles": "tsx --test tests/article-studio.test.ts",
+    "test:seo": "tsx --test tests/seo-module.test.ts",
     "db:migrate-missions": "node scripts/migrate-missions.mjs",
     "db:migrate-bank-accounts": "node scripts/migrate-bank-accounts.mjs",
     "set-role": "node --env-file=.env.local scripts/set-role.mjs"
@@ -49,6 +51,7 @@
     "clsx": "^2.1.1",
     "date-fns": "^4.4.0",
     "drizzle-orm": "^0.45.2",
+    "htmlparser2": "^12.0.0",
     "lucide-react": "^1.6.0",
     "motion": "^14.3.0",
     "next": "16.3.0",

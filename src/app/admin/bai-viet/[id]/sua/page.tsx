@@ -40,6 +40,7 @@ export default async function EditArticlePage({
           id={a.id}
           initialDocument={studio?.document}
           initialRevision={studio?.revision}
+          initialPublished={a.status === "published"}
           slug={a.slug}
           categories={categories.map((category) => category.name)}
           initialHtml={articleContentHtml(a)}
