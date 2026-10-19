@@ -3,12 +3,12 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRef } from 'react';
-import { ArrowRight, Headset, House, Menu, Newspaper, X } from 'lucide-react';
+import { ArrowRight, Headset, House, Menu, Newspaper, ScrollText, ShieldCheck, X } from 'lucide-react';
 import { BrandLogo } from '@/components/BrandLogo';
 import { Button } from '@/components/ui/button';
 import styles from './NavBar.module.css';
 
-type ActiveNavLink = 'home' | 'news' | 'contact' | null;
+type ActiveNavLink = 'home' | 'news' | 'contact' | 'terms' | 'privacy' | null;
 
 export function NavBar({ variant = 'overlay', active = null }: { variant?: 'overlay' | 'news-overlay' | 'solid'; active?: ActiveNavLink }) {
   const mobileMenuRef = useRef<HTMLDialogElement>(null);
@@ -16,7 +16,7 @@ export function NavBar({ variant = 'overlay', active = null }: { variant?: 'over
   const onNews = variant === 'news-overlay';
   const isOverlay = variant !== 'solid';
   const navLinkClass = (active: boolean) => `${styles.navLink} inline-flex h-9 items-center rounded-full px-4 py-0 text-sm font-semibold no-underline hover:backdrop-blur-md focus-visible:backdrop-blur-md ${isOverlay ? 'text-[#133451] hover:text-[#133451]' : 'text-white/80 hover:text-white'} ${active ? `${styles.active} backdrop-blur-md` : ''}`;
-  const mobileLinkClass = (item: Exclude<ActiveNavLink, null>) => `${styles.mobileLink} flex min-h-14 items-center gap-3 rounded-2xl px-4 text-base font-bold ${active === item ? styles.mobileLinkActive : ''}`;
+  const mobileLinkClass = (item: Exclude<ActiveNavLink, null>) => `${styles.mobileLink} flex min-h-12 items-center gap-3 rounded-xl px-3 text-[15px] font-semibold ${active === item ? styles.mobileLinkActive : ''}`;
   const closeMobileMenu = () => mobileMenuRef.current?.close();
 
   return (
@@ -66,10 +66,12 @@ export function NavBar({ variant = 'overlay', active = null }: { variant?: 'over
             <Link href="/" onClick={closeMobileMenu} aria-label="Win-Win Back - Trang chủ"><BrandLogo /></Link>
             <button type="button" onClick={closeMobileMenu} aria-label="Đóng menu" className="grid size-11 place-items-center rounded-full bg-white/75 text-[#12365a] ring-1 ring-white/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#278a34]"><X className="size-5" aria-hidden="true" /></button>
           </div>
-          <nav className="mt-7 space-y-2" aria-label="Điều hướng mobile">
+          <nav className="mt-6 space-y-1" aria-label="Điều hướng mobile">
             <Link href="/" onClick={closeMobileMenu} aria-current={active === 'home' ? 'page' : undefined} className={mobileLinkClass('home')}><House className="size-5 shrink-0 text-[#258e3c]" aria-hidden="true" />Trang chủ</Link>
             <Link href="/bai-viet" onClick={closeMobileMenu} aria-current={active === 'news' ? 'page' : undefined} className={mobileLinkClass('news')}><Newspaper className="size-5 shrink-0 text-[#258e3c]" aria-hidden="true" />Tin tức</Link>
             <Link href="/lien-he" onClick={closeMobileMenu} aria-current={active === 'contact' ? 'page' : undefined} className={mobileLinkClass('contact')}><Headset className="size-5 shrink-0 text-[#258e3c]" aria-hidden="true" />Liên hệ</Link>
+            <Link href="/dieu-khoan" onClick={closeMobileMenu} aria-current={active === 'terms' ? 'page' : undefined} className={mobileLinkClass('terms')}><ScrollText className="size-5 shrink-0 text-[#258e3c]" aria-hidden="true" />Điều khoản sử dụng</Link>
+            <Link href="/chinh-sach-bao-mat" onClick={closeMobileMenu} aria-current={active === 'privacy' ? 'page' : undefined} className={mobileLinkClass('privacy')}><ShieldCheck className="size-5 shrink-0 text-[#258e3c]" aria-hidden="true" />Chính sách bảo mật</Link>
           </nav>
           <div className="mt-auto flex flex-col items-center pt-6">
             <Image src="/images/landing-hero-mascot-v3.webp" alt="" width={1536} height={1024} sizes="230px" className={`${styles.mobileMascot} h-auto w-full max-w-[230px]`} aria-hidden="true" />

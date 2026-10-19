@@ -15,7 +15,9 @@ export function MarketingNavBar() {
     ? 'home'
     : pathname === '/bai-viet' || pathname.startsWith('/bai-viet/')
       ? 'news'
-      : pathname === '/lien-he' ? 'contact' : null;
+      : pathname === '/lien-he' ? 'contact'
+        : pathname === '/dieu-khoan' ? 'terms'
+          : pathname === '/chinh-sach-bao-mat' ? 'privacy' : null;
 
   return <NavBar variant={variant} active={active} />;
 }
