@@ -14,6 +14,7 @@ const MODEL = process.env.NVIDIA_MODEL || "openai/gpt-oss-20b";
 export function isNvidiaConfigured(): boolean {
   return Boolean(process.env.NVIDIA_API_KEY);
 }
+export function getNvidiaModel() { return MODEL; }
 
 export async function nvidiaChat(opts: {
   system?: string;
@@ -22,6 +23,7 @@ export async function nvidiaChat(opts: {
   temperature?: number;
   timeoutMs?: number;
   onDelta?: (text: string) => Promise<void>;
+  onUsage?: (usage: { promptTokens: number | null; completionTokens: number | null }) => Promise<void>;
 }): Promise<string> {
   const key = process.env.NVIDIA_API_KEY;
   if (!key) throw new Error("NVIDIA_API_KEY chưa cấu hình");
@@ -71,7 +73,9 @@ export async function nvidiaChat(opts: {
         if (!data) continue;
         const parsed = JSON.parse(data) as {
           choices?: { delta?: { content?: string } }[];
+          usage?: { prompt_tokens?: number; completion_tokens?: number };
         };
+        if (parsed.usage) await opts.onUsage?.({ promptTokens: parsed.usage.prompt_tokens ?? null, completionTokens: parsed.usage.completion_tokens ?? null });
         const delta = parsed.choices?.[0]?.delta?.content;
         if (delta) {
           content += delta;
@@ -100,8 +104,10 @@ export async function nvidiaChat(opts: {
 
   const json = (await res.json()) as {
     choices?: { message?: { content?: string } }[];
+    usage?: { prompt_tokens?: number; completion_tokens?: number };
   };
   const content = json?.choices?.[0]?.message?.content;
   if (!content) throw new Error("NVIDIA API không trả về nội dung");
+  await opts.onUsage?.({ promptTokens: json.usage?.prompt_tokens ?? null, completionTokens: json.usage?.completion_tokens ?? null });
   return content;
 }

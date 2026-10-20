@@ -6,7 +6,10 @@ import { db } from "@/db";
 import { articles, articleSlugs, type Article } from "@/db/schema";
 import { defaultSeo, documentSchema, publicationErrors } from "./document";
 import type { Platform } from "@/lib/affiliate/types";
-import { nvidiaChat, isNvidiaConfigured } from "@/lib/ai/nvidia";
+import { nvidiaChat, isNvidiaConfigured, getNvidiaModel } from "@/lib/ai/nvidia";
+import { seoAiUsage } from "@/db/schema";
+import { getSeoTemplate } from "./seo-template";
+import { renderSeoPattern } from "./seo-template-pattern";
 import { platformLabel } from "@/lib/labels";
 import { formatVnd, cashbackRate } from "@/lib/config";
 import { getShopeeProductInfo } from "@/lib/affiliate/shopee/automation-client";
@@ -207,6 +210,7 @@ function buildContentHtml(opts: {
 async function buildArticle(
   input: GenerateArticleInput,
   onProgress?: (progress: ArticleProgress) => Promise<void>,
+  onUsage?: (usage: { promptTokens: number | null; completionTokens: number | null }) => Promise<void>,
 ): Promise<BuiltArticle | null> {
   if (!isNvidiaConfigured() || !input.productId) return null;
 
@@ -267,6 +271,7 @@ async function buildArticle(
     maxTokens: 6000,
     temperature: 0.6,
     timeoutMs: 170_000,
+    onUsage,
     onDelta: onProgress
       ? async (partial) => {
           const preview = previewFromPartialArticle(partial);
@@ -345,20 +350,36 @@ export async function generateAndSaveArticle(
       .limit(1);
     if (existing[0]) return existing[0];
 
-    const c = await buildArticle(input, onProgress);
+    let tokenUsage: { promptTokens: number | null; completionTokens: number | null } = { promptTokens: null, completionTokens: null };
+    let generated = false;
+    let c: BuiltArticle | null;
+    try {
+      c = await buildArticle(input, onProgress, async (usage) => { tokenUsage = usage; });
+      generated = Boolean(c);
+    } finally {
+      const inputPrice = Number(process.env.NVIDIA_INPUT_USD_PER_MILLION_TOKENS);
+      const outputPrice = Number(process.env.NVIDIA_OUTPUT_USD_PER_MILLION_TOKENS);
+      const cost = process.env.NVIDIA_INPUT_USD_PER_MILLION_TOKENS && process.env.NVIDIA_OUTPUT_USD_PER_MILLION_TOKENS && Number.isFinite(inputPrice) && Number.isFinite(outputPrice) && tokenUsage.promptTokens !== null && tokenUsage.completionTokens !== null ? String((tokenUsage.promptTokens * inputPrice + tokenUsage.completionTokens * outputPrice) / 1_000_000) : null;
+      await db.insert(seoAiUsage).values({ userId: input.userId || null, task: "product_article", model: getNvidiaModel(), promptTokens: tokenUsage.promptTokens, completionTokens: tokenUsage.completionTokens, estimatedCostUsd: cost, status: generated ? "success" : "error" }).catch(() => console.error("[seo-ai] product usage logging failed"));
+    }
     if (!c) return null;
 
     const category = await resolveArticleCategory(c.category);
     const safeHtml = sanitizeArticleHtml(c.contentHtml);
+    const template = await getSeoTemplate(category, false);
+    const initialSeo = defaultSeo();
+    const baseDocument = { title: c.title, slug: c.slug, html: safeHtml, intro: c.intro ?? "", metaDescription: c.metaDescription ?? "", category, imageUrl: c.imageUrl && /^https:\/\//.test(c.imageUrl) ? c.imageUrl : "", seo: initialSeo };
+    const templateTitle = template ? renderSeoPattern(template.titlePattern, baseDocument).slice(0, 180) : "";
+    const templateDescription = template ? renderSeoPattern(template.descriptionPattern, baseDocument).slice(0, 300) : "";
     const document = documentSchema.safeParse({
       title: c.title,
       slug: c.slug,
       html: safeHtml,
       intro: c.intro ?? "",
-      metaDescription: c.metaDescription ?? "",
+      metaDescription: templateDescription || c.metaDescription || "",
       category,
       imageUrl: c.imageUrl && /^https:\/\//.test(c.imageUrl) ? c.imageUrl : "",
-      seo: defaultSeo(),
+      seo: { ...initialSeo, title: templateTitle },
     });
     if (!document.success) return null;
     const isPublishable = Boolean(input.affiliateShortCode && input.productUrl && c.productName.trim() && c.sections.length && !publicationErrors(document.data).length);
@@ -369,7 +390,7 @@ export async function generateAndSaveArticle(
         productId: input.productId,
         userId: input.userId,
         title: c.title,
-        metaDescription: c.metaDescription,
+        metaDescription: document.data.metaDescription,
         intro: document.data.intro,
         sections: JSON.stringify(c.sections),
         contentHtml: safeHtml,

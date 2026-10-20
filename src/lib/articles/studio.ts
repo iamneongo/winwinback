@@ -48,6 +48,17 @@ export async function saveDocument(input: { id?: string; revision: number; docum
     const revision = old.revision + 1;
     if (input.publish) {
       doc.slug ||= old.slug;
+      if (doc.seo.canonical) {
+        const [sameCanonical] = await tx.select({ id: articles.id }).from(articles).where(and(ne(articles.id, id), eq(articles.status, "published"), sql`${articles.seo}->>'canonical' = ${doc.seo.canonical}`)).limit(1);
+        if (sameCanonical) throw new Error("Canonical này đã được dùng ở bài viết khác.");
+        const origin = (process.env.NEXT_PUBLIC_SITE_URL || "https://winwinback.com").replace(/\/$/, "");
+        if (doc.seo.canonical.startsWith(`${origin}/bai-viet/`)) {
+          let otherSlug = new URL(doc.seo.canonical).pathname.split("/")[2] || "";
+          try { otherSlug = decodeURIComponent(otherSlug); } catch { throw new Error("Canonical có URL không hợp lệ."); }
+          const [samePage] = await tx.select({ id: articles.id }).from(articles).where(and(ne(articles.id, id), eq(articles.status, "published"), eq(articles.slug, otherSlug))).limit(1);
+          if (samePage) throw new Error("Canonical đang trỏ tới URL của bài viết khác.");
+        }
+      }
       const [reserved] = await tx.select().from(articleSlugs).where(and(eq(articleSlugs.slug, doc.slug), ne(articleSlugs.articleId, id)));
       const [occupied] = await tx.select().from(articles).where(and(eq(articles.slug, doc.slug), ne(articles.id, id)));
       if (reserved || occupied) throw new Error("URL này đã được sử dụng. Hãy chọn URL khác.");

@@ -636,6 +636,55 @@ export const articleOutros = pgTable("article_outros", {
   revision: integer("revision").notNull().default(0),
 });
 
+// SEO operations are separate from article content so audits and analytics never
+// rewrite a published article or its editorial revision.
+export const seoTemplates = pgTable("seo_templates", {
+  key: text("key").primaryKey(), // manual, product, or category:<category name>
+  titlePattern: text("title_pattern").notNull(),
+  descriptionPattern: text("description_pattern").notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+export type SeoAuditFinding = { code: string; message: string; href?: string };
+export const seoAuditRecords = pgTable("seo_audit_records", {
+  articleId: uuid("article_id").primaryKey().references(() => articles.id, { onDelete: "cascade" }),
+  findings: jsonb("findings").$type<SeoAuditFinding[]>().notNull().default([]),
+  checkedAt: timestamp("checked_at", { withTimezone: true }).notNull().defaultNow(),
+});
+export const seoAuditRuns = pgTable("seo_audit_runs", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  articleCount: integer("article_count").notNull(),
+  findingCount: integer("finding_count").notNull(),
+  completedAt: timestamp("completed_at", { withTimezone: true }).notNull().defaultNow(),
+});
+export const seoSearchConsole = pgTable("seo_search_console", {
+  id: text("id").primaryKey(),
+  property: text("property").notNull(),
+  refreshToken: text("refresh_token").notNull(), // AES-256-GCM envelope
+  connectedAt: timestamp("connected_at", { withTimezone: true }).notNull().defaultNow(),
+  syncedAt: timestamp("synced_at", { withTimezone: true }),
+});
+export const seoSearchMetrics = pgTable("seo_search_metrics", {
+  property: text("property").notNull(),
+  date: text("date").notNull(),
+  page: text("page").notNull(),
+  clicks: integer("clicks").notNull(),
+  impressions: integer("impressions").notNull(),
+  ctr: text("ctr").notNull(),
+  position: text("position").notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [uniqueIndex("seo_search_metrics_property_date_page_idx").on(t.property, t.date, t.page)]);
+export const seoAiUsage = pgTable("seo_ai_usage", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
+  task: text("task").notNull(),
+  model: text("model").notNull(),
+  promptTokens: integer("prompt_tokens"),
+  completionTokens: integer("completion_tokens"),
+  estimatedCostUsd: text("estimated_cost_usd"),
+  status: text("status").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [index("seo_ai_usage_user_created_idx").on(t.userId, t.createdAt)]);
+
 export const referralRewards = pgTable("referral_rewards", {
   referredUserId: uuid("referred_user_id")
     .primaryKey()

@@ -38,6 +38,7 @@ export default async function EditArticlePage({
         <p className="mb-5 mt-1 text-sm text-[#58749a]">{a.title}</p>
         <ArticleEditor
           id={a.id}
+          manual={a.productId.startsWith("manual:")}
           initialDocument={studio?.document}
           initialRevision={studio?.revision}
           initialPublished={a.status === "published"}
