@@ -14,7 +14,7 @@ import {
 import { platformLabel } from "@/lib/labels";
 import { UNCATEGORIZED } from "@/lib/articles/categories";
 import { getOutro } from "@/lib/articles/studio";
-import { resolvePublicArticleSeo } from "@/lib/articles/seo-public";
+import { publicArticleMetadata, resolvePublicArticleSeo } from "@/lib/articles/seo-public";
 
 export const dynamic = "force-dynamic";
 
@@ -26,26 +26,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   if (!article) return { title: "Không tìm thấy bài viết — Win-Win Back", robots: { index: false, follow: false } };
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://winwinback.com";
   const cover = articleCoverUrl(article);
-  const seo = resolvePublicArticleSeo(article, siteUrl, cover);
-  return {
-    title: `${seo.title} | Win-Win Back`,
-    robots: { index: seo.index, follow: seo.follow },
-    description: seo.description,
-    alternates: { canonical: seo.canonical },
-    openGraph: {
-      title: seo.socialTitle,
-      description: seo.socialDescription,
-      url: seo.canonical,
-      images: seo.image ? [{ url: seo.image, alt: article.title }] : undefined,
-      type: seo.seo.schemaType === "Article" ? "article" : "website",
-    },
-    twitter: {
-      card: "summary_large_image",
-      title: seo.socialTitle,
-      description: seo.socialDescription,
-      images: seo.image ? [seo.image] : undefined,
-    },
-  };
+  return publicArticleMetadata(article, siteUrl, cover);
 }
 
 export default async function ArticlePage({

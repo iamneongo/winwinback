@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { performance } from "node:perf_hooks";
 import { articleSlug, defaultSeo, documentSchema, seoSchema, type ArticleDocument } from "../src/lib/articles/document";
 import { adaptArticleForSeo, analyzeSeo } from "../src/lib/articles/seo-engine";
-import { resolvePublicArticleSeo } from "../src/lib/articles/seo-public";
+import { publicArticleMetadata, resolvePublicArticleSeo } from "../src/lib/articles/seo-public";
 
 const doc: ArticleDocument = { title: "Cửa composite cho nhà ở hiện đại", slug: "cua-composite", html: '<h2>Chọn cửa composite</h2><p>Cửa composite phù hợp nhiều không gian.</p><p>Kiểm tra vật liệu và kích thước trước khi chọn.</p><img src="/api/article-media/abc" alt="Cửa composite màu nâu"><a href="/bai-viet">Bài viết liên quan</a>', intro: "Tìm hiểu cách chọn cửa composite cho nhà ở.", metaDescription: "", category: "Khác", imageUrl: "", seo: { ...defaultSeo(), keyword: "Cửa composite" } };
 
@@ -40,6 +40,10 @@ test("metadata fallbacks, robots and sitemap eligibility share one resolver", ()
   const base = { title: doc.title, slug: doc.slug, intro: doc.intro, metaDescription: null, imageUrl: null, seo: null, status: "published" } as Parameters<typeof resolvePublicArticleSeo>[0];
   const fallback = resolvePublicArticleSeo(base, "https://winwinback.com");
   assert.equal(fallback.title, doc.title);
+  assert.equal(resolvePublicArticleSeo({ ...base, seo: { ...defaultSeo(), title: "Mẹo mua sắm | Win-Win Back" } }, "https://winwinback.com").title, "Mẹo mua sắm | Win-Win Back");
+  const metadata = publicArticleMetadata({ ...base, seo: { ...defaultSeo(), title: "Mẹo mua sắm | Win-Win Back" } }, "https://winwinback.com");
+  assert.equal(metadata.title, "Mẹo mua sắm | Win-Win Back");
+  assert.equal(metadata.openGraph?.title, "Mẹo mua sắm | Win-Win Back");
   assert.equal(fallback.description, doc.intro);
   assert.equal(fallback.inSitemap, true);
   assert.equal(resolvePublicArticleSeo({ ...base, status: "hidden" }, "https://winwinback.com").inSitemap, false);

@@ -6,6 +6,8 @@ CMS hiện dùng Next.js 16 App Router, Tiptap 3, React state trong `ArticleEdit
 
 Trường SEO mở rộng trong `articles.seo` JSONB và `article_drafts.document.seo` JSONB hiện có. `articles.meta_description` và `articles.slug` vẫn là trường nguồn như trước để tránh phân đôi dữ liệu. Tên TypeScript tương ứng: `title` = meta title, `keyword` = focus keyword, `canonical` = canonical URL, `noindex` = nghịch đảo robots index, `follow` = robots follow, `socialTitle`/`socialDescription`/`socialImage` = OG. `secondaryKeywords` là mảng; giá trị chuỗi cũ được chuẩn hóa khi đọc. Các trường mới mặc định tương thích bài cũ.
 
+Tiêu đề SEO hiệu lực được xuất nguyên văn trong thẻ `<title>` và preview; hệ thống không tự nối tên thương hiệu. Mẫu SEO có thể thêm `| Win-Win Back` khi người biên tập muốn, tránh lặp hậu tố với tiêu đề tùy chỉnh.
+
 `seo-engine.ts` phân tích nội dung đã chuẩn hóa bằng một lượt parse HTML, không gọi database hay AI. Cùng kết quả này tạo score và checklist. 13 rule có tổng trọng số 100; rule không áp dụng được loại khỏi mẫu số. Ngưỡng tiêu đề/mô tả và độ dài bài là gợi ý biên tập, không dùng làm điều kiện xuất bản. Điểm không phải điểm Google. Ở client, phân tích chạy sau 400 ms ngừng nhập, độc lập với autosave 1,8 giây. Trường SEO được lưu cùng document và revision; bài public chỉ đổi sau khi chọn Xuất bản/Cập nhật.
 
 `seo-public.ts` là nguồn fallback duy nhất cho `generateMetadata`, JSON-LD và sitemap. `article_slugs`/`src/proxy.ts` tiếp tục quản lý URL cũ và redirect 301, không tạo bộ redirect mới. Trang nháp/ẩn không được public; bài noindex hoặc canonical sang URL khác không được đưa vào sitemap.

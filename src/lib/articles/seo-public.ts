@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import type { Article } from "@/db/schema";
 import { seoSchema } from "./document";
 
@@ -31,5 +32,29 @@ export function resolvePublicArticleSeo(article: PublicSeoArticle, siteUrl: stri
     index: article.status === "published" && !seo.noindex,
     follow: seo.follow,
     inSitemap: article.status === "published" && !seo.noindex && canonical === articleUrl,
+  };
+}
+
+/** Keep the browser title and social tags aligned with the editor's SEO preview. */
+export function publicArticleMetadata(article: PublicSeoArticle, siteUrl: string, coverImage?: string | null): Metadata {
+  const seo = resolvePublicArticleSeo(article, siteUrl, coverImage);
+  return {
+    title: seo.title,
+    robots: { index: seo.index, follow: seo.follow },
+    description: seo.description,
+    alternates: { canonical: seo.canonical },
+    openGraph: {
+      title: seo.socialTitle,
+      description: seo.socialDescription,
+      url: seo.canonical,
+      images: seo.image ? [{ url: seo.image, alt: article.title }] : undefined,
+      type: seo.seo.schemaType === "Article" ? "article" : "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: seo.socialTitle,
+      description: seo.socialDescription,
+      images: seo.image ? [seo.image] : undefined,
+    },
   };
 }
