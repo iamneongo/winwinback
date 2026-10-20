@@ -10,12 +10,12 @@ Take a database backup first, retain it outside the application container, and t
 
 ## Scheduled jobs
 
-Both endpoints require `x-cron-secret: $CRON_SECRET` and return JSON. Configure an external scheduler to call:
+Both endpoints require `x-cron-secret: $CRON_SECRET` and return JSON. `.github/workflows/seo-maintenance.yml` schedules both daily at 02:17 UTC (09:17 Asia/Bangkok) and supports manual dispatch. The GitHub Actions repository secret `SEO_CRON_SECRET` must match production `CRON_SECRET`. It calls:
 
 - `GET /api/cron/seo-audit` daily, preferably outside peak traffic. It checks public articles and persists findings. External URL checks are limited and use DNS-pinned requests; a failed external check is advisory.
 - `GET /api/cron/seo-search-console` daily after Search Console is connected. It imports page/date aggregates for the recent 28-day window. It returns `not_connected` without changing data before OAuth setup.
 
-An endpoint existing is **not** evidence of a successful scheduled run. Check the scheduler's run history after deployment. For a one-off authenticated smoke test, call the endpoints with the cron header and verify the SEO dashboard's last-run/sync timestamps. Run `npm run test:seo:public` to check the live sitemap, robots, article metadata, canonical, Open Graph and JSON-LD without admin access.
+An endpoint or workflow file existing is **not** evidence of a successful scheduled run. Check the GitHub Actions run history after deployment. For a one-off authenticated smoke test, dispatch the workflow and verify the SEO dashboard's last-run/sync timestamps. Run `npm run test:seo:public` to check the live sitemap, robots, article metadata, canonical, Open Graph and JSON-LD without admin access.
 
 ## Search Console
 
