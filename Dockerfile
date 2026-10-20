@@ -54,6 +54,9 @@ ENV NODE_ENV=production
 # Better Auth does not refuse to initialise during `next build`; the real
 # secret is provided at runtime.
 ARG NEXT_PUBLIC_BASE_URL="https://winwinback.com"
+# Keep a deployment-specific ID in the Next.js build so open browser tabs can
+# detect version skew after Dokploy replaces the running image.
+ARG NEXT_DEPLOYMENT_ID
 ARG BETTER_AUTH_SECRET="build-time-placeholder-secret-not-used-at-runtime-0001"
 # Dummy connection string so the lazy DB getter (used by the Better Auth
 # adapter at module load) doesn't throw during `next build`. The Pool connects
@@ -61,6 +64,7 @@ ARG BETTER_AUTH_SECRET="build-time-placeholder-secret-not-used-at-runtime-0001"
 # DATABASE_URL is injected at runtime by the platform and overrides this.
 ARG DATABASE_URL="postgres://build:build@localhost:5432/build"
 ENV NEXT_PUBLIC_BASE_URL=${NEXT_PUBLIC_BASE_URL}
+ENV NEXT_DEPLOYMENT_ID=${NEXT_DEPLOYMENT_ID}
 ENV BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
 ENV DATABASE_URL=${DATABASE_URL}
 

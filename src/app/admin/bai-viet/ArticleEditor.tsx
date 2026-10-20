@@ -9,10 +9,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArticleRichTextEditor } from "./ArticleRichTextEditor";
 import { defaultSeo, type ArticleDocument, type ArticleSeo } from "@/lib/articles/document";
+import type { articleOutros } from "@/db/schema";
 import { saveStudioAction, versionsAction, listOutrosAction } from "./studio-actions";
 import { MediaPicker } from "./MediaPicker";
 import { StudioDialog } from "./StudioDialog";
 import { SeoPanel } from "./SeoPanel";
+import { ArticleOutroPreview } from "./ArticleOutroPreview";
 import { previewSeoTemplateAction } from "./seo-actions";
 
 export function ArticleEditor(props: { id?: string; slug?: string; manual?: boolean; categories: string[]; initialHtml: string; initialTitle: string; initialDescription: string; initialCategory: string; initialImageUrl: string; initialDocument?: ArticleDocument; initialRevision?: number; initialPublished?: boolean }) {
@@ -23,7 +25,8 @@ export function ArticleEditor(props: { id?: string; slug?: string; manual?: bool
   const [published, setPublished] = useState(props.initialPublished ?? false);
   const [error, setError] = useState(""); const [status, setStatus] = useState("Chưa có thay đổi"); const [saving, setSaving] = useState(false); const savingRef = useRef(false); const [blocked, setBlocked] = useState(false);
   const [media, setMedia] = useState<"cover" | "social" | null>(null); const [history, setHistory] = useState<Awaited<ReturnType<typeof versionsAction>> | null>(null);
-  const [outros, setOutros] = useState<{ id: string; name: string }[]>([]);
+  const [outros, setOutros] = useState<(typeof articleOutros.$inferSelect)[]>([]);
+  const [outroLoading, setOutroLoading] = useState(true);
   const [templatePreview, setTemplatePreview] = useState<{ key: string; title: string; description: string } | null>(null);
   const editorRef = useRef<Editor | null>(null); const [editorKey, setEditorKey] = useState(0); const editorHtml = useRef(initial.current.html); const saved = useRef(JSON.stringify(initial.current));
   const settingsButtonRef = useRef<HTMLButtonElement>(null);
@@ -46,7 +49,7 @@ export function ArticleEditor(props: { id?: string; slug?: string; manual?: bool
   }, []);
   useEffect(() => { if (blocked || saving || JSON.stringify(doc) === saved.current) return; const timer = setTimeout(() => void save(), 1800); return () => clearTimeout(timer); }, [doc, saving, blocked, save]);
   useEffect(() => { const handler = (event: BeforeUnloadEvent) => { if (JSON.stringify(latest.current) !== saved.current) { event.preventDefault(); event.returnValue = ""; } }; window.addEventListener("beforeunload", handler); return () => window.removeEventListener("beforeunload", handler); }, []);
-  useEffect(() => { listOutrosAction().then(setOutros).catch(() => setError("Không tải được mẫu cuối bài. Hãy kiểm tra migration.")); }, []);
+  useEffect(() => { listOutrosAction().then(setOutros).catch(() => setError("Không tải được mẫu cuối bài. Hãy kiểm tra migration.")).finally(() => setOutroLoading(false)); }, []);
   useEffect(() => {
     if (!mobileSettings) return;
     const previousOverflow = document.body.style.overflow;
@@ -62,6 +65,7 @@ export function ArticleEditor(props: { id?: string; slug?: string; manual?: bool
     };
   }, [mobileSettings]);
   const field = (key: "intro" | "metaDescription" | "slug", label: string, multiline = false) => <label className="block space-y-2 text-sm font-medium" htmlFor={key}>{label}{multiline ? <Textarea id={key} value={doc[key]} rows={3} onChange={(e) => update(key, e.target.value)} /> : <Input id={key} value={doc[key]} onChange={(e) => update(key, e.target.value)} />}</label>;
+  const selectedOutro = outros.find((outro) => outro.id === doc.seo.outro);
   return <div className="space-y-4 text-[#173b5e]">
     <div className="flex flex-wrap items-center justify-between gap-3 border-b pb-4"><p role="status" className="flex items-center gap-2 text-sm text-[#526f8e]">{saving && <Loader2 className="size-4 animate-spin" />}{status}</p><div className="flex flex-wrap gap-2">
       {id && <><Link href={`/admin/bai-viet/${id}/preview`} target="_blank" className="inline-flex items-center rounded-lg border px-3 text-sm">Xem bản đã lưu</Link><Button type="button" variant="outline" onClick={() => { versionsAction(id).then(setHistory).catch(() => setError("Không tải được lịch sử.")); }}>Lịch sử</Button></>}
@@ -80,7 +84,16 @@ export function ArticleEditor(props: { id?: string; slug?: string; manual?: bool
           <div className="space-y-2"><p className="text-sm font-medium">Ảnh bìa</p>{doc.imageUrl && <>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={doc.imageUrl.startsWith("https:") ? `/api/img?url=${encodeURIComponent(doc.imageUrl)}` : doc.imageUrl} alt="Ảnh bìa" className="aspect-video w-full rounded-lg object-cover" /></>}<div className="flex gap-2"><Button type="button" variant="outline" onClick={() => setMedia("cover")}>Chọn ảnh</Button>{doc.imageUrl && <Button type="button" variant="ghost" onClick={() => update("imageUrl", "")}>Gỡ ảnh</Button>}</div></div>
-          <label className="block space-y-2 text-sm font-medium">Mẫu cuối bài<Select value={doc.seo.outro} onValueChange={(v) => { if (v) updateSeo("outro", v); }}><SelectTrigger><SelectValue>{doc.seo.outro === "off" ? "Không hiển thị" : outros.find((o) => o.id === doc.seo.outro)?.name || "Mẫu thương hiệu mặc định"}</SelectValue></SelectTrigger><SelectContent>{outros.map((o) => <SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>)}<SelectItem value="off">Không hiển thị</SelectItem></SelectContent></Select></label><Link href="/admin/bai-viet/mau-cuoi-bai" className="inline-block text-sm text-blue-700 underline">Quản lý mẫu cuối bài</Link>
+          <div className="space-y-3">
+            <label className="block space-y-2 text-sm font-medium">Mẫu cuối bài<Select value={doc.seo.outro} onValueChange={(v) => { if (v) updateSeo("outro", v); }}><SelectTrigger><SelectValue>{doc.seo.outro === "off" ? "Không hiển thị" : selectedOutro?.name || "Mẫu thương hiệu mặc định"}</SelectValue></SelectTrigger><SelectContent>{outros.map((o) => <SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>)}<SelectItem value="off">Không hiển thị</SelectItem></SelectContent></Select></label>
+            <div aria-live="polite">
+              {doc.seo.outro === "off" ? <p className="rounded-lg bg-[#f4f8fc] px-3 py-4 text-xs text-[#526f8e]">Bài viết này sẽ không hiển thị banner cuối bài.</p>
+                : outroLoading ? <div className="h-48 animate-pulse rounded-xl bg-[#eef5f9]" aria-label="Đang tải bản xem trước mẫu cuối bài" />
+                  : selectedOutro ? <><p className="mb-2 text-xs font-medium text-[#526f8e]">Xem trước bố cục thu gọn</p><ArticleOutroPreview outro={selectedOutro} manual={props.manual ?? !props.id} />{!(props.manual ?? !props.id) && <p className="mt-2 text-xs leading-5 text-[#526f8e]">Giá, mức hoàn tiền và nút đến sản phẩm sẽ dùng dữ liệu thực tế của bài.</p>}</>
+                    : <p role="status" className="rounded-lg bg-amber-50 px-3 py-4 text-xs text-amber-800">Không tìm thấy mẫu đã chọn. Hãy chọn mẫu khác hoặc kiểm tra danh sách mẫu.</p>}
+            </div>
+            <Link href="/admin/bai-viet/mau-cuoi-bai" className="inline-block text-sm text-blue-700 underline">Quản lý mẫu cuối bài</Link>
+          </div>
         </div>}
         {tab === "seo" && <div className="space-y-4"><SeoPanel key={editorKey} articleId={id} doc={doc} published={published} update={update} updateSeo={updateSeo} chooseSocialImage={() => setMedia("social")} focusEditor={() => { setMobileSettings(false); requestAnimationFrame(() => editorRef.current?.commands.focus()); }} insertInternalLink={({ title, slug }) => {
           const editor = editorRef.current;
