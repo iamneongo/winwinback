@@ -25,7 +25,7 @@ Do not enable the connection with another site's Google client or property. Key 
 
 ## Templates, audit, and AI
 
-Templates use only the supported placeholders shown in the SEO dashboard. Applying a template in the manual editor is explicit; product-article generation applies the configured product/category template in its existing generation flow. Audit findings do not block publication. The AI assistant still runs only when requested by an admin and requires review before application. Per-user limits are 6 requests per minute on the single application replica and 60 requests per rolling 24 hours in the database. Token counts are logged when NVIDIA returns usage; cost is estimated only if both token-price environment variables are configured.
+Templates use only the supported placeholders shown in the SEO dashboard. Applying a template in the manual editor is explicit; product-article generation applies the configured product/category template in its existing generation flow. Audit findings do not block publication. The manual article editor has only Article and SEO settings; its AI suggestion tab and server action were removed. Product-article generation still uses NVIDIA in its existing flow. Token counts are logged when NVIDIA returns usage; cost is estimated only if both token-price environment variables are configured.
 
 ## QA after deployment
 
@@ -34,7 +34,7 @@ Templates use only the supported placeholders shown in the SEO dashboard. Applyi
 3. Run the audit endpoint with the cron secret; confirm a last-run timestamp and findings in the dashboard.
 4. Save a test template, preview it in the editor, apply it, save a draft, and reopen the draft. Confirm the published article remains unchanged until publishing.
 5. After configuring Google OAuth, connect the correct verified property and run one sync. Compare one page/date row with Search Console, allowing for reporting delay.
-6. Request one AI suggestion, reject it, then request and apply another. Confirm the usage table records the attempts and article text changes only after acceptance.
+6. Confirm the manual article editor has no AI suggestion tab or action. Product-article generation remains available through its existing flow; verify its usage records without changing a manually edited article.
 7. Confirm public article metadata and sitemap still follow the P0 rules; inspect a changed slug's permanent redirect.
 
 The optional Google OAuth credentials and scheduled job configuration are deployment operations, not required for existing public SEO metadata to keep working.
