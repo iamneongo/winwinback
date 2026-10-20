@@ -6,6 +6,14 @@ import { ChevronDown } from 'lucide-react';
 
 const faqs = [
   {
+    question: 'Mua sắm hoàn tiền Shopee là gì?',
+    answer: 'Đó là cách mua hàng trên Shopee qua link được tạo từ Win-Win Back. Nếu đơn hàng được sàn ghi nhận và xác nhận đủ điều kiện, tiền hoàn sẽ được cộng vào ví Win-Win Back của bạn.',
+  },
+  {
+    question: 'Mua sắm hoàn tiền TikTok là gì?',
+    answer: 'Đó là cách mua hàng trên TikTok Shop qua link được tạo từ Win-Win Back. Sau khi đơn hàng hoàn tất và được sàn xác nhận đủ điều kiện, tiền hoàn sẽ được cộng vào ví Win-Win Back của bạn.',
+  },
+  {
     question: 'Tôi có mất thêm phí khi sử dụng không?',
     answer: 'Không. Bạn thanh toán trên sàn như bình thường và Win-Win Back không thu phí tham gia.',
   },

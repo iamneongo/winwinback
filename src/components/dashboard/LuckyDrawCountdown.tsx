@@ -1,19 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CalendarDays } from "lucide-react";
+import { Clock3 } from "lucide-react";
 
-const dateFormatter = new Intl.DateTimeFormat("vi-VN", {
-  timeZone: "Asia/Ho_Chi_Minh",
-  day: "2-digit", month: "2-digit", year: "numeric",
-  hour: "2-digit", minute: "2-digit", hour12: false,
-});
-
-export function LuckyDrawCountdown({ endAt, periodName }: { endAt: string | null; periodName: string | null }) {
+export function LuckyDrawCountdown({ endAt }: { endAt: string | null }) {
   const [now, setNow] = useState<number | null>(null);
   useEffect(() => {
+    const initialTick = window.setTimeout(() => setNow(Date.now()), 0);
     const timer = window.setInterval(() => setNow(Date.now()), 1000);
-    return () => window.clearInterval(timer);
+    return () => {
+      window.clearTimeout(initialTick);
+      window.clearInterval(timer);
+    };
   }, []);
 
   const target = endAt ? new Date(endAt).getTime() : null;
@@ -26,20 +24,21 @@ export function LuckyDrawCountdown({ endAt, periodName }: { endAt: string | null
   ];
 
   return (
-    <div className="w-full max-w-[410px] overflow-hidden rounded-xl border border-[#f8d166] bg-[#071a3b]/80 text-white shadow-[0_0_0_3px_rgba(251,198,76,0.2)]">
-      <div className="bg-gradient-to-r from-[#fff1a0] via-[#ffd75e] to-[#f4ad28] px-4 py-1.5 text-center text-xs font-black text-[#473000]">THỜI GIAN ĐẾN KỲ QUAY TIẾP THEO</div>
-      <div className="grid grid-cols-4 gap-1.5 px-3 py-4 sm:gap-2 sm:px-5">
+    <div className="w-full max-w-[410px] overflow-hidden rounded-xl border border-white/85 bg-[linear-gradient(180deg,rgba(255,255,255,0.48),rgba(255,255,255,0.86))] text-[#0a3151] shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_4px_8px_rgba(38,129,175,0.09)] backdrop-blur-[10px] backdrop-saturate-[125%]">
+      <div className="flex items-center justify-center gap-1.5 px-3 pt-3 text-center text-[11px] font-bold tracking-[0.03em] text-[#315a78]"><Clock3 className="size-3.5 text-[#188437]" aria-hidden="true" /> THỜI GIAN ĐẾN KỲ QUAY TIẾP THEO</div>
+      <div className="mt-2 grid grid-cols-4 px-2 pb-3 sm:px-3" role="timer" aria-live="off">
         {(["Ngày", "Giờ", "Phút", "Giây"] as const).map((label, index) => (
-          <div key={label} className="min-w-0 text-center">
-            <span className="block rounded-md border border-[#476a9b] bg-[#183663] py-2 font-mono text-[clamp(1.25rem,4vw,2rem)] font-black tabular-nums leading-none shadow-[inset_0_2px_5px_rgba(0,0,0,0.3)]">{units ? String(units[index]).padStart(2, "0") : "--"}</span>
-            <span className="mt-1 block text-[10px] font-semibold text-[#dbeaff]">{label}</span>
+          <div key={label} className={`min-w-0 text-center ${index < 3 ? "border-r border-[#95c8d5]/50" : ""}`}>
+            <span key={units ? `${label}-${units[index]}` : label} className="block font-mono text-[1.75rem] font-bold tabular-nums leading-none text-[#0d315d] animate-in fade-in duration-200 motion-reduce:animate-none sm:text-[2rem]">{units ? String(units[index]).padStart(2, "0") : "--"}</span>
+            <span className="mt-1 block text-[11px] font-medium text-[#315a78]">{label}</span>
           </div>
         ))}
       </div>
-      <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-0.5 border-t border-[#b78b39] bg-[#fff3b6] px-2 py-2 text-center text-[11px] font-semibold text-[#5b4307]">
-        <CalendarDays className="size-3.5" aria-hidden="true" />
-        {!endAt ? "Chưa có lịch quay mới" : remaining === 0 ? `${periodName ?? "Kỳ quay"} đã đóng · chờ công bố kết quả` : `${periodName ?? "Kỳ quay"} · Dự kiến ${dateFormatter.format(new Date(endAt))}`}
-      </div>
+      {(!endAt || remaining === 0) && (
+        <p className="border-t border-white/65 bg-white/30 px-3 py-2 text-center text-[11px] font-medium text-[#315a78]">
+          {!endAt ? "Chưa có lịch quay mới" : "Kỳ quay đã đóng · chờ công bố kết quả"}
+        </p>
+      )}
     </div>
   );
 }
