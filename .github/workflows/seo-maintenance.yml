@@ -19,6 +19,12 @@ jobs:
       - name: Validate configuration
         run: test -n "$SEO_CRON_SECRET"
       - name: Audit published articles
-        run: curl --fail-with-body --silent --show-error --max-time 180 --retry 2 -H "x-cron-secret: $SEO_CRON_SECRET" https://winwinback.com/api/cron/seo-audit
+        run: |
+          curl --fail-with-body --silent --show-error --max-time 180 --retry 2 \
+            -H "x-cron-secret: $SEO_CRON_SECRET" \
+            https://winwinback.com/api/cron/seo-audit
       - name: Sync Search Console
-        run: curl --fail-with-body --silent --show-error --max-time 180 --retry 2 -H "x-cron-secret: $SEO_CRON_SECRET" https://winwinback.com/api/cron/seo-search-console
+        run: |
+          curl --fail-with-body --silent --show-error --max-time 180 --retry 2 \
+            -H "x-cron-secret: $SEO_CRON_SECRET" \
+            https://winwinback.com/api/cron/seo-search-console
