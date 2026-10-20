@@ -1,28 +1,36 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CheckCircle2, CircleAlert, Info } from "lucide-react";
+import { CheckCircle2, CircleAlert, Info, Link2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { ArticleDocument, ArticleSeo } from "@/lib/articles/document";
 import { analyzeSeo, effectiveSeo, type SeoGroup } from "@/lib/articles/seo-engine";
+import { linkedArticleSlugs } from "@/lib/articles/seo-link-suggestions";
+import { suggestArticleLinks } from "./studio-actions";
 
 const groups: SeoGroup[] = ["SEO cơ bản", "Nội dung", "Hình ảnh & liên kết", "Kỹ thuật"];
 const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://winwinback.com").replace(/\/$/, "");
 
-export function SeoPanel({ doc, published, update, updateSeo, chooseSocialImage, focusEditor }: {
+export function SeoPanel({ articleId, doc, published, update, updateSeo, chooseSocialImage, focusEditor, insertInternalLink }: {
+  articleId?: string;
   doc: ArticleDocument;
   published: boolean;
   update: (key: "slug" | "metaDescription", value: string) => void;
   updateSeo: <K extends keyof ArticleSeo>(key: K, value: ArticleSeo[K]) => void;
   chooseSocialImage: () => void;
   focusEditor: () => void;
+  insertInternalLink: (suggestion: { title: string; slug: string }) => void;
 }) {
   const [analysis, setAnalysis] = useState(() => analyzeSeo(doc, published ? "published" : "draft"));
   const [previewMode, setPreviewMode] = useState<"desktop" | "mobile">("desktop");
   const [secondaryInput, setSecondaryInput] = useState(doc.seo.secondaryKeywords.join(", "));
+  const [suggestions, setSuggestions] = useState<{ title: string; slug: string }[]>([]);
+  const [suggestionLoading, setSuggestionLoading] = useState(false);
+  const [suggestionError, setSuggestionError] = useState("");
+  const [suggestionChecked, setSuggestionChecked] = useState(false);
   const effective = effectiveSeo(doc);
   const canonicalError = doc.seo.canonical && (() => {
     try { const url = new URL(doc.seo.canonical); return url.protocol !== "https:" || Boolean(url.username || url.password); } catch { return true; }
@@ -41,6 +49,25 @@ export function SeoPanel({ doc, published, update, updateSeo, chooseSocialImage,
       field?.scrollIntoView({ behavior: "smooth", block: "center" });
       field?.focus();
     });
+  }
+
+  async function loadSuggestions() {
+    setSuggestionError("");
+    setSuggestionLoading(true);
+    try {
+      const results = await suggestArticleLinks({
+        articleId,
+        focusKeyword: doc.seo.keyword,
+        title: doc.title,
+        excludedSlugs: linkedArticleSlugs(doc),
+      });
+      setSuggestions(results);
+      setSuggestionChecked(true);
+    } catch {
+      setSuggestionError("Không tải được gợi ý. Hãy thử lại.");
+    } finally {
+      setSuggestionLoading(false);
+    }
   }
 
   function textField(key: "title" | "keyword" | "canonical" | "socialTitle" | "socialDescription", label: string, maxLength: number) {
@@ -64,6 +91,14 @@ export function SeoPanel({ doc, published, update, updateSeo, chooseSocialImage,
     </section>
 
     <section className="space-y-3" aria-label="Từ khóa SEO"><h3 className="text-sm font-semibold">Từ khóa</h3>{textField("keyword", "Từ khóa chính", 100)}<label className="block space-y-2 text-sm font-medium" htmlFor="seo-secondaryKeywords">Từ khóa phụ<Input id="seo-secondaryKeywords" value={secondaryInput} maxLength={500} onChange={(e) => { const text = e.target.value; setSecondaryInput(text); updateSeo("secondaryKeywords", [...new Set(text.split(",").map((part) => part.trim()).filter(Boolean))]); }} placeholder="Ngăn cách bằng dấu phẩy" /></label><p className="text-xs text-[#526f8e]">Từ khóa chính xuất hiện khoảng {analysis.keywordCount} lần trong tiêu đề, mô tả và bài. Chỉ dùng để tham khảo.</p></section>
+
+    <section className="space-y-3 border-t border-[#dfe9f5] pt-4" aria-label="Gợi ý liên kết nội bộ">
+      <div className="flex items-center justify-between gap-2"><h3 className="text-sm font-semibold">Liên kết nội bộ</h3><Button type="button" variant="outline" size="sm" disabled={suggestionLoading || !doc.title.trim() && !doc.seo.keyword.trim()} onClick={() => void loadSuggestions()}>{suggestionLoading ? "Đang tìm…" : suggestionChecked ? "Tìm lại" : "Tìm bài liên quan"}</Button></div>
+      <p className="text-xs text-[#526f8e]">Gợi ý từ bài đã xuất bản, dựa trên từ khóa chính hoặc tiêu đề. Chỉ chèn khi liên quan đến nội dung.</p>
+      {suggestionError && <p role="alert" className="text-xs text-red-700">{suggestionError}</p>}
+      {suggestionChecked && !suggestionLoading && !suggestions.length && <p className="text-xs text-[#526f8e]">Chưa tìm thấy bài phù hợp chưa được liên kết. Thử từ khóa khác.</p>}
+      {suggestions.length > 0 && <ul className="divide-y divide-[#e5edf6]">{suggestions.map((item) => <li key={item.slug} className="flex items-start justify-between gap-2 py-2"><div className="min-w-0"><p className="text-sm font-medium leading-5">{item.title}</p><p className="mt-0.5 truncate text-xs text-[#526f8e]">/bai-viet/{item.slug}</p></div><Button type="button" variant="ghost" size="sm" className="shrink-0" onClick={() => { if (linkedArticleSlugs(doc).includes(item.slug)) { setSuggestions((current) => current.filter((candidate) => candidate.slug !== item.slug)); return; } insertInternalLink(item); setSuggestions((current) => current.filter((candidate) => candidate.slug !== item.slug)); }} aria-label={`Chèn liên kết đến ${item.title}`}><Link2 className="mr-1 size-3.5" />Chèn</Button></li>)}</ul>}
+    </section>
 
     <section className="space-y-3" aria-label="Thiết lập metadata"><h3 className="text-sm font-semibold">Meta settings</h3>{textField("title", "Tiêu đề SEO (trống dùng tiêu đề bài)", 180)}<p className="text-xs text-[#526f8e]">Gợi ý khoảng 30–65 ký tự, không bắt buộc.</p><label className="block space-y-2 text-sm font-medium" htmlFor="metaDescription"><span className="flex justify-between gap-2"><span>Mô tả SEO (trống dùng đoạn giới thiệu)</span><span className="font-normal text-[#526f8e]">{doc.metaDescription.length}/300</span></span><Textarea id="metaDescription" value={doc.metaDescription} rows={3} maxLength={300} onChange={(e) => update("metaDescription", e.target.value)} /></label><p className="text-xs text-[#526f8e]">Gợi ý khoảng 100–160 ký tự, không chặn xuất bản.</p><label className="block space-y-2 text-sm font-medium" htmlFor="slug">Đường dẫn bài viết<Input id="slug" value={doc.slug} maxLength={160} onChange={(e) => update("slug", e.target.value)} /></label><p className="text-xs text-[#526f8e]">Đổi slug sau xuất bản sẽ chuyển hướng URL cũ.</p></section>
 

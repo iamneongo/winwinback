@@ -82,7 +82,17 @@ export function ArticleEditor(props: { id?: string; slug?: string; manual?: bool
             <img src={doc.imageUrl.startsWith("https:") ? `/api/img?url=${encodeURIComponent(doc.imageUrl)}` : doc.imageUrl} alt="Ảnh bìa" className="aspect-video w-full rounded-lg object-cover" /></>}<div className="flex gap-2"><Button type="button" variant="outline" onClick={() => setMedia("cover")}>Chọn ảnh</Button>{doc.imageUrl && <Button type="button" variant="ghost" onClick={() => update("imageUrl", "")}>Gỡ ảnh</Button>}</div></div>
           <label className="block space-y-2 text-sm font-medium">Mẫu cuối bài<Select value={doc.seo.outro} onValueChange={(v) => { if (v) updateSeo("outro", v); }}><SelectTrigger><SelectValue>{doc.seo.outro === "off" ? "Không hiển thị" : outros.find((o) => o.id === doc.seo.outro)?.name || "Mẫu thương hiệu mặc định"}</SelectValue></SelectTrigger><SelectContent>{outros.map((o) => <SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>)}<SelectItem value="off">Không hiển thị</SelectItem></SelectContent></Select></label><Link href="/admin/bai-viet/mau-cuoi-bai" className="inline-block text-sm text-blue-700 underline">Quản lý mẫu cuối bài</Link>
         </div>}
-        {tab === "seo" && <div className="space-y-4"><SeoPanel key={editorKey} doc={doc} published={published} update={update} updateSeo={updateSeo} chooseSocialImage={() => setMedia("social")} focusEditor={() => { setMobileSettings(false); requestAnimationFrame(() => editorRef.current?.commands.focus()); }} /><Button type="button" variant="outline" className="w-full" onClick={() => { previewSeoTemplateAction({ document: doc, manual: props.manual ?? !props.id }).then((value) => { if (value) setTemplatePreview(value); else setError("Chưa có mẫu SEO cho danh mục hoặc loại bài này."); }).catch(() => setError("Không tải được mẫu SEO.")); }}>Xem mẫu SEO phù hợp</Button></div>}
+        {tab === "seo" && <div className="space-y-4"><SeoPanel key={editorKey} articleId={id} doc={doc} published={published} update={update} updateSeo={updateSeo} chooseSocialImage={() => setMedia("social")} focusEditor={() => { setMobileSettings(false); requestAnimationFrame(() => editorRef.current?.commands.focus()); }} insertInternalLink={({ title, slug }) => {
+          const editor = editorRef.current;
+          if (!editor) { setError("Trình soạn thảo chưa sẵn sàng. Hãy thử lại."); return; }
+          const href = `/bai-viet/${encodeURIComponent(slug)}`;
+          setMobileSettings(false);
+          requestAnimationFrame(() => {
+            const { from, to } = editor.state.selection;
+            if (from !== to) editor.chain().focus().setLink({ href }).run();
+            else editor.chain().focus().insertContent({ type: "text", text: title, marks: [{ type: "link", attrs: { href } }] }).run();
+          });
+        }} /><Button type="button" variant="outline" className="w-full" onClick={() => { previewSeoTemplateAction({ document: doc, manual: props.manual ?? !props.id }).then((value) => { if (value) setTemplatePreview(value); else setError("Chưa có mẫu SEO cho danh mục hoặc loại bài này."); }).catch(() => setError("Không tải được mẫu SEO.")); }}>Xem mẫu SEO phù hợp</Button></div>}
       </aside>
     </div>
     {media && <MediaPicker onClose={() => setMedia(null)} onSelect={(url) => { if (media === "cover") update("imageUrl", url); else updateSeo("socialImage", url); }} />}

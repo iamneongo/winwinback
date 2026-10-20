@@ -2,7 +2,7 @@
 
 ## Kiến trúc và dữ liệu
 
-CMS hiện dùng Next.js 16 App Router, Tiptap 3, React state trong `ArticleEditor`, server actions có `requireAdmin`, Neon Postgres và Drizzle. SEO P0 giữ nguyên editor, luồng lưu nháp/xuất bản, cấu trúc hai cột và ba tab.
+CMS hiện dùng Next.js 16 App Router, Tiptap 3, React state trong `ArticleEditor`, server actions có `requireAdmin`, Neon Postgres và Drizzle. SEO P0 giữ nguyên editor, luồng lưu nháp/xuất bản và cấu trúc hai cột. Editor hiện có hai tab Bài viết và SEO; tab AI thủ công đã được gỡ theo yêu cầu sau này.
 
 Trường SEO mở rộng trong `articles.seo` JSONB và `article_drafts.document.seo` JSONB hiện có. `articles.meta_description` và `articles.slug` vẫn là trường nguồn như trước để tránh phân đôi dữ liệu. Tên TypeScript tương ứng: `title` = meta title, `keyword` = focus keyword, `canonical` = canonical URL, `noindex` = nghịch đảo robots index, `follow` = robots follow, `socialTitle`/`socialDescription`/`socialImage` = OG. `secondaryKeywords` là mảng; giá trị chuỗi cũ được chuẩn hóa khi đọc. Các trường mới mặc định tương thích bài cũ.
 

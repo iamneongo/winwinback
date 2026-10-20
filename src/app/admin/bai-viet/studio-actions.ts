@@ -2,12 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { and, asc, eq, ilike, sql } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, ne, notInArray, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { articles, articleOutros } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth/guards";
 import { documentSchema, type ArticleDocument } from "@/lib/articles/document";
 import { listVersions, saveDocument } from "@/lib/articles/studio";
+import { linkSuggestionTerms } from "@/lib/articles/seo-link-suggestions";
 
 export async function saveStudioAction(input: { id?: string; revision: number; document: ArticleDocument; publish?: boolean }) {
   await requireAdmin();
@@ -38,6 +39,30 @@ export async function searchArticleLinks(query: string) {
     .orderBy(sql`ts_rank(${vector}, ${term}) DESC`).limit(10);
   if (rows.length) return rows;
   return db.select({ title: articles.title, slug: articles.slug }).from(articles).where(and(eq(articles.status, "published"), ilike(articles.title, `%${q.replace(/[%_]/g, "")}%`))).limit(10);
+}
+export async function suggestArticleLinks(input: { articleId?: string; focusKeyword: string; title: string; excludedSlugs: string[] }) {
+  await requireAdmin();
+  const data = z.object({
+    articleId: z.string().uuid().optional(),
+    focusKeyword: z.string().max(100),
+    title: z.string().max(180),
+    excludedSlugs: z.array(z.string().max(160)).max(50),
+  }).parse(input);
+  const terms = linkSuggestionTerms(data.focusKeyword, data.title);
+  if (!terms.length) return [];
+  const query = sql`websearch_to_tsquery('simple', ${terms.join(" OR ")})`;
+  const titleVector = sql`to_tsvector('simple', coalesce(${articles.title}, ''))`;
+  const bodyVector = sql`to_tsvector('simple', coalesce(regexp_replace(${articles.contentHtml}, '<[^>]+>', ' ', 'g'), ''))`;
+  const rank = sql<number>`4 * ts_rank(${titleVector}, ${query}) + ts_rank(${bodyVector}, ${query})`;
+  return db.select({ title: articles.title, slug: articles.slug }).from(articles)
+    .where(and(
+      eq(articles.status, "published"),
+      sql`(${titleVector} @@ ${query} OR ${bodyVector} @@ ${query})`,
+      data.articleId ? ne(articles.id, data.articleId) : undefined,
+      data.excludedSlugs.length ? notInArray(articles.slug, data.excludedSlugs) : undefined,
+    ))
+    .orderBy(desc(rank), desc(articles.createdAt))
+    .limit(8);
 }
 export async function listOutrosAction() {
   await requireAdmin();

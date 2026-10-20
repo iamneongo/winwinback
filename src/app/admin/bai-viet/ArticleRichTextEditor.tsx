@@ -350,7 +350,7 @@ export function ArticleRichTextEditor({
       <EditorContent editor={editor} className="article-editor-content" />
       {error ? <p role="alert" className="border-t border-red-100 bg-red-50 px-4 py-2.5 text-sm text-red-700">{error}</p> : null}
       <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[#e5edf6] bg-[#fbfdff] px-4 py-2 text-xs text-[#587298]">
-        <p>Chọn văn bản để định dạng hoặc dùng AI · Chọn ảnh để chỉnh thông tin</p>
+        <p>Chọn văn bản để định dạng hoặc thêm liên kết · Chọn ảnh để chỉnh thông tin</p>
         <p aria-live="polite">{hasChanged ? state.wordCount : initialWordCount} từ</p>
       </div>
     </div>

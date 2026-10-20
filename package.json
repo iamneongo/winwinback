@@ -29,6 +29,7 @@
     "db:migrate-seo-advanced": "node scripts/migrate-seo-advanced.mjs",
     "test:articles": "tsx --test tests/article-studio.test.ts",
     "test:seo": "tsx --test tests/seo-module.test.ts tests/seo-advanced.test.ts",
+    "test:seo:public": "node tests/seo-public-smoke.mjs",
     "db:migrate-missions": "node scripts/migrate-missions.mjs",
     "db:migrate-bank-accounts": "node scripts/migrate-bank-accounts.mjs",
     "set-role": "node --env-file=.env.local scripts/set-role.mjs"

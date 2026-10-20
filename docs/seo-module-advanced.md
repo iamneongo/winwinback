@@ -15,7 +15,7 @@ Both endpoints require `x-cron-secret: $CRON_SECRET` and return JSON. Configure 
 - `GET /api/cron/seo-audit` daily, preferably outside peak traffic. It checks public articles and persists findings. External URL checks are limited and use DNS-pinned requests; a failed external check is advisory.
 - `GET /api/cron/seo-search-console` daily after Search Console is connected. It imports page/date aggregates for the recent 28-day window. It returns `not_connected` without changing data before OAuth setup.
 
-An endpoint existing is **not** evidence that a scheduler has been configured. Check the scheduler's execution history after deployment. For a one-off authenticated smoke test, call the endpoints with the cron header and verify the SEO dashboard's last-run/sync timestamps.
+An endpoint existing is **not** evidence of a successful scheduled run. Check the scheduler's run history after deployment. For a one-off authenticated smoke test, call the endpoints with the cron header and verify the SEO dashboard's last-run/sync timestamps. Run `npm run test:seo:public` to check the live sitemap, robots, article metadata, canonical, Open Graph and JSON-LD without admin access.
 
 ## Search Console
 
@@ -26,6 +26,8 @@ Do not enable the connection with another site's Google client or property. Key 
 ## Templates, audit, and AI
 
 Templates use only the supported placeholders shown in the SEO dashboard. Applying a template in the manual editor is explicit; product-article generation applies the configured product/category template in its existing generation flow. Audit findings do not block publication. The manual article editor has only Article and SEO settings; its AI suggestion tab and server action were removed. Product-article generation still uses NVIDIA in its existing flow. Token counts are logged when NVIDIA returns usage; cost is estimated only if both token-price environment variables are configured.
+
+The SEO sidebar also offers an explicit internal-link search. It uses PostgreSQL full-text search over published articles, excludes the current article and already-linked slugs, and inserts only the editor's chosen suggestion. It never changes the article automatically or sends a request on each keystroke.
 
 ## QA after deployment
 
