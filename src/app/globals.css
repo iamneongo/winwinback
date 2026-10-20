@@ -397,8 +397,40 @@ html:has(.landing-page) {
 .ww-btn-cta:active:not(:disabled) {
   transform: translateY(1px);
 }
+
+@keyframes ww-draw-mascot-wave {
+  0%, 10%, 24%, 100% { transform: translateY(0) rotate(0deg); }
+  15% { transform: translateY(-5px) rotate(-4deg); }
+  20% { transform: translateY(-2px) rotate(2deg); }
+}
+
+@keyframes ww-draw-shine {
+  0%, 72%, 100% { transform: translateX(-180%) skewX(-25deg); }
+  85% { transform: translateX(430%) skewX(-25deg); }
+}
+
+.ww-draw-float-mascot {
+  animation: ww-draw-mascot-wave 6s ease-in-out infinite;
+  transform-origin: 50% 85%;
+}
+
+.ww-draw-float-shine::after {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 -25%;
+  width: 23%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.38), transparent);
+  animation: ww-draw-shine 7s ease-in-out infinite;
+}
+
+.ww-draw-float-link:hover .ww-draw-float-mascot {
+  animation-play-state: paused;
+  transform: translateY(-5px) rotate(-4deg);
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .ww-btn-cta { transition: none; }
+  .ww-btn-cta, .ww-draw-float-link { transition: none; }
+  .ww-draw-float-mascot, .ww-draw-float-shine::after { animation: none; }
 }
 
 .ww-lime-text-gradient {

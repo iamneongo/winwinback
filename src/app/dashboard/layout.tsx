@@ -14,6 +14,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import Link from "next/link";
 import { dashboardFrameClass } from "@/components/dashboard/ui";
+import { LuckyDrawFloatingPromoData } from "@/components/dashboard/LuckyDrawFloatingPromoData";
+import { Suspense } from "react";
 
 export const dynamic = "force-dynamic";
 
@@ -83,6 +85,7 @@ export default async function DashboardLayout({
           </header>
           <Dock />
           <NuqsAdapter>{children}</NuqsAdapter>
+          <Suspense fallback={null}><LuckyDrawFloatingPromoData /></Suspense>
         </div>
       </SidebarProvider>
     </TooltipProvider>

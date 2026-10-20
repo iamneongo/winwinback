@@ -5,6 +5,7 @@ import { HowItWorksSection } from '@/components/sections/HowItWorksSection';
 import { FAQSection } from '@/components/sections/FAQSection';
 import { CommunitySection } from '@/components/sections/CommunitySection';
 import { FinalCTASection } from '@/components/sections/FinalCTASection';
+import { LandingLuckyDrawPromo } from '@/components/sections/LandingLuckyDrawPromo';
 
 export default function Home() {
   return (
@@ -17,6 +18,7 @@ export default function Home() {
         <FAQSection />
         <FinalCTASection />
       </main>
+      <LandingLuckyDrawPromo />
     </MarketingLayout>
   );
 }

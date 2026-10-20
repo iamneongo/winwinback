@@ -82,7 +82,7 @@ export default async function LuckyDrawPage() {
         </div>
       </section>
 
-      <dl className="relative z-10 mt-3 grid gap-2.5 sm:grid-cols-3 sm:gap-3 lg:-mt-6">
+      <dl className="mt-4 grid gap-2.5 sm:grid-cols-3 sm:gap-3">
         <div className="flex min-w-0 items-center gap-3 rounded-xl border border-[#e3ebf4] bg-white px-4 py-4 sm:px-5">
           <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#e9f8e2] text-[#2b963e]"><PiggyBank className="size-5" aria-hidden="true" /></span>
           <div className="min-w-0"><dt className="text-xs font-medium text-[#456783]">Giải thưởng kỳ này (tạm tính)</dt><dd className="mt-0.5 break-words text-xl font-black tabular-nums text-[#153a60]">{formatVnd(advertisedPot)}</dd></div>
@@ -99,15 +99,29 @@ export default async function LuckyDrawPage() {
 
       <div className="mt-3 grid gap-3 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
         <section className="min-w-0 rounded-xl border border-[#e2ebf3] bg-white p-4 sm:p-5" aria-labelledby="prizes-heading">
-          <div className="flex items-center justify-between gap-3"><h2 id="prizes-heading" className="flex items-center gap-2 text-sm font-extrabold text-[#153a60]"><Gift className="size-4 text-[#2ca142]" aria-hidden="true" /> Giải thưởng kỳ quay này</h2><span className="text-xs text-[#597695]">Theo quy tắc đang áp dụng</span></div>
-          <div className="mt-4 grid gap-2.5 sm:grid-cols-3">
-            <div className="rounded-lg bg-gradient-to-b from-[#fff7dd] to-[#fffdf5] p-3 text-center ring-1 ring-[#f6dfa6]"><Trophy className="mx-auto size-6 text-[#d59b08]" aria-hidden="true" /><p className="mt-2 text-xs font-bold text-[#794f00]">Trùng đúng 4 số</p><p className="mt-1 break-words text-base font-black text-[#153a60]">{formatVnd(advertisedPot)}</p><p className="mt-1 text-[11px] text-[#5f6f82]">Các phiếu trùng chia toàn bộ quỹ</p></div>
-            <div className="rounded-lg bg-[#f4fbf4] p-3 text-center ring-1 ring-[#d9edda]"><Coins className="mx-auto size-6 text-[#49a942]" aria-hidden="true" /><p className="mt-2 text-xs font-bold text-[#26652e]">Nếu không trùng</p><p className="mt-1 break-words text-base font-black text-[#153a60]">{formatVnd(Math.floor(advertisedPot * 0.2))}</p><p className="mt-1 text-[11px] text-[#5f6f82]">Phiếu gần nhất chia 20% quỹ</p></div>
-            <div className="rounded-lg bg-[#f4f8ff] p-3 text-center ring-1 ring-[#deebfa]"><PiggyBank className="mx-auto size-6 text-[#3e83cf]" aria-hidden="true" /><p className="mt-2 text-xs font-bold text-[#325d91]">Phần chưa trao</p><p className="mt-1 break-words text-base font-black text-[#153a60]">Cộng dồn</p><p className="mt-1 text-[11px] text-[#5f6f82]">Chuyển sang kỳ tiếp theo</p></div>
+          <h2 id="prizes-heading" className="flex items-center gap-2 text-sm font-extrabold text-[#153a60]"><Gift className="size-4 text-[#2ca142]" aria-hidden="true" /> Giải thưởng kỳ quay này</h2>
+          <div className="mt-4 overflow-hidden rounded-lg bg-[#f8fbe9] sm:grid sm:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)]">
+            <div className="flex flex-col justify-between gap-5 bg-[#f8fbe9] p-4 sm:p-5">
+              <div className="flex items-start gap-3">
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-white text-[#d18b00]"><Trophy className="size-5" aria-hidden="true" /></span>
+                <div className="min-w-0"><h3 className="text-sm font-extrabold text-[#244d2b]">Trùng đúng 4 số</h3><p className="mt-1 text-xs leading-5 text-[#4d6855]">Các phiếu trúng chia đều toàn bộ quỹ thưởng</p></div>
+              </div>
+              <p className="break-words text-[1.65rem] font-black leading-none tabular-nums tracking-tight text-[#153a60]">{formatVnd(advertisedPot)}</p>
+            </div>
+            <div className="divide-y divide-[#e8edf2] border-t border-[#e3ebdf] bg-[#fbfdff] sm:border-l sm:border-t-0">
+              <div className="flex items-start gap-3 p-4">
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-[#e9f7e8] text-[#35a444]"><Coins className="size-[18px]" aria-hidden="true" /></span>
+                <div className="min-w-0"><h3 className="text-xs font-bold text-[#285b36]">Nếu không trùng đủ 4 số</h3><p className="mt-1 break-words text-base font-extrabold tabular-nums text-[#153a60]">{formatVnd(Math.floor(advertisedPot * 0.2))}</p><p className="mt-0.5 text-[11px] leading-4 text-[#58718a]">Phiếu gần nhất chia 20% quỹ</p></div>
+              </div>
+              <div className="flex items-start gap-3 p-4">
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-[#eaf3fd] text-[#3e83cf]"><PiggyBank className="size-[18px]" aria-hidden="true" /></span>
+                <div className="min-w-0"><h3 className="text-xs font-bold text-[#315d91]">Phần chưa trao</h3><p className="mt-1 text-base font-extrabold text-[#153a60]">Cộng dồn</p><p className="mt-0.5 text-[11px] leading-4 text-[#58718a]">Chuyển sang kỳ tiếp theo</p></div>
+              </div>
+            </div>
           </div>
           <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-[#e7edf3] pt-4">
             <div><p className="text-xs font-bold text-[#153a60]">Phiếu của bạn</p><p className="mt-1 text-xs leading-5 text-[#58749a]">Một đơn hợp lệ nhận một phiếu từ 4 số cuối mã đơn.</p></div>
-            <Link href="/dashboard" className="inline-flex min-h-10 items-center gap-1.5 rounded-full bg-[#b8ea78] px-4 text-xs font-bold text-[#173c49] hover:bg-[#a5df5f] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#258b3e]">Mua hàng nhận phiếu <ArrowRight className="size-3.5" aria-hidden="true" /></Link>
+            <Link href="/dashboard" className="ww-btn-cta inline-flex min-h-11 items-center gap-1.5 rounded-full px-5 py-2.5 text-xs font-extrabold">Mua hàng nhận phiếu <ArrowRight className="size-3.5" aria-hidden="true" /></Link>
           </div>
           {currentTickets.length > 0 && <div className="mt-3 flex flex-wrap gap-1.5">{currentTickets.map((ticket) => <span key={ticket.id} className="rounded-md bg-[#ecf6fd] px-2 py-1 font-mono text-xs font-bold tabular-nums text-[#1d638f]">{ticket.number}</span>)}{waitingCount > currentTickets.length && <span className="self-center text-xs text-[#58749a]">+{waitingCount - currentTickets.length} phiếu</span>}</div>}
         </section>
