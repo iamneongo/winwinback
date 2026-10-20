@@ -14,6 +14,7 @@
     "typecheck": "tsc --noEmit",
     "test:share": "tsx --test tests/shared-link.test.ts",
     "test:missions": "tsx --test tests/missions.test.ts",
+    "test:lucky-draw": "tsx --test tests/lucky-draw-funding.test.ts",
     "test:sw": "node --test tests/service-worker.test.mjs",
     "test:pwa": "node --test tests/pwa-http.test.mjs",
     "check": "npm run lint && npm run typecheck && npm run build",
@@ -32,6 +33,7 @@
     "test:seo:public": "node tests/seo-public-smoke.mjs",
     "db:migrate-missions": "node scripts/migrate-missions.mjs",
     "db:migrate-bank-accounts": "node scripts/migrate-bank-accounts.mjs",
+    "db:migrate-lucky-draw-funding": "node scripts/migrate-lucky-draw-funding.mjs",
     "set-role": "node --env-file=.env.local scripts/set-role.mjs"
   },
   "dependencies": {

@@ -1,5 +1,5 @@
 import "server-only";
-import { and, between, eq, inArray, isNull, sql } from "drizzle-orm";
+import { and, eq, inArray, isNull, lt, lte, ne, sql } from "drizzle-orm";
 import { db } from "@/db";
 import {
   prizeFund,
@@ -8,6 +8,7 @@ import {
 } from "@/db/schema";
 import { prizeFundRate } from "@/lib/config";
 import { recordWalletTx } from "@/lib/wallet";
+import { balanceAfterDraw, periodPrizePool } from "./funding";
 
 const FUND_ID = "global";
 /** Share of the fund the nearest ticket wins when no number matches exactly. */
@@ -149,6 +150,18 @@ export async function runDraw(periodId: string): Promise<DrawResult> {
     const period = periodRows[0];
     if (!period) throw new Error("Không tìm thấy kỳ quay");
     if (period.status === "drawn") throw new Error("Kỳ này đã được quay");
+    if (Date.now() < period.endAt.getTime()) {
+      throw new Error("Chỉ có thể quay sau giờ đóng kỳ. Bạn có thể chỉnh giờ đóng trong trang chi tiết kỳ.");
+    }
+    const [earlierOpen] = await tx.select({ id: luckyDrawPeriods.id })
+      .from(luckyDrawPeriods)
+      .where(and(
+        eq(luckyDrawPeriods.status, "open"),
+        ne(luckyDrawPeriods.id, period.id),
+        lt(luckyDrawPeriods.endAt, period.endAt),
+      ))
+      .limit(1);
+    if (earlierOpen) throw new Error("Cần công bố kỳ mở trước đó trước khi quay kỳ này.");
 
     await ensureFund(tx);
     const fundRows = await tx
@@ -157,16 +170,19 @@ export async function runDraw(periodId: string): Promise<DrawResult> {
       .where(eq(prizeFund.id, FUND_ID))
       .for("update")
       .limit(1);
-    const pot = fundRows[0]?.balance ?? 0;
+    const fundBalance = fundRows[0]?.balance ?? 0;
+    const pot = periodPrizePool(period.adminContribution, period.includeCommissionFund, fundBalance);
 
-    // Tickets inside the window that no earlier draw has consumed.
+    // Every outstanding ticket issued by closing time enters the next draw.
+    // Older tickets must not become permanently stranded when a period is
+    // created after their orders were completed.
     const tickets = await tx
       .select()
       .from(luckyDrawTickets)
       .where(
         and(
           isNull(luckyDrawTickets.periodId),
-          between(luckyDrawTickets.createdAt, period.startAt, period.endAt),
+          lte(luckyDrawTickets.createdAt, period.endAt),
         ),
       );
 
@@ -241,7 +257,9 @@ export async function runDraw(periodId: string): Promise<DrawResult> {
         );
     }
 
-    const newBalance = pot - paidOut;
+    // An unused admin pledge becomes rollover after this period settles.
+    // When the commission fund is excluded, its existing balance is untouched.
+    const newBalance = balanceAfterDraw(fundBalance, period.adminContribution, paidOut);
     await tx
       .update(prizeFund)
       .set({ balance: newBalance, updatedAt: new Date() })

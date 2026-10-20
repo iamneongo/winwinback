@@ -16,6 +16,9 @@ export type PeriodTableRow = {
   status: string;
   eligibleTickets: number;
   potTotal: number;
+  adminContribution: number;
+  includeCommissionFund: boolean;
+  projectedPot: number;
   winningNumber: string | null;
   exactMatch: boolean | null;
   paidOut: number;
@@ -28,7 +31,7 @@ const columns: ColumnDef<PeriodTableRow>[] = [
   { accessorKey: "startAt", header: "Khoảng thời gian", size: 220, cell: ({ row }) => <span className="leading-5">{fmtDate(row.original.startAt)}<br />→ {fmtDate(row.original.endAt)}</span> },
   { accessorKey: "status", header: "Trạng thái", size: 115, cell: ({ row }) => <Badge variant={row.original.status === "drawn" ? "info" : "success"}>{row.original.status === "drawn" ? "Đã quay" : "Đang mở"}</Badge> },
   { id: "tickets", header: "Phiếu", size: 100, enableSorting: false, cell: ({ row }) => row.original.status === "drawn" ? "—" : `${row.original.eligibleTickets} phiếu` },
-  { accessorKey: "potTotal", header: "Quỹ / Số trúng", size: 150, cell: ({ row }) => row.original.status === "drawn" ? <span>{formatVnd(row.original.potTotal)}<br /><b className="tracking-widest text-[#aa34de]">{row.original.winningNumber}</b></span> : "—" },
+  { accessorKey: "potTotal", header: "Giải thưởng / Số trúng", size: 170, cell: ({ row }) => row.original.status === "drawn" ? <span>{formatVnd(row.original.potTotal)}<br /><b className="tracking-widest text-[#aa34de]">{row.original.winningNumber}</b></span> : <span><b>{formatVnd(row.original.projectedPot)}</b><br /><span className="text-xs text-[#58749a]">Admin {formatVnd(row.original.adminContribution)}{row.original.includeCommissionFund ? " + quỹ" : ""}</span></span> },
   { id: "result", header: "Kết quả", size: 205, enableSorting: false, cell: ({ row }) => row.original.status !== "drawn" ? "—" : row.original.exactMatch === null ? "Không có phiếu → cộng dồn" : row.original.exactMatch ? <b className="text-[#168146]">Trùng! Chi {formatVnd(row.original.paidOut)}</b> : <span className="text-[#e68b00]">Gần nhất nhận {formatVnd(row.original.paidOut)}</span> },
   { id: "actions", header: "Thao tác", size: 130, enableSorting: false, cell: ({ row }) => row.original.status === "drawn" ? <span className="inline-flex items-center gap-1 text-[#9fb0c7]"><Dices className="size-4" /> Đã quay</span> : <DrawButton periodId={row.original.id} /> },
 ];

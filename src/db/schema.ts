@@ -485,6 +485,13 @@ export const luckyDrawPeriods = pgTable("lucky_draw_periods", {
   status: luckyDrawStatus("status").notNull().default("open"),
   startAt: timestamp("start_at", { withTimezone: true }).notNull(),
   endAt: timestamp("end_at", { withTimezone: true }).notNull(),
+  // Admin-funded budget is reserved for this period until its draw. It is
+  // credited to the global fund only when the draw is settled.
+  adminContribution: bigint("admin_contribution", { mode: "number" }).notNull().default(0),
+  includeCommissionFund: boolean("include_commission_fund").notNull().default(true),
+  fundingNote: text("funding_note"),
+  fundingUpdatedBy: uuid("funding_updated_by").references(() => users.id, { onDelete: "set null" }),
+  fundingUpdatedAt: timestamp("funding_updated_at", { withTimezone: true }),
   // Draw result — null until drawn.
   winningNumber: text("winning_number"),
   // Fund snapshot at draw time, and how much was actually paid to winners.

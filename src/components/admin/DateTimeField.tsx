@@ -24,32 +24,25 @@ function pad(value: number): string {
 
 function toDateTimeValue(date: Date | undefined, hour: string, minute: string): string {
   if (!date || !hour || !minute) return "";
-  const hours = Number(hour);
-  const minutes = Number(minute);
-
-  const local = new Date(
-    date.getFullYear(),
-    date.getMonth(),
-    date.getDate(),
-    hours,
-    minutes,
-  );
-  const offsetMinutes = -local.getTimezoneOffset();
-  const sign = offsetMinutes >= 0 ? "+" : "-";
-  const absoluteOffset = Math.abs(offsetMinutes);
-  return `${local.getFullYear()}-${pad(local.getMonth() + 1)}-${pad(local.getDate())}T${pad(hours)}:${pad(minutes)}:00${sign}${pad(Math.floor(absoluteOffset / 60))}:${pad(absoluteOffset % 60)}`;
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${hour}:${minute}:00+07:00`;
 }
 
 export function DateTimeField({
   name,
   label,
+  initialValue,
 }: {
   name: string;
   label: string;
+  /** Calendar fields in Vietnam time: YYYY-MM-DDTHH:mm. */
+  initialValue?: string;
 }) {
-  const [date, setDate] = useState<Date>();
-  const [hour, setHour] = useState("");
-  const [minute, setMinute] = useState("");
+  const initial = initialValue?.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/);
+  const [date, setDate] = useState<Date | undefined>(() => initial
+    ? new Date(Number(initial[1]), Number(initial[2]) - 1, Number(initial[3]))
+    : undefined);
+  const [hour, setHour] = useState(initial?.[4] ?? "");
+  const [minute, setMinute] = useState(initial?.[5] ?? "");
   const time = hour && minute ? `${hour}:${minute}` : "";
   const formattedDate = date?.toLocaleDateString("vi-VN", {
     weekday: "short",
@@ -115,7 +108,7 @@ export function DateTimeField({
             </Select>
           </div>
           <p className="text-[11px] leading-4 text-[#6681a7]">
-            Chọn ngày và giờ theo múi giờ thiết bị.
+            Thời gian theo múi giờ Việt Nam (UTC+7).
           </p>
         </PopoverContent>
       </Popover>
