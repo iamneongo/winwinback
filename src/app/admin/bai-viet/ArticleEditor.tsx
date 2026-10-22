@@ -17,6 +17,8 @@ import { SeoPanel } from "./SeoPanel";
 import { ArticleOutroPreview } from "./ArticleOutroPreview";
 import { previewSeoTemplateAction } from "./seo-actions";
 
+type ArticleVersion = Awaited<ReturnType<typeof versionsAction>>[number];
+
 export function ArticleEditor(props: { id?: string; slug?: string; manual?: boolean; categories: string[]; initialHtml: string; initialTitle: string; initialDescription: string; initialCategory: string; initialImageUrl: string; initialDocument?: ArticleDocument; initialRevision?: number; initialPublished?: boolean }) {
   const initial = useRef<ArticleDocument>(props.initialDocument ?? { title: props.initialTitle, slug: props.slug || "", html: props.initialHtml, intro: "", metaDescription: props.initialDescription, category: props.initialCategory || props.categories[0] || "", imageUrl: props.initialImageUrl, seo: defaultSeo() });
   const [doc, setDoc] = useState(initial.current); const latest = useRef(doc); latest.current = doc;
@@ -25,6 +27,7 @@ export function ArticleEditor(props: { id?: string; slug?: string; manual?: bool
   const [published, setPublished] = useState(props.initialPublished ?? false);
   const [error, setError] = useState(""); const [status, setStatus] = useState("Chưa có thay đổi"); const [saving, setSaving] = useState(false); const savingRef = useRef(false); const [blocked, setBlocked] = useState(false);
   const [media, setMedia] = useState<"cover" | "social" | null>(null); const [history, setHistory] = useState<Awaited<ReturnType<typeof versionsAction>> | null>(null);
+  const [restoreCandidate, setRestoreCandidate] = useState<ArticleVersion | null>(null);
   const [outros, setOutros] = useState<(typeof articleOutros.$inferSelect)[]>([]);
   const [outroLoading, setOutroLoading] = useState(true);
   const [templatePreview, setTemplatePreview] = useState<{ key: string; title: string; description: string } | null>(null);
@@ -110,6 +113,16 @@ export function ArticleEditor(props: { id?: string; slug?: string; manual?: bool
     </div>
     {media && <MediaPicker onClose={() => setMedia(null)} onSelect={(url) => { if (media === "cover") update("imageUrl", url); else updateSeo("socialImage", url); }} />}
     {templatePreview && <StudioDialog title="Áp dụng mẫu SEO" onClose={() => setTemplatePreview(null)}><div className="space-y-4 text-sm"><p>Mẫu: {templatePreview.key}. Chỉ thay tiêu đề SEO và meta description sau khi bạn xác nhận.</p><p className="rounded-lg bg-[#f3f7fc] p-3"><strong>Tiêu đề:</strong> {templatePreview.title}<br /><strong>Mô tả:</strong> {templatePreview.description}</p><div className="flex gap-2"><Button type="button" variant="cta" onClick={() => { setDoc((d) => ({ ...d, metaDescription: templatePreview.description, seo: { ...d.seo, title: templatePreview.title } })); setTemplatePreview(null); }}>Áp dụng</Button><Button type="button" variant="outline" onClick={() => setTemplatePreview(null)}>Bỏ qua</Button></div></div></StudioDialog>}
-    {history && <StudioDialog title="Lịch sử phiên bản" onClose={() => setHistory(null)}><p className="mb-4 text-sm">Khôi phục vào bản nháp, không thay đổi bài công khai. Giữ 50 phiên bản gần nhất.</p><ul className="space-y-2">{history.map((v) => <li key={v.id} className="flex items-center justify-between gap-3 border-b py-3 text-sm"><span>{v.label}<br /><span className="text-xs">{new Date(v.createdAt).toLocaleString("vi-VN")}</span></span><Button type="button" variant="outline" onClick={() => { if (!window.confirm("Thay nội dung đang viết bằng phiên bản này?")) return; editorHtml.current = v.document.html; setDoc(v.document); setEditorKey((k) => k + 1); setHistory(null); }}>Khôi phục</Button></li>)}</ul></StudioDialog>}
+    {history && <StudioDialog title={restoreCandidate ? "Xác nhận khôi phục" : "Lịch sử phiên bản"} description={restoreCandidate ? "Phiên bản được áp dụng vào bản nháp của bạn." : "Khôi phục vào bản nháp, không thay đổi bài công khai. Giữ 50 phiên bản gần nhất."} onClose={() => { setHistory(null); setRestoreCandidate(null); }}>
+      {restoreCandidate ? <div className="space-y-4 text-sm text-[#34527d]">
+        <p>Thay nội dung đang viết bằng phiên bản <strong>{restoreCandidate.label}</strong> lúc {new Date(restoreCandidate.createdAt).toLocaleString("vi-VN")}? Bài công khai chỉ thay đổi khi bạn bấm Cập nhật.</p>
+        <div className="flex flex-wrap justify-end gap-2"><Button type="button" variant="outline" onClick={() => setRestoreCandidate(null)}>Quay lại</Button><Button type="button" variant="cta" onClick={() => { editorHtml.current = restoreCandidate.document.html; setDoc(restoreCandidate.document); setEditorKey((key) => key + 1); setRestoreCandidate(null); setHistory(null); }}>Khôi phục vào bản nháp</Button></div>
+      </div> : <>
+        {history.length ? <ul className="divide-y divide-[#e5edf6]">{history.map((version) => <li key={version.id} className="flex items-center justify-between gap-3 py-3 text-sm">
+          <span className="min-w-0"><span className="block font-medium text-[#173b5e]">{version.label}</span><span className="mt-0.5 block text-xs text-[#526f8e]">{new Date(version.createdAt).toLocaleString("vi-VN")}</span></span>
+          <Button type="button" variant="outline" size="sm" className="shrink-0" onClick={() => setRestoreCandidate(version)}>Khôi phục</Button>
+        </li>)}</ul> : <p className="rounded-lg bg-[#f4f8fc] p-4 text-sm text-[#526f8e]">Chưa có phiên bản nào để khôi phục.</p>}
+      </>}
+    </StudioDialog>}
   </div>;
 }
