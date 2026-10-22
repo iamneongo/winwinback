@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { sql, eq } from "drizzle-orm";
 import { articleMedia } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth/session";
+import { hasTrustedArticleMediaOrigin } from "@/lib/articles/media-origin";
 export const runtime = "nodejs";
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -11,7 +12,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   } catch { return new Response("Not found", { status: 404 }); }
 }
 export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  if ((await getCurrentUser())?.role !== "admin" || request.headers.get("origin") !== new URL(request.url).origin) return Response.json({ error: "Không có quyền truy cập." }, { status: 403 });
+  if ((await getCurrentUser())?.role !== "admin" || !hasTrustedArticleMediaOrigin(request)) return Response.json({ error: "Không có quyền truy cập." }, { status: 403 });
   const { id } = await params;
   if (!/^[a-f0-9-]{36}$/.test(id)) return Response.json({ error: "Ảnh không hợp lệ." }, { status: 400 });
   const used = await db.execute(sql`SELECT 1 FROM articles WHERE content_html LIKE ${`%${id}%`} OR image_url LIKE ${`%${id}%`} OR seo::text LIKE ${`%${id}%`} UNION ALL SELECT 1 FROM article_drafts WHERE document::text LIKE ${`%${id}%`} UNION ALL SELECT 1 FROM article_versions WHERE document::text LIKE ${`%${id}%`} UNION ALL SELECT 1 FROM article_outros WHERE image_url LIKE ${`%${id}%`} OR links::text LIKE ${`%${id}%`} LIMIT 1`);

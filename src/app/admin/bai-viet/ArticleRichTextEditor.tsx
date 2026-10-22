@@ -264,8 +264,8 @@ export function ArticleRichTextEditor({
       setError("");
       const { url: src } = await uploadArticleImage(file);
       editor.chain().focus().setImage({ src, alt: file.name.replace(/\.[^.]+$/, "") }).run();
-    } catch {
-      setError("Ảnh không xử lý được hoặc quá lớn. Vui lòng chọn ảnh khác.");
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Không tải được ảnh. Vui lòng thử lại.");
     }
   }, [editor]);
 
