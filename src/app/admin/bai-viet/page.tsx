@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { FileText, FolderOpen, Plus, ChartNoAxesCombined } from "lucide-react";
+import { FileText, FolderOpen, Images, Plus, ChartNoAxesCombined } from "lucide-react";
 import { requireAdmin } from "@/lib/auth/guards";
 import { getArticleAdminStats, listAdminArticles } from "@/lib/articles/service";
 import { ArticlesTable } from "./ArticlesTable";
@@ -37,7 +37,7 @@ export default async function AdminArticlesPage({
       <h1 className="text-xl font-black leading-tight tracking-tight text-[#11335e] lg:hidden">Bài viết SEO</h1>
       <p className="mt-1 text-sm text-[#58749a]">Viết bài mới hoặc quản lý các bài được tạo từ link sản phẩm.</p>
       </div>
-      <div className="flex flex-wrap gap-2"><Link href="/admin/bai-viet/seo" className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-[#cddced] bg-white px-3 text-sm font-bold text-[#234568] hover:bg-[#f4f8fc]"><ChartNoAxesCombined className="size-4" /> Tổng quan SEO</Link><Link href="/admin/bai-viet/danh-muc" className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-[#cddced] bg-white px-3 text-sm font-bold text-[#234568] hover:bg-[#f4f8fc]"><FolderOpen className="size-4" /> Danh mục</Link><Link href="/admin/bai-viet/tao-moi" className="ww-btn-cta inline-flex min-h-10 items-center gap-2 rounded-lg px-4 text-sm font-bold text-[#173b5e]"><Plus className="size-4" /> Viết bài mới</Link></div>
+      <div className="flex flex-wrap gap-2"><Link href="/admin/bai-viet/seo" className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-[#cddced] bg-white px-3 text-sm font-bold text-[#234568] hover:bg-[#f4f8fc]"><ChartNoAxesCombined className="size-4" /> Tổng quan SEO</Link><Link href="/admin/bai-viet/danh-muc" className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-[#cddced] bg-white px-3 text-sm font-bold text-[#234568] hover:bg-[#f4f8fc]"><FolderOpen className="size-4" /> Danh mục</Link><Link href="/admin/bai-viet/thu-vien-anh" className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-[#cddced] bg-white px-3 text-sm font-bold text-[#234568] hover:bg-[#f4f8fc]"><Images className="size-4" /> Thư viện ảnh</Link><Link href="/admin/bai-viet/tao-moi" className="ww-btn-cta inline-flex min-h-10 items-center gap-2 rounded-lg px-4 text-sm font-bold text-[#173b5e]"><Plus className="size-4" /> Viết bài mới</Link></div>
     </header>
     <div className="mb-4 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-[#34527d]">
       <FileText className="size-4 shrink-0 text-[#287be5]" />

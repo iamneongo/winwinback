@@ -60,7 +60,7 @@ export function Sidebar({
             const Icon = item.icon;
             const active = item.exact
               ? pathname === item.href
-              : pathname.startsWith(item.href);
+              : pathname.startsWith(item.href) && !items.some((other) => other.href !== item.href && other.href.startsWith(`${item.href}/`) && pathname.startsWith(other.href));
             return (
               <SidebarMenuItem key={item.href}>
                 <SidebarMenuButton

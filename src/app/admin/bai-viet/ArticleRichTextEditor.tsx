@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { EditorContent, useEditor, useEditorState, type Editor } from "@tiptap/react";
+import { NodeSelection } from "@tiptap/pm/state";
 import { TableKit } from "@tiptap/extension-table";
 import { EditorTools, ArticleImage } from "./EditorTools";
 import { uploadArticleImage } from "./MediaPicker";
@@ -183,6 +184,12 @@ export function ArticleRichTextEditor({
     editorProps: {
       attributes: { id: "content", "aria-label": "Nội dung bài viết" },
       transformPastedHTML: cleanPastedHtml,
+      handleClickOn: (view, _position, node, nodePosition) => {
+        if (node.type.name !== "image") return false;
+        view.dispatch(view.state.tr.setSelection(NodeSelection.create(view.state.doc, nodePosition)));
+        view.focus();
+        return true;
+      },
       handlePaste: (view, event) => {
         const image = Array.from(event.clipboardData?.files ?? []).find((file) => file.type.startsWith("image/"));
         if (!image) return false;

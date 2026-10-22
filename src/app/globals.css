@@ -678,6 +678,7 @@ html:has(.landing-page) {
 .article-editor-content .tiptap pre code { background: transparent; padding: 0; }
 .article-editor-content .tiptap a { color: #1261ed; text-decoration: underline; text-underline-offset: 2px; }
 .article-editor-content .tiptap img { display: block; max-width: 100%; height: auto; margin-inline: auto; border-radius: 0.5rem; cursor: pointer; }
+.article-editor-content .tiptap figure.ProseMirror-selectednode { outline: 2px solid #287be5; outline-offset: 3px; border-radius: 0.5rem; }
 .article-editor-content .tiptap div[data-youtube-video] { max-width: 100%; overflow: hidden; border-radius: 0.75rem; }
 .article-editor-content .tiptap div[data-youtube-video] iframe { width: 100%; aspect-ratio: 16 / 9; height: auto; border: 0; }
 .article-editor-content .tiptap p.is-editor-empty:first-child::before {
