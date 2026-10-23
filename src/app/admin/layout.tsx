@@ -28,7 +28,7 @@ export default async function AdminLayout({
     <NuqsAdapter>
       <TooltipProvider>
         <SidebarProvider
-        className="ww-dashboard-shell winwin-root overflow-x-hidden text-[#0d315d]"
+        className="ww-dashboard-shell winwin-root overflow-x-clip text-[#0d315d]"
         style={{ "--sidebar-width-icon": "3.5rem" } as React.CSSProperties}
       >
         <Sidebar variant="admin" />

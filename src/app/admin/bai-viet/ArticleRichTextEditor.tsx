@@ -284,8 +284,9 @@ export function ArticleRichTextEditor({
   const active = (key: keyof typeof state) => Boolean(state[key]);
 
   return (
-    <div className="overflow-hidden rounded-xl border border-[#dfe9f5] bg-white">
-      <div className="flex flex-wrap items-center gap-1 border-b border-[#e5edf6] bg-[#f8fbff] p-2" role="toolbar" aria-label="Định dạng nội dung bài viết">
+    <div className="rounded-xl border border-[#dfe9f5] bg-white">
+      <div className="sticky top-0 z-20 rounded-t-xl border-b border-[#e5edf6] bg-white shadow-sm">
+        <div className="flex items-center gap-1 overflow-x-auto rounded-t-xl bg-[#f8fbff] p-2 lg:flex-wrap lg:overflow-visible [&_[data-slot=select-trigger]]:shrink-0" role="toolbar" aria-label="Định dạng nội dung bài viết">
         <Select
           value={blockSelection}
           onValueChange={(value) => {
@@ -353,7 +354,8 @@ export function ArticleRichTextEditor({
         <ToolButton label="Làm lại" disabled={!editor.can().redo()} onClick={command(() => editor.chain().focus().redo().run())}><Redo2 className="size-4" /></ToolButton>
         <ToolButton label="Xóa định dạng" onClick={command(() => editor.chain().focus().unsetAllMarks().clearNodes().run())}><RemoveFormatting className="size-4" /></ToolButton>
       </div>
-      <EditorTools editor={editor} />
+        <EditorTools editor={editor} />
+      </div>
       <EditorContent editor={editor} className="article-editor-content" />
       {error ? <p role="alert" className="border-t border-red-100 bg-red-50 px-4 py-2.5 text-sm text-red-700">{error}</p> : null}
       <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[#e5edf6] bg-[#fbfdff] px-4 py-2 text-xs text-[#587298]">

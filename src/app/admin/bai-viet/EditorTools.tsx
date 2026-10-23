@@ -47,17 +47,17 @@ export function EditorTools({ editor }: { editor: Editor }) {
   const selection = useEditorState({ editor, selector: ({ editor: e }) => ({ table: e.isActive("table"), image: e.isActive("image"), position: e.state.selection.from }) });
   useEffect(() => { if (!link) return; let cancelled = false; const timer = setTimeout(() => { searchArticleLinks(search).then((r) => { if (!cancelled) setResults(r); }).catch(() => { if (!cancelled) setError("Không tìm được bài viết."); }); }, 300); return () => { cancelled = true; clearTimeout(timer); }; }, [search, link]);
   return <>
-    <div className="flex flex-wrap gap-1 border-b p-2">
+    <div className="flex items-center gap-1 overflow-x-auto whitespace-nowrap px-2 py-1 [&>button]:shrink-0">
       <Button type="button" variant="ghost" size="sm" onClick={() => { const a = editor.getAttributes("link"); setError(""); setLink({ href: a.href || "", text: editor.state.doc.textBetween(editor.state.selection.from, editor.state.selection.to), blank: a.target === "_blank", nofollow: (a.rel || "").includes("nofollow"), sponsored: (a.rel || "").includes("sponsored") }); }}>Liên kết</Button>
       <Button type="button" variant="ghost" size="sm" onClick={() => setMedia("insert")}>Thư viện ảnh</Button>
       <Button type="button" variant="ghost" size="sm" onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}>Bảng so sánh</Button>
       <Button type="button" variant="ghost" size="sm" onClick={() => editor.chain().focus().insertContent('<blockquote><p><strong>Lưu ý:</strong> Nhập thông tin cần lưu ý.</p></blockquote>').run()}>Lưu ý</Button>
       <Button type="button" variant="ghost" size="sm" onClick={() => editor.chain().focus().insertContent('<p><strong>Tìm hiểu thêm trên Win-Win Back</strong></p><p><a href="/register">Bắt đầu mua sắm</a></p>').run()}>CTA</Button>
     </div>
-    {selection?.table && <div className="flex flex-wrap gap-1 border-b p-2" aria-label="Chỉnh bảng">{([
+    {selection?.table && <div className="flex items-center gap-1 overflow-x-auto whitespace-nowrap border-t border-[#e5edf6] px-2 py-1 [&>button]:shrink-0" aria-label="Chỉnh bảng">{([
       ["Thêm hàng", () => editor.chain().focus().addRowAfter().run()], ["Xóa hàng", () => editor.chain().focus().deleteRow().run()], ["Thêm cột", () => editor.chain().focus().addColumnAfter().run()], ["Xóa cột", () => editor.chain().focus().deleteColumn().run()], ["Gộp ô", () => editor.chain().focus().mergeCells().run()], ["Tách ô", () => editor.chain().focus().splitCell().run()], ["Hàng tiêu đề", () => editor.chain().focus().toggleHeaderRow().run()], ["Xóa bảng", () => editor.chain().focus().deleteTable().run()],
     ] as [string, () => boolean][]).map(([label, run]) => <Button key={label} type="button" variant="ghost" size="sm" onClick={run}>{label}</Button>)}</div>}
-    {selection?.image && <div className="flex flex-wrap items-center gap-2 border-b bg-[#f3f8fd] p-2" aria-label="Thao tác với ảnh đã chọn">
+    {selection?.image && <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap border-t border-[#e5edf6] bg-[#f3f8fd] px-2 py-1 [&>button]:shrink-0" aria-label="Thao tác với ảnh đã chọn">
       <span className="px-1 text-xs font-semibold text-[#34527d]">Ảnh đã chọn</span>
       <Button type="button" variant="outline" size="sm" onMouseDown={(event) => event.preventDefault()} onClick={() => setMedia("replace")}>Đổi ảnh</Button>
       <Button type="button" variant="outline" size="sm" onMouseDown={(event) => event.preventDefault()} onClick={() => { const a = editor.getAttributes("image"); setImage({ alt: a.alt || "", caption: a.caption || "", width: String(a.width || ""), align: a.align || "center" }); }}>Sửa alt, chú thích & kích thước</Button>
