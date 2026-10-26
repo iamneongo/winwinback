@@ -24,7 +24,7 @@ const SANITIZE_OPTS: sanitizeHtml.IOptions = {
   allowedSchemesByTag: { img: ["http", "https", "data"], iframe: ["https"] },
   allowProtocolRelative: false,
   allowedIframeHostnames: ["www.youtube.com", "www.youtube-nocookie.com"],
-  allowedStyles: { "*": { "text-align": [/^(left|right|center|justify)$/], "color": [/^#[0-9a-f]{3,8}$/i, /^rgb\([\d\s,]+\)$/], "background-color": [/^#[0-9a-f]{3,8}$/i, /^rgb\([\d\s,]+\)$/], "font-size": [/^\d+(?:\.\d+)?(?:px|em|rem)$/], "width": [/^\d+(?:px|%)$/], "height": [/^\d+px$/], "padding-left": [/^\d+(?:px|em)$/] } },
+  allowedStyles: { "*": { "text-align": [/^(left|right|center|justify)$/], "text-indent": [/^2em$/], "color": [/^#[0-9a-f]{3,8}$/i, /^rgb\([\d\s,]+\)$/], "background-color": [/^#[0-9a-f]{3,8}$/i, /^rgb\([\d\s,]+\)$/], "font-size": [/^\d+(?:\.\d+)?(?:px|em|rem)$/], "width": [/^\d+(?:px|%)$/], "height": [/^\d+px$/], "padding-left": [/^\d+(?:px|em)$/] } },
   transformTags: {
     h1: "h2",
     a: (_tag, attrs) => ({ tagName: "a", attribs: { ...attrs, ...(attrs.target === "_blank" ? { rel: Array.from(new Set(`${attrs.rel || ""} noopener noreferrer`.split(/\s+/))).join(" ") } : {}) } }),

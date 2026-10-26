@@ -5,6 +5,7 @@ import { EditorContent, useEditor, useEditorState, type Editor } from "@tiptap/r
 import { NodeSelection } from "@tiptap/pm/state";
 import { TableKit } from "@tiptap/extension-table";
 import { EditorTools, ArticleImage } from "./EditorTools";
+import { ArticleFirstLineIndent, setFirstLineIndent } from "./ArticleFirstLineIndent";
 import { uploadArticleImage } from "./MediaPicker";
 import { sanitizeArticleHtml } from "@/lib/articles/sanitize";
 import StarterKit from "@tiptap/starter-kit";
@@ -23,6 +24,8 @@ import {
   Code2,
   Highlighter,
   ImagePlus,
+  IndentDecrease,
+  IndentIncrease,
   Italic,
   List,
   ListOrdered,
@@ -57,6 +60,7 @@ const extensions = [
     allowBase64: true,
   }),
   TextAlign.configure({ types: ["heading", "paragraph"] }),
+  ArticleFirstLineIndent,
   TextStyleKit,
   Highlight.configure({ multicolor: true }),
   Subscript,
@@ -234,6 +238,8 @@ export function ArticleRichTextEditor({
       h3: current?.isActive("heading", { level: 3 }) ?? false,
       h4: current?.isActive("heading", { level: 4 }) ?? false,
       textAlign: current?.getAttributes("paragraph").textAlign ?? current?.getAttributes("heading").textAlign ?? "left",
+      paragraph: current?.isActive("paragraph") ?? false,
+      firstLineIndent: current?.getAttributes("paragraph").firstLineIndent === true,
       fontSize: current?.getAttributes("textStyle").fontSize ?? "16px",
       wordCount: current?.getText().trim().split(/\s+/).filter(Boolean).length ?? 0,
     }),
@@ -242,7 +248,7 @@ export function ArticleRichTextEditor({
     bold: false, italic: false, underline: false, strike: false, highlight: false,
     subscript: false, superscript: false, bulletList: false, orderedList: false,
     blockquote: false, codeBlock: false, link: false, h1: false, h2: false, h3: false, h4: false,
-    textAlign: "left", fontSize: "16px", wordCount: 0,
+    textAlign: "left", paragraph: false, firstLineIndent: false, fontSize: "16px", wordCount: 0,
   };
   const blockSelection = state.h1 ? "h1" : state.h2 ? "h2" : state.h3 ? "h3" : state.h4 ? "h4" : "paragraph";
   const blockLabels: Record<string, string> = {
@@ -338,6 +344,9 @@ export function ArticleRichTextEditor({
         <ToolButton label="Căn trái" active={state.textAlign === "left"} onClick={command(() => editor.chain().focus().setTextAlign("left").run())}><AlignLeft className="size-4" /></ToolButton>
         <ToolButton label="Căn giữa" active={state.textAlign === "center"} onClick={command(() => editor.chain().focus().setTextAlign("center").run())}><AlignCenter className="size-4" /></ToolButton>
         <ToolButton label="Căn phải" active={state.textAlign === "right"} onClick={command(() => editor.chain().focus().setTextAlign("right").run())}><AlignRight className="size-4" /></ToolButton>
+        <ToolbarDivider />
+        <ToolButton label="Thụt đầu dòng" disabled={!state.paragraph || state.firstLineIndent} onClick={() => setFirstLineIndent(editor, true)}><IndentIncrease className="size-4" /></ToolButton>
+        <ToolButton label="Bỏ thụt đầu dòng" disabled={!state.paragraph || !state.firstLineIndent} onClick={() => setFirstLineIndent(editor, false)}><IndentDecrease className="size-4" /></ToolButton>
         <ToolButton label="Trích dẫn" active={active("blockquote")} onClick={command(() => editor.chain().focus().toggleBlockquote().run())}><Quote className="size-4" /></ToolButton>
         <ToolButton label="Khối mã" active={active("codeBlock")} onClick={command(() => editor.chain().focus().toggleCodeBlock().run())}><Code2 className="size-4" /></ToolButton>
         <ToolButton label="Đường kẻ ngang" onClick={command(() => editor.chain().focus().setHorizontalRule().run())}><Minus className="size-4" /></ToolButton>
