@@ -5,7 +5,7 @@ import { EditorContent, useEditor, useEditorState, type Editor } from "@tiptap/r
 import { NodeSelection } from "@tiptap/pm/state";
 import { TableKit } from "@tiptap/extension-table";
 import { EditorTools, ArticleImage } from "./EditorTools";
-import { ArticleFirstLineIndent, setFirstLineIndent } from "./ArticleFirstLineIndent";
+import { ArticleFirstLineIndent, changeFirstLineIndent, MAX_FIRST_LINE_INDENT } from "./ArticleFirstLineIndent";
 import { uploadArticleImage } from "./MediaPicker";
 import { sanitizeArticleHtml } from "@/lib/articles/sanitize";
 import StarterKit from "@tiptap/starter-kit";
@@ -239,7 +239,7 @@ export function ArticleRichTextEditor({
       h4: current?.isActive("heading", { level: 4 }) ?? false,
       textAlign: current?.getAttributes("paragraph").textAlign ?? current?.getAttributes("heading").textAlign ?? "left",
       paragraph: current?.isActive("paragraph") ?? false,
-      firstLineIndent: current?.getAttributes("paragraph").firstLineIndent === true,
+      firstLineIndent: Number(current?.getAttributes("paragraph").firstLineIndent ?? 0),
       fontSize: current?.getAttributes("textStyle").fontSize ?? "16px",
       wordCount: current?.getText().trim().split(/\s+/).filter(Boolean).length ?? 0,
     }),
@@ -248,7 +248,7 @@ export function ArticleRichTextEditor({
     bold: false, italic: false, underline: false, strike: false, highlight: false,
     subscript: false, superscript: false, bulletList: false, orderedList: false,
     blockquote: false, codeBlock: false, link: false, h1: false, h2: false, h3: false, h4: false,
-    textAlign: "left", paragraph: false, firstLineIndent: false, fontSize: "16px", wordCount: 0,
+    textAlign: "left", paragraph: false, firstLineIndent: 0, fontSize: "16px", wordCount: 0,
   };
   const blockSelection = state.h1 ? "h1" : state.h2 ? "h2" : state.h3 ? "h3" : state.h4 ? "h4" : "paragraph";
   const blockLabels: Record<string, string> = {
@@ -316,16 +316,15 @@ export function ArticleRichTextEditor({
           type="button"
           variant="outline"
           size="sm"
-          title="Thụt đầu dòng cho đoạn văn"
-          aria-pressed={state.firstLineIndent}
-          disabled={!state.paragraph || state.firstLineIndent}
+          title={`Tăng thụt đầu dòng (mức ${state.firstLineIndent}/${MAX_FIRST_LINE_INDENT})`}
+          disabled={!state.paragraph || state.firstLineIndent >= MAX_FIRST_LINE_INDENT}
           onMouseDown={(event) => event.preventDefault()}
-          onClick={() => setFirstLineIndent(editor, true)}
+          onClick={() => changeFirstLineIndent(editor, 1)}
           className="h-8 shrink-0 gap-1.5 border-[#c9dcf5] bg-[#eaf2ff] px-2.5 text-xs font-semibold text-[#1261ed] hover:bg-[#dceaff]"
         >
-          <IndentIncrease className="size-4" />Thụt đầu dòng
+          <IndentIncrease className="size-4" />Tăng thụt dòng
         </Button>
-        <ToolButton label="Bỏ thụt đầu dòng" disabled={!state.paragraph || !state.firstLineIndent} onClick={() => setFirstLineIndent(editor, false)}><IndentDecrease className="size-4" /></ToolButton>
+        <ToolButton label="Giảm thụt đầu dòng" disabled={!state.paragraph || state.firstLineIndent <= 0} onClick={() => changeFirstLineIndent(editor, -1)}><IndentDecrease className="size-4" /></ToolButton>
         <Select value={fontSizeSelection} onValueChange={(value) => { if (value && value !== "custom") editor.chain().focus().setFontSize(value).run(); }}>
           <SelectTrigger aria-label="Cỡ chữ" className="h-8 w-24 border-[#dbe6f3] bg-white text-xs"><SelectValue>{fontSizeLabels[fontSizeSelection]}</SelectValue></SelectTrigger>
           <SelectContent>
