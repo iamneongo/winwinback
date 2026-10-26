@@ -312,6 +312,20 @@ export function ArticleRichTextEditor({
             <SelectItem value="h4">Tiêu đề 4</SelectItem>
           </SelectContent>
         </Select>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          title="Thụt đầu dòng cho đoạn văn"
+          aria-pressed={state.firstLineIndent}
+          disabled={!state.paragraph || state.firstLineIndent}
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={() => setFirstLineIndent(editor, true)}
+          className="h-8 shrink-0 gap-1.5 border-[#c9dcf5] bg-[#eaf2ff] px-2.5 text-xs font-semibold text-[#1261ed] hover:bg-[#dceaff]"
+        >
+          <IndentIncrease className="size-4" />Thụt đầu dòng
+        </Button>
+        <ToolButton label="Bỏ thụt đầu dòng" disabled={!state.paragraph || !state.firstLineIndent} onClick={() => setFirstLineIndent(editor, false)}><IndentDecrease className="size-4" /></ToolButton>
         <Select value={fontSizeSelection} onValueChange={(value) => { if (value && value !== "custom") editor.chain().focus().setFontSize(value).run(); }}>
           <SelectTrigger aria-label="Cỡ chữ" className="h-8 w-24 border-[#dbe6f3] bg-white text-xs"><SelectValue>{fontSizeLabels[fontSizeSelection]}</SelectValue></SelectTrigger>
           <SelectContent>
@@ -345,8 +359,6 @@ export function ArticleRichTextEditor({
         <ToolButton label="Căn giữa" active={state.textAlign === "center"} onClick={command(() => editor.chain().focus().setTextAlign("center").run())}><AlignCenter className="size-4" /></ToolButton>
         <ToolButton label="Căn phải" active={state.textAlign === "right"} onClick={command(() => editor.chain().focus().setTextAlign("right").run())}><AlignRight className="size-4" /></ToolButton>
         <ToolbarDivider />
-        <ToolButton label="Thụt đầu dòng" disabled={!state.paragraph || state.firstLineIndent} onClick={() => setFirstLineIndent(editor, true)}><IndentIncrease className="size-4" /></ToolButton>
-        <ToolButton label="Bỏ thụt đầu dòng" disabled={!state.paragraph || !state.firstLineIndent} onClick={() => setFirstLineIndent(editor, false)}><IndentDecrease className="size-4" /></ToolButton>
         <ToolButton label="Trích dẫn" active={active("blockquote")} onClick={command(() => editor.chain().focus().toggleBlockquote().run())}><Quote className="size-4" /></ToolButton>
         <ToolButton label="Khối mã" active={active("codeBlock")} onClick={command(() => editor.chain().focus().toggleCodeBlock().run())}><Code2 className="size-4" /></ToolButton>
         <ToolButton label="Đường kẻ ngang" onClick={command(() => editor.chain().focus().setHorizontalRule().run())}><Minus className="size-4" /></ToolButton>
