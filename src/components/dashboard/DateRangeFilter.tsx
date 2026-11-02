@@ -4,6 +4,7 @@ import * as React from "react";
 import { CalendarDays } from "lucide-react";
 import type { DateRange } from "react-day-picker";
 import { Calendar } from "@/components/ui/calendar";
+import { Button } from "@/components/ui/button";
 import {
   Popover,
   PopoverContent,
@@ -61,14 +62,15 @@ export function DateRangeFilter({
     : "";
 
   return (
-    <label className={`grid min-w-0 gap-1.5 text-xs font-bold text-[#213e67] ${className ?? ""}`}>
+    <label className={`grid min-w-0 gap-1 text-xs font-bold text-[#213e67] ${className ?? ""}`}>
       <span>Thời gian</span>
       <Popover>
         <PopoverTrigger
           render={
-            <button
+            <Button
               type="button"
-              className="flex h-11 w-full min-w-0 items-center gap-2 rounded-lg border border-[#d9e5f4] bg-white px-3 text-sm font-medium text-[#35537c] outline-none transition focus:border-[#8bd950] focus:ring-2 focus:ring-[#b7e961]/25 aria-expanded:border-[#8bd950] aria-expanded:ring-2 aria-expanded:ring-[#b7e961]/25"
+              variant="outline"
+              className="h-10 w-full min-w-0 justify-start gap-2 rounded-lg border-[#d9e5f4] bg-white px-3 text-sm font-medium text-[#35537c] focus-visible:border-[#8bd950] focus-visible:ring-[#b7e961]/25 aria-expanded:border-[#8bd950]"
             />
           }
         >

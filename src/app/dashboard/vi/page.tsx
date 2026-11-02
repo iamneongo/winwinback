@@ -11,6 +11,10 @@ import { formatVnd, minWithdrawal } from "@/lib/config";
 import { txTypeLabel } from "@/lib/labels";
 import { DashboardPageHeader } from "@/components/dashboard/ui";
 import { DashboardMetricCard } from "@/components/dashboard/DashboardMetricCard";
+import { Button } from "@/components/ui/button";
+import { ScrollArea, ScrollAreaContent, ScrollAreaViewport, ScrollBar } from "@/components/ui/scroll-area";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 export const metadata = { title: "Ví hoàn tiền — Win-Win Back" };
 export const dynamic = "force-dynamic";
@@ -83,22 +87,28 @@ export default async function WalletPage({ searchParams }: { searchParams: Promi
     <section className="grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1fr)_22.8rem]">
       <div className="min-w-0"><div className="grid gap-3 sm:grid-cols-2 2xl:grid-cols-4"><WalletStat icon={Wallet} iconClass="bg-[#e7f9df] text-[#33a91f]" label="Số dư khả dụng" value={formatVnd(user.balance)} action="Rút tiền ngay" href="#rut-tien" /><WalletStat icon={Clock3} iconClass="bg-[#fff1d9] text-[#e99a10]" label="Tiền chờ duyệt" value={formatVnd(waitingAmount)} action="Xem chi tiết" href="#lich-su" /><WalletStat icon={ArrowUpRight} iconClass="bg-[#e8f1ff] text-[#287be5]" label="Tổng đã rút" value={formatVnd(withdrawnAmount)} action="Xem lịch sử rút" href="#lich-su" /><WalletStat icon={Landmark} iconClass="bg-[#f6e9ff] text-[#aa34de]" label="Tài khoản ngân hàng" value={linkedBank ? "Đã liên kết" : "Chưa liên kết"} action="Xem tài khoản" href="#tai-khoan" /></div>
       <section id="lich-su" className="mt-4 min-w-0 overflow-hidden rounded-xl border border-[#e0eaf6] bg-white shadow-[0_5px_14px_rgba(26,73,124,0.04)]">
-        <header className="flex min-w-0 flex-col gap-4 border-b border-[#e5edf7] px-4 py-4 sm:px-5 xl:flex-row xl:items-end xl:justify-between">
-          <div className="min-w-0">
+        <header className="flex min-w-0 flex-col gap-3 border-b border-[#e5edf7] px-4 py-3 sm:px-5 xl:flex-row xl:items-end xl:justify-between">
+          <div className="min-w-0 flex-1">
             <h2 className="text-base font-bold text-[#173861] sm:text-lg">Lịch sử giao dịch ví</h2>
-            <nav aria-label="Lọc giao dịch theo loại" className="mt-3 flex flex-wrap gap-2">
-              {TYPE_TABS.map((tab) => {
-                const active = tab.value === activeType;
-                return <Link key={tab.label} href={`/dashboard/vi${qs({ type: tab.value, from: query.from, to: query.to })}`} aria-current={active ? "page" : undefined} className={`inline-flex h-11 shrink-0 items-center justify-center whitespace-nowrap rounded-full border px-3 text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#28711a] ${active ? "border-[#b1eb78] bg-[#eaf9df] font-bold text-[#28711a]" : "border-[#e0eaf6] text-[#46658e] hover:border-[#bcd7ad] hover:bg-[#f6fbf3]"}`}>{tab.label}</Link>;
-              })}
-            </nav>
+            <Tabs value={activeType ?? "all"} className="mt-2 min-w-0">
+              <ScrollArea className="w-full min-w-0">
+                <ScrollAreaViewport className="w-full pb-1">
+                  <ScrollAreaContent>
+                    <TabsList aria-label="Lọc giao dịch theo loại" className="flex h-auto w-max justify-start gap-1.5 rounded-none bg-transparent p-0">
+                      {TYPE_TABS.map((tab) => <TabsTrigger key={tab.label} value={tab.value ?? "all"} render={<Link href={`/dashboard/vi${qs({ type: tab.value, from: query.from, to: query.to })}`} />} className="min-h-10 rounded-lg border border-[#dbe7f6] px-3 text-xs font-semibold text-[#46658e] hover:bg-[#f6fbf3] data-active:border-[#b1eb78] data-active:bg-[#eaf9df] data-active:text-[#28711a] data-active:shadow-none">{tab.label}</TabsTrigger>)}
+                    </TabsList>
+                  </ScrollAreaContent>
+                </ScrollAreaViewport>
+                <ScrollBar orientation="horizontal" className="h-1.5 opacity-100" />
+              </ScrollArea>
+            </Tabs>
           </div>
-          <form action="/dashboard/vi" className="grid w-full min-w-0 grid-cols-[minmax(0,1fr)_auto] items-end gap-2 xl:w-auto xl:max-w-[25rem] xl:flex-1">
+          <form action="/dashboard/vi" className="grid w-full min-w-0 grid-cols-[minmax(0,1fr)_auto] items-end gap-2 xl:w-[24rem] xl:shrink-0">
             {activeType && <input type="hidden" name="type" value={activeType} />}
-            <DateRangeFilter defaultFrom={query.from} defaultTo={query.to} className="col-span-2 w-full sm:col-span-1" />
-            <div className="col-span-2 flex min-w-0 gap-2 sm:col-span-1">
-              <button type="submit" className="ww-btn-cta h-11 min-w-0 flex-1 rounded-lg px-4 text-xs font-bold lg:flex-none">Lọc</button>
-              {(query.from || query.to) && <Link href={`/dashboard/vi${qs({ type: activeType })}`} className="inline-flex h-11 shrink-0 items-center rounded-lg border border-[#d9e5f4] px-3 text-xs font-bold text-[#34527d] hover:bg-[#f6f9fd]">Xóa</Link>}
+            <DateRangeFilter defaultFrom={query.from} defaultTo={query.to} className="w-full" />
+            <div className="flex min-w-0 gap-2">
+              <Button type="submit" variant="cta" className="h-10 min-w-14 px-3 text-xs font-bold">Lọc</Button>
+              {(query.from || query.to) && <Button variant="outline" nativeButton={false} render={<Link href={`/dashboard/vi${qs({ type: activeType })}`} />} className="h-10 px-3 text-xs font-bold">Xóa</Button>}
             </div>
           </form>
         </header>
@@ -126,7 +136,29 @@ export default async function WalletPage({ searchParams }: { searchParams: Promi
             </Link>;
           })}
         </div>
-        <div className="hidden overflow-x-auto md:block"><table className="min-w-[720px] w-full text-left text-xs"><thead className="border-b border-[#e5edf7] bg-[#f8fbff] font-bold text-[#25436b]"><tr><th className="px-4 py-3.5">Mã GD</th><th className="px-4 py-3.5">Nội dung</th><th className="px-4 py-3.5">Số tiền</th><th className="px-4 py-3.5">Trạng thái</th><th className="px-4 py-3.5">Thời gian</th></tr></thead><tbody className="divide-y divide-[#e8eef6]">{transactions.length === 0 ? <tr><td colSpan={5} className="px-5 py-14 text-center text-sm text-[#6681a7]">Không có giao dịch phù hợp.</td></tr> : transactions.map((item) => { const meta = typeMeta[item.type]; const Icon = meta.icon; const success = item.amount >= 0; return <tr key={item.id} className="text-[#49688f] hover:bg-[#fbfdff]"><td className="px-4 py-3.5 font-medium"><Link href={`/dashboard/vi/giao-dich/${item.id}`} className="text-[#1261ed] hover:underline">{item.id.slice(0, 10).toUpperCase()}</Link></td><td className="px-4 py-3.5"><div className="flex items-center gap-3"><span className={`flex h-8 w-8 items-center justify-center rounded-lg ${meta.tone}`}><Icon className="h-4 w-4" /></span><span><b className="block text-[#244a7c]">{item.note || meta.label}</b><small className="mt-0.5 block text-[#7790b1]">{txTypeLabel[item.type]}</small></span></div></td><td className={`px-4 py-3.5 font-bold ${success ? "text-[#168146]" : "text-[#f04438]"}`}>{success ? "+ " : "- "}{formatVnd(Math.abs(item.amount))}</td><td className="px-4 py-3.5"><span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 font-bold ${success ? "bg-[#e8f8eb] text-[#168146]" : "bg-[#eaf2ff] text-[#287be5]"}`}><Check className="h-3.5 w-3.5" />{success ? "Thành công" : "Đã xử lý"}</span></td><td className="px-4 py-3.5 leading-4">{item.createdAt.toLocaleDateString("vi-VN")}<br /><span className="text-[#7790b1]">{item.createdAt.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}</span></td></tr>; })}</tbody></table></div>
+        <div className="hidden md:block">
+          <Table className="min-w-[720px] text-xs">
+            <TableHeader className="bg-[#f8fbff] text-[#25436b]">
+              <TableRow>
+                <TableHead className="px-4">Mã GD</TableHead><TableHead className="px-4">Nội dung</TableHead><TableHead className="px-4">Số tiền</TableHead><TableHead className="px-4">Trạng thái</TableHead><TableHead className="px-4">Thời gian</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {transactions.length === 0 ? <TableRow><TableCell colSpan={5} className="py-12 text-center text-sm text-[#6681a7]">Không có giao dịch phù hợp.</TableCell></TableRow> : transactions.map((item) => {
+                const meta = typeMeta[item.type];
+                const Icon = meta.icon;
+                const success = item.amount >= 0;
+                return <TableRow key={item.id} className="text-[#49688f]">
+                  <TableCell className="px-4 font-medium"><Link href={`/dashboard/vi/giao-dich/${item.id}`} className="text-[#1261ed] hover:underline">{item.id.slice(0, 10).toUpperCase()}</Link></TableCell>
+                  <TableCell className="px-4"><div className="flex items-center gap-3"><span className={`flex size-8 items-center justify-center rounded-lg ${meta.tone}`}><Icon className="size-4" /></span><span><b className="block text-[#244a7c]">{item.note || meta.label}</b><small className="mt-0.5 block text-[#7790b1]">{txTypeLabel[item.type]}</small></span></div></TableCell>
+                  <TableCell className={`px-4 font-bold ${success ? "text-[#168146]" : "text-[#f04438]"}`}>{success ? "+ " : "− "}{formatVnd(Math.abs(item.amount))}</TableCell>
+                  <TableCell className="px-4"><span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 font-bold ${success ? "bg-[#e8f8eb] text-[#168146]" : "bg-[#eaf2ff] text-[#287be5]"}`}><Check className="size-3.5" />{success ? "Thành công" : "Đã xử lý"}</span></TableCell>
+                  <TableCell className="px-4 leading-4">{item.createdAt.toLocaleDateString("vi-VN")}<br /><span className="text-[#7790b1]">{item.createdAt.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}</span></TableCell>
+                </TableRow>;
+              })}
+            </TableBody>
+          </Table>
+        </div>
         <footer className="flex flex-col gap-3 border-t border-[#e8eef6] px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
           <span className="text-xs leading-5 text-[#6d87aa]">Hiển thị {firstShown} - {lastShown} trong tổng số {total} giao dịch</span>
           <div className="flex items-center gap-2 self-end sm:self-auto">
