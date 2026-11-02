@@ -103,7 +103,7 @@ export default async function WalletPage({ searchParams }: { searchParams: Promi
               </ScrollArea>
             </Tabs>
           </div>
-          <form action="/dashboard/vi" className="grid w-full min-w-0 grid-cols-[minmax(0,1fr)_auto] items-end gap-2 xl:w-[24rem] xl:shrink-0">
+          <form action="/dashboard/vi" className="grid w-full min-w-0 grid-cols-[minmax(0,1fr)_auto] items-end gap-2 xl:w-[19rem] xl:shrink-0">
             {activeType && <input type="hidden" name="type" value={activeType} />}
             <DateRangeFilter defaultFrom={query.from} defaultTo={query.to} className="w-full" />
             <div className="flex min-w-0 gap-2">
