@@ -4,10 +4,10 @@ import { revalidatePath } from "next/cache";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
-import { users, orders, withdrawals } from "@/db/schema";
+import { users, orders, withdrawals, withdrawalEvents } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth/guards";
 import { settleOrderCashback, recordWalletTx } from "@/lib/wallet";
-import { notifyOrderStatusForOrder, notifyWithdrawalStatus } from "@/lib/notify";
+import { notifyOrderStatusForOrder, notifyWithdrawalStatus, notifyWithdrawalNeedsInfo } from "@/lib/notify";
 import { cashbackRate } from "@/lib/config";
 import { verifyTikTokOrder, type VerifyResult } from "@/lib/affiliate/tiktok/orders";
 import { verifyShopeeOrder } from "@/lib/affiliate/shopee/orders";
@@ -322,22 +322,26 @@ export async function verifyOrderAction(
 
 const withdrawalActionSchema = z.object({
   withdrawalId: z.string().uuid(),
-  action: z.enum(["approve", "reject", "paid"]),
+  action: z.enum(["approve", "reject", "paid", "needs_info"]),
+  reason: z.string().trim().max(500).optional(),
 });
 
 export async function processWithdrawalAction(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const parsed = withdrawalActionSchema.safeParse({
     withdrawalId: formData.get("withdrawalId"),
     action: formData.get("action"),
+    reason: formData.get("reason") ?? undefined,
   });
   if (!parsed.success) return { error: "Dữ liệu không hợp lệ" };
   const { withdrawalId, action } = parsed.data;
+  const reason = parsed.data.reason;
+  if (action === "needs_info" && (!reason || reason.length < 10)) return { error: "Nhập lý do cụ thể (ít nhất 10 ký tự) để khách biết cần sửa gì." };
 
-  let processed: { withdrawalId: string; userId: string; amount: number; status: "approved" | "rejected" | "paid" };
+  let processed: { withdrawalId: string; userId: string; amount: number; status: "approved" | "rejected" | "paid" | "needs_info" };
   try {
     processed = await db.transaction(async (tx) => {
       const rows = await tx
@@ -348,11 +352,18 @@ export async function processWithdrawalAction(
         .limit(1);
       const w = rows[0];
       if (!w) throw new Error("NOT_FOUND");
+      if (w.status === "rejected" || w.status === "paid") throw new Error("ALREADY_FINAL");
+      if (w.status === "needs_info") throw new Error("WAITING_FOR_CUSTOMER");
+      if (action === "approve" && w.status !== "pending") throw new Error("INVALID_TRANSITION");
+      if (action === "paid" && w.status !== "approved") throw new Error("INVALID_TRANSITION");
+
+      if (action === "needs_info") {
+        await tx.update(withdrawals).set({ status: "needs_info", correctionReason: reason }).where(eq(withdrawals.id, withdrawalId));
+        await tx.insert(withdrawalEvents).values({ withdrawalId, actorId: admin.id, event: "needs_info", detail: `${reason}${w.processedAt ? ` (Đã duyệt trước đó: ${w.processedAt.toISOString()})` : ""}` });
+        return { withdrawalId, userId: w.userId, amount: w.amount, status: "needs_info" as const };
+      }
 
       if (action === "reject") {
-        if (w.status === "rejected" || w.status === "paid") {
-          throw new Error("ALREADY_FINAL");
-        }
         // Refund the held amount back to the wallet.
         await recordWalletTx(tx, {
           userId: w.userId,
@@ -364,12 +375,14 @@ export async function processWithdrawalAction(
           .update(withdrawals)
           .set({ status: "rejected", processedAt: new Date() })
           .where(eq(withdrawals.id, withdrawalId));
+        await tx.insert(withdrawalEvents).values({ withdrawalId, actorId: admin.id, event: "rejected" });
         return { withdrawalId: w.id, userId: w.userId, amount: w.amount, status: "rejected" as const };
       } else if (action === "approve") {
         await tx
           .update(withdrawals)
           .set({ status: "approved", processedAt: new Date() })
           .where(eq(withdrawals.id, withdrawalId));
+        await tx.insert(withdrawalEvents).values({ withdrawalId, actorId: admin.id, event: "approved" });
         return { withdrawalId: w.id, userId: w.userId, amount: w.amount, status: "approved" as const };
       } else {
         // paid
@@ -377,6 +390,7 @@ export async function processWithdrawalAction(
           .update(withdrawals)
           .set({ status: "paid", processedAt: new Date() })
           .where(eq(withdrawals.id, withdrawalId));
+        await tx.insert(withdrawalEvents).values({ withdrawalId, actorId: admin.id, event: "paid" });
         return { withdrawalId: w.id, userId: w.userId, amount: w.amount, status: "paid" as const };
       }
     });
@@ -384,13 +398,22 @@ export async function processWithdrawalAction(
     const msg = e instanceof Error ? e.message : "";
     if (msg === "NOT_FOUND") return { error: "Không tìm thấy yêu cầu" };
     if (msg === "ALREADY_FINAL") return { error: "Yêu cầu đã xử lý xong" };
+    if (msg === "WAITING_FOR_CUSTOMER") return { error: "Đang chờ khách bổ sung thông tin" };
+    if (msg === "INVALID_TRANSITION") return { error: "Trạng thái yêu cầu đã thay đổi. Vui lòng tải lại trang." };
     return { error: "Không xử lý được yêu cầu" };
   }
 
   // Best-effort notification; never block the response.
-  await notifyWithdrawalStatus(processed).catch(() => {});
+  if (processed.status === "needs_info") {
+    await notifyWithdrawalNeedsInfo({ ...processed, reason: reason ?? "" }).catch(() => {});
+  } else {
+    await notifyWithdrawalStatus({ withdrawalId: processed.withdrawalId, userId: processed.userId, amount: processed.amount, status: processed.status }).catch(() => {});
+  }
 
   revalidatePath("/admin");
   revalidatePath("/admin/rut-tien");
+  revalidatePath(`/admin/rut-tien/${withdrawalId}`);
+  revalidatePath("/dashboard/vi");
+  revalidatePath(`/dashboard/vi/rut-tien/${withdrawalId}`);
   return { success: "Đã xử lý yêu cầu rút tiền" };
 }

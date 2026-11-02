@@ -20,8 +20,8 @@ export default async function WithdrawalsPage({ searchParams }: { searchParams: 
   const q = one("q").trim().slice(0, 150);
   const status = one("status");
   const conditions = [];
-  if (q) conditions.push(or(ilike(users.name, `%${q}%`), ilike(users.email, `%${q}%`), ilike(withdrawals.accountHolder, `%${q}%`), ilike(withdrawals.bankName, `%${q}%`)));
-  if (status === "pending" || status === "approved" || status === "rejected" || status === "paid") conditions.push(eq(withdrawals.status, status));
+  if (q) conditions.push(or(ilike(users.name, `%${q}%`), ilike(users.email, `%${q}%`), ilike(withdrawals.accountHolder, `%${q}%`), ilike(withdrawals.bankName, `%${q}%`), ilike(withdrawals.contactPhone, `%${q}%`)));
+  if (status === "pending" || status === "needs_info" || status === "approved" || status === "rejected" || status === "paid") conditions.push(eq(withdrawals.status, status));
   const where = conditions.length ? and(...conditions) : undefined;
   const [[stats], [count]] = await Promise.all([
     db.select({ pendingCount: sql<number>`count(*) filter (where ${withdrawals.status} = 'pending')::int`, pendingAmount: sql<number>`coalesce(sum(${withdrawals.amount}) filter (where ${withdrawals.status} = 'pending'), 0)::float8`, approvedAmount: sql<number>`coalesce(sum(${withdrawals.amount}) filter (where ${withdrawals.status} = 'approved'), 0)::float8`, paidAmount: sql<number>`coalesce(sum(${withdrawals.amount}) filter (where ${withdrawals.status} = 'paid'), 0)::float8` }).from(withdrawals),

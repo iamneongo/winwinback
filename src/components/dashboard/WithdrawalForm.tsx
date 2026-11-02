@@ -61,6 +61,9 @@ export function WithdrawalForm({
           placeholder="Tên chủ tài khoản"
           className={inputClass}
         />
+        <label className="sm:col-span-2 text-xs font-semibold text-[#34537a]">Số điện thoại liên hệ khi xử lý rút tiền
+          <input name="contactPhone" type="tel" inputMode="tel" autoComplete="tel" required maxLength={20} placeholder="Ví dụ: 0912345678" className={`${inputClass} mt-1.5`} />
+        </label>
       </div>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <span className="text-sm text-[#6681a7]">

@@ -27,6 +27,7 @@ export const orderStatusClass: Record<string, string> = {
 
 export const withdrawalStatusLabel: Record<string, string> = {
   pending: "Chờ xử lý",
+  needs_info: "Cần bổ sung thông tin",
   approved: "Đã duyệt",
   rejected: "Từ chối",
   paid: "Đã chi",
@@ -34,6 +35,7 @@ export const withdrawalStatusLabel: Record<string, string> = {
 
 export const withdrawalStatusClass: Record<string, string> = {
   pending: "bg-amber-400/15 text-amber-200",
+  needs_info: "bg-orange-400/15 text-orange-200",
   approved: "bg-sky-400/15 text-sky-200",
   rejected: "bg-red-400/15 text-red-200",
   paid: "bg-[#b7e961]/20 text-[#b7e961]",

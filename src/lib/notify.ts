@@ -6,6 +6,10 @@ import { sendEmail, emailLayout } from "@/lib/email";
 import { formatVnd, baseUrl } from "@/lib/config";
 import { createNotification, notifyAdmins } from "@/lib/notifications";
 
+function escapeHtml(value: string): string {
+  return value.replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char] ?? char);
+}
+
 async function recipient(userId: string): Promise<
   | {
       email: string;
@@ -136,6 +140,18 @@ export async function notifyNewWithdrawalRequest(input: {
       dedupeKey: `withdrawal:${input.withdrawalId}:requested`,
     }),
   ]);
+}
+
+export async function notifyWithdrawalNeedsInfo(input: { withdrawalId: string; userId: string; amount: number; reason: string }): Promise<void> {
+  const href = `/dashboard/vi/rut-tien/${input.withdrawalId}`;
+  await createNotification({ userId: input.userId, type: "withdrawal", title: "Cần sửa thông tin rút tiền", body: input.reason, href, dedupeKey: `withdrawal:${input.withdrawalId}:needs-info:${Date.now()}` });
+  const to = await recipient(input.userId);
+  if (!to || !to.notifyOrders) return;
+  await sendEmail({ to: to.email, subject: "Cần bổ sung thông tin rút tiền — Win-Win Back", html: emailLayout("Cần bổ sung thông tin rút tiền", `Yêu cầu rút <b>${formatVnd(input.amount)}</b> cần chỉnh sửa: ${escapeHtml(input.reason)}<p><a href="${baseUrl}${href}">Xem và cập nhật yêu cầu →</a></p>`) });
+}
+
+export async function notifyWithdrawalCorrectionSubmitted(input: { withdrawalId: string; userName: string }): Promise<void> {
+  await notifyAdmins({ type: "withdrawal_request", title: "Khách đã sửa thông tin rút tiền", body: `${input.userName} đã cập nhật yêu cầu rút tiền. Vui lòng kiểm tra lại.`, href: `/admin/rut-tien/${input.withdrawalId}`, dedupeKey: `withdrawal:${input.withdrawalId}:corrected:${Date.now()}` });
 }
 
 /** Notify the order owner about a meaningful affiliate status change. */

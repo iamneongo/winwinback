@@ -13,11 +13,11 @@ type WithdrawalRow = {
   id: string;
   name: string;
   amount: number;
-  status: "pending" | "approved" | "rejected" | "paid";
+  status: "pending" | "needs_info" | "approved" | "rejected" | "paid";
 };
 
 const withdrawalVariant: Record<WithdrawalRow["status"], "warning" | "default" | "destructive" | "success"> = {
-  pending: "warning", approved: "default", rejected: "destructive", paid: "success",
+  pending: "warning", needs_info: "warning", approved: "default", rejected: "destructive", paid: "success",
 };
 
 const withdrawalColumns: ColumnDef<WithdrawalRow>[] = [

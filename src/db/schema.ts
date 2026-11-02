@@ -45,6 +45,7 @@ export const luckyDrawStatus = pgEnum("lucky_draw_status", ["open", "drawn"]);
 
 export const withdrawalStatus = pgEnum("withdrawal_status", [
   "pending",
+  "needs_info",
   "approved",
   "rejected",
   "paid",
@@ -271,6 +272,8 @@ export const withdrawals = pgTable(
     bankName: text("bank_name").notNull(),
     bankAccount: text("bank_account").notNull(),
     accountHolder: text("account_holder").notNull(),
+    contactPhone: text("contact_phone"),
+    correctionReason: text("correction_reason"),
     note: text("note"),
     requestedAt: timestamp("requested_at", { withTimezone: true })
       .notNull()
@@ -279,6 +282,15 @@ export const withdrawals = pgTable(
   },
   (t) => [index("withdrawals_user_idx").on(t.userId)],
 );
+
+export const withdrawalEvents = pgTable("withdrawal_events", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  withdrawalId: uuid("withdrawal_id").notNull().references(() => withdrawals.id, { onDelete: "cascade" }),
+  actorId: uuid("actor_id").references(() => users.id, { onDelete: "set null" }),
+  event: text("event").notNull(),
+  detail: text("detail"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [index("withdrawal_events_withdrawal_idx").on(t.withdrawalId, t.createdAt)]);
 
 // The user's saved default bank account. Withdrawal rows keep their own
 // snapshots so later account edits never change an existing payout request.

@@ -33,6 +33,8 @@
     "test:seo:public": "node tests/seo-public-smoke.mjs",
     "db:migrate-missions": "node scripts/migrate-missions.mjs",
     "db:migrate-bank-accounts": "node scripts/migrate-bank-accounts.mjs",
+    "db:migrate-withdrawal-contact": "node scripts/migrate-withdrawal-contact.mjs",
+    "db:verify-withdrawal-contact": "node scripts/verify-withdrawal-contact.mjs",
     "db:migrate-lucky-draw-funding": "node scripts/migrate-lucky-draw-funding.mjs",
     "set-role": "node --env-file=.env.local scripts/set-role.mjs"
   },

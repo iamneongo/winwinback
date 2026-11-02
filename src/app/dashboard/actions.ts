@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { after } from "next/server";
 import { z } from "zod";
 import { db } from "@/db";
-import { affiliateLinks, bankAccounts, users, withdrawals } from "@/db/schema";
+import { affiliateLinks, bankAccounts, users, withdrawals, withdrawalEvents } from "@/db/schema";
 import { and, eq, lt, ne, or } from "drizzle-orm";
 import { requireUser } from "@/lib/auth/guards";
 import { detectPlatform } from "@/lib/affiliate/platform";
@@ -12,7 +12,8 @@ import { getAffiliateProvider } from "@/lib/affiliate/providers";
 import { runArticleGeneration } from "@/lib/articles/progress";
 import { generateShortCode } from "@/lib/shortcode";
 import { recordWalletTx } from "@/lib/wallet";
-import { notifyNewWithdrawalRequest } from "@/lib/notify";
+import { notifyNewWithdrawalRequest, notifyWithdrawalCorrectionSubmitted } from "@/lib/notify";
+import { contactPhoneSchema } from "@/lib/withdrawal-phone";
 import { minWithdrawal, cashbackRate } from "@/lib/config";
 import { platformLabel } from "@/lib/labels";
 
@@ -211,8 +212,9 @@ export async function retryArticleAction(formData: FormData): Promise<void> {
 const withdrawalSchema = z.object({
   amount: z.coerce.number().int().positive("Số tiền không hợp lệ"),
   bankName: z.string().trim().min(1, "Nhập tên ngân hàng").max(80),
-  bankAccount: z.string().trim().min(4, "Nhập số tài khoản").max(40),
+  bankAccount: z.string().trim().regex(/^\d{4,40}$/, "Số tài khoản chỉ gồm 4–40 chữ số"),
   accountHolder: z.string().trim().min(1, "Nhập tên chủ tài khoản").max(80),
+  contactPhone: contactPhoneSchema,
 });
 
 const bankAccountSchema = z.object({
@@ -259,12 +261,13 @@ export async function requestWithdrawalAction(
     bankName: formData.get("bankName"),
     bankAccount: formData.get("bankAccount"),
     accountHolder: formData.get("accountHolder"),
+    contactPhone: formData.get("contactPhone"),
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Dữ liệu không hợp lệ" };
   }
 
-  const { amount, bankName, bankAccount, accountHolder } = parsed.data;
+  const { amount, bankName, bankAccount, accountHolder, contactPhone } = parsed.data;
   if (amount < minWithdrawal) {
     return { error: `Số tiền rút tối thiểu là ${minWithdrawal.toLocaleString("vi-VN")} ₫` };
   }
@@ -285,7 +288,9 @@ export async function requestWithdrawalAction(
         bankName,
         bankAccount,
         accountHolder,
+        contactPhone,
       }).returning({ id: withdrawals.id });
+      await tx.insert(withdrawalEvents).values({ withdrawalId: withdrawal.id, actorId: user.id, event: "requested" });
       return withdrawal;
     });
     withdrawalId = createdWithdrawal.id;
@@ -306,4 +311,41 @@ export async function requestWithdrawalAction(
 
   revalidatePath("/dashboard");
   return { success: "Đã gửi yêu cầu rút tiền" };
+}
+
+const correctionSchema = z.object({
+  withdrawalId: z.string().uuid(),
+  bankName: z.string().trim().min(1).max(80),
+  bankAccount: z.string().trim().regex(/^\d{4,40}$/, "Số tài khoản chỉ gồm 4–40 chữ số"),
+  accountHolder: z.string().trim().min(1).max(80),
+  contactPhone: contactPhoneSchema,
+});
+
+export async function correctWithdrawalAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const user = await requireUser();
+  const parsed = correctionSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Thông tin chưa hợp lệ" };
+  const { withdrawalId, ...details } = parsed.data;
+  try {
+    await db.transaction(async (tx) => {
+      const [item] = await tx.select().from(withdrawals).where(and(eq(withdrawals.id, withdrawalId), eq(withdrawals.userId, user.id))).for("update").limit(1);
+      if (!item || item.status !== "needs_info") throw new Error("NOT_EDITABLE");
+      await tx.update(withdrawals).set({ ...details, status: "pending", correctionReason: null }).where(eq(withdrawals.id, item.id));
+      const changes = [
+        item.bankName !== details.bankName && "ngân hàng",
+        item.bankAccount !== details.bankAccount && `số tài khoản (đuôi ${details.bankAccount.slice(-4)})`,
+        item.accountHolder !== details.accountHolder && "tên chủ tài khoản",
+        item.contactPhone !== details.contactPhone && "số điện thoại",
+      ].filter(Boolean).join(", ");
+      await tx.insert(withdrawalEvents).values({ withdrawalId, actorId: user.id, event: "corrected", detail: changes ? `Đã cập nhật: ${changes}` : "Khách đã xác nhận lại thông tin nhận tiền" });
+    });
+  } catch {
+    return { error: "Yêu cầu không còn chờ bổ sung. Vui lòng tải lại trang." };
+  }
+  await notifyWithdrawalCorrectionSubmitted({ withdrawalId, userName: user.name }).catch(() => {});
+  revalidatePath("/dashboard/vi");
+  revalidatePath(`/dashboard/vi/rut-tien/${withdrawalId}`);
+  revalidatePath("/admin/rut-tien");
+  revalidatePath(`/admin/rut-tien/${withdrawalId}`);
+  return { success: "Đã gửi lại thông tin. Yêu cầu đang chờ kiểm tra." };
 }
