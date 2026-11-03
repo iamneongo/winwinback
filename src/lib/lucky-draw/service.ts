@@ -9,6 +9,7 @@ import {
 import { prizeFundRate } from "@/lib/config";
 import { recordWalletTx } from "@/lib/wallet";
 import { balanceAfterDraw, periodPrizePool } from "./funding";
+import { selectWinningTickets } from "./winners";
 
 const FUND_ID = "global";
 /** Share of the fund the nearest ticket wins when no number matches exactly. */
@@ -190,25 +191,7 @@ export async function runDraw(periodId: string): Promise<DrawResult> {
       4,
       "0",
     );
-    const winNum = Number(winningNumber);
-
-    let exactMatch: boolean | null = tickets.length > 0 ? false : null;
-    let winnerTickets: typeof tickets = [];
-    if (tickets.length > 0) {
-      const exact = tickets.filter((t) => t.number === winningNumber);
-      if (exact.length > 0) {
-        exactMatch = true;
-        winnerTickets = exact;
-      } else {
-        let best = Infinity;
-        for (const t of tickets) {
-          best = Math.min(best, Math.abs(Number(t.number) - winNum));
-        }
-        winnerTickets = tickets.filter(
-          (t) => Math.abs(Number(t.number) - winNum) === best,
-        );
-      }
-    }
+    const { exactMatch, winnerTickets } = selectWinningTickets(tickets, winningNumber);
 
     const payoutPool =
       winnerTickets.length === 0
