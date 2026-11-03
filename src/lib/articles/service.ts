@@ -6,7 +6,7 @@ import { db } from "@/db";
 import { articles, articleSlugs, type Article } from "@/db/schema";
 import { defaultSeo, documentSchema, publicationErrors } from "./document";
 import type { Platform } from "@/lib/affiliate/types";
-import { nvidiaChat, isNvidiaConfigured, getNvidiaModel } from "@/lib/ai/nvidia";
+import { nvidiaChat, isNvidiaConfigured, getNvidiaArticleModel } from "@/lib/ai/nvidia";
 import { seoAiUsage } from "@/db/schema";
 import { getSeoTemplate } from "./seo-template";
 import { renderSeoPattern } from "./seo-template-pattern";
@@ -149,22 +149,6 @@ export interface ArticleProgress {
   preview?: string;
 }
 
-/** Pull readable fields from a partially streamed JSON response. */
-function previewFromPartialArticle(raw: string): string {
-  const pieces: string[] = [];
-  for (const match of raw.matchAll(/"(title|intro|q|a)"\s*:\s*"((?:\\.|[^"\\])*)/g)) {
-    const fragment = match[2] ?? "";
-    let plain: string;
-    try {
-      plain = JSON.parse(`"${fragment}"`) as string;
-    } catch {
-      plain = fragment.replace(/\\n/g, "\n").replace(/\\"/g, '"');
-    }
-    if (plain.trim()) pieces.push(plain.trim());
-  }
-  return pieces.join("\n\n");
-}
-
 function escapeHtml(s: string): string {
   return s
     .replace(/&/g, "&amp;")
@@ -273,33 +257,29 @@ async function buildArticle(
     '"},' +
     '{"q":"Bao lâu thì nhận được tiền hoàn?","a":"~60 từ: tiền hoàn về ví sau khi đơn hoàn tất và hết thời gian đổi trả"}]}';
 
-  let lastPreview = name;
-  let lastWrite = 0;
-  const raw = await nvidiaChat({
+  const chatOptions = {
+    model: getNvidiaArticleModel(),
     system,
     user,
-    maxTokens: 6000,
-    temperature: 0.6,
-    timeoutMs: 170_000,
+    maxTokens: 4500,
+    temperature: 0.4,
+    timeoutMs: 60_000,
     onUsage,
-    onDelta: onProgress
-      ? async (partial) => {
-          const preview = previewFromPartialArticle(partial);
-          const now = Date.now();
-          if (preview && preview !== lastPreview && now - lastWrite >= 550) {
-            lastPreview = preview;
-            lastWrite = now;
-            await onProgress({ stage: "generating", preview });
-          }
-        }
-      : undefined,
-  });
-  await onProgress?.({ stage: "generating", preview: previewFromPartialArticle(raw) });
+  };
+  let raw: string;
+  try {
+    raw = await nvidiaChat(chatOptions);
+  } catch (error) {
+    if (!(error instanceof Error) || !["TimeoutError", "TypeError"].includes(error.name)) throw error;
+    console.warn("[article-generation] retrying NVIDIA request", { name: error.name });
+    raw = await nvidiaChat(chatOptions);
+  }
   const parsed = parseJsonObject(raw);
   if (!parsed) {
     console.warn("[article-generation] invalid AI response");
     return null;
   }
+  await onProgress?.({ stage: "generating", preview: typeof parsed.intro === "string" ? parsed.intro : name });
 
   const title = (
     (typeof parsed.title === "string" && parsed.title.trim()) ||
@@ -438,10 +418,10 @@ export async function generateAndSaveArticle(
     return null;
   } finally {
     if (shouldRecordUsage) {
-      const inputPrice = Number(process.env.NVIDIA_INPUT_USD_PER_MILLION_TOKENS);
-      const outputPrice = Number(process.env.NVIDIA_OUTPUT_USD_PER_MILLION_TOKENS);
-      const cost = process.env.NVIDIA_INPUT_USD_PER_MILLION_TOKENS && process.env.NVIDIA_OUTPUT_USD_PER_MILLION_TOKENS && Number.isFinite(inputPrice) && Number.isFinite(outputPrice) && tokenUsage.promptTokens !== null && tokenUsage.completionTokens !== null ? String((tokenUsage.promptTokens * inputPrice + tokenUsage.completionTokens * outputPrice) / 1_000_000) : null;
-      await db.insert(seoAiUsage).values({ userId: input.userId || null, task: "product_article", model: getNvidiaModel(), promptTokens: tokenUsage.promptTokens, completionTokens: tokenUsage.completionTokens, estimatedCostUsd: cost, status: usageStatus }).catch(() => console.error("[seo-ai] product usage logging failed"));
+      const inputPrice = Number(process.env.NVIDIA_ARTICLE_INPUT_USD_PER_MILLION_TOKENS);
+      const outputPrice = Number(process.env.NVIDIA_ARTICLE_OUTPUT_USD_PER_MILLION_TOKENS);
+      const cost = process.env.NVIDIA_ARTICLE_INPUT_USD_PER_MILLION_TOKENS && process.env.NVIDIA_ARTICLE_OUTPUT_USD_PER_MILLION_TOKENS && Number.isFinite(inputPrice) && Number.isFinite(outputPrice) && tokenUsage.promptTokens !== null && tokenUsage.completionTokens !== null ? String((tokenUsage.promptTokens * inputPrice + tokenUsage.completionTokens * outputPrice) / 1_000_000) : null;
+      await db.insert(seoAiUsage).values({ userId: input.userId || null, task: "product_article", model: getNvidiaArticleModel(), promptTokens: tokenUsage.promptTokens, completionTokens: tokenUsage.completionTokens, estimatedCostUsd: cost, status: usageStatus }).catch(() => console.error("[seo-ai] product usage logging failed"));
     }
   }
 }

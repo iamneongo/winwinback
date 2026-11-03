@@ -2,21 +2,23 @@ import "server-only";
 
 /**
  * Minimal NVIDIA NIM chat client (OpenAI-compatible). Used to generate SEO
- * article copy. Model is env-configurable; defaults to openai/gpt-oss-20b, which
- * returns clean `content` (its reasoning goes to a separate field) and is
- * accessible on the current NVIDIA account.
+ * article copy. Product articles use a separately configurable NVIDIA model
+ * with thinking disabled so the requested token budget goes to the article.
  */
 const BASE = (
   process.env.NVIDIA_BASE_URL || "https://integrate.api.nvidia.com/v1"
 ).replace(/\/$/, "");
 const MODEL = process.env.NVIDIA_MODEL || "openai/gpt-oss-20b";
+const ARTICLE_MODEL = process.env.NVIDIA_ARTICLE_MODEL || "nvidia/nemotron-3.5-lightning-30b-a3b";
 
 export function isNvidiaConfigured(): boolean {
   return Boolean(process.env.NVIDIA_API_KEY);
 }
 export function getNvidiaModel() { return MODEL; }
+export function getNvidiaArticleModel() { return ARTICLE_MODEL; }
 
 export async function nvidiaChat(opts: {
+  model?: string;
   system?: string;
   user: string;
   maxTokens?: number;
@@ -27,6 +29,7 @@ export async function nvidiaChat(opts: {
 }): Promise<string> {
   const key = process.env.NVIDIA_API_KEY;
   if (!key) throw new Error("NVIDIA_API_KEY chưa cấu hình");
+  const model = opts.model ?? MODEL;
 
   const messages: { role: string; content: string }[] = [];
   if (opts.system) messages.push({ role: "system", content: opts.system });
@@ -39,13 +42,15 @@ export async function nvidiaChat(opts: {
       authorization: `Bearer ${key}`,
     },
     body: JSON.stringify({
-      model: MODEL,
+      model,
       messages,
       temperature: opts.temperature ?? 0.6,
       max_tokens: opts.maxTokens ?? 1500,
       stream: Boolean(opts.onDelta),
-      // gpt-oss: keeps latency down and reasoning out of `content`.
-      reasoning_effort: "low",
+      ...(model === "openai/gpt-oss-20b" ? { reasoning_effort: "low" } : {}),
+      ...(model === "nvidia/nemotron-3.5-lightning-30b-a3b"
+        ? { chat_template_kwargs: { enable_thinking: false } }
+        : {}),
     }),
     signal: AbortSignal.timeout(opts.timeoutMs ?? 120_000),
     cache: "no-store",

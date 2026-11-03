@@ -100,7 +100,7 @@ export function ArticleProgress({ code, initial, allowRetry = false, showFullArt
           </h3>
           <p className="mt-0.5 text-xs leading-5 text-[#58749a]">
             {progress.status === "failed" || stalled
-              ? "Link hoàn tiền vẫn dùng được. Bạn có thể thử tạo bài lại trong Bài viết của bạn."
+              ? `Link hoàn tiền vẫn dùng được. ${progress.status === "failed" && progress.preview ? progress.preview : "Bạn có thể thử tạo bài lại trong Bài viết của bạn."}`
               : progress.status === "unavailable"
                 ? "Bài viết chưa công khai hoặc đang chờ kiểm tra. Link hoàn tiền vẫn dùng được."
               : progress.status === "published"

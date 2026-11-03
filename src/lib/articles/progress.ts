@@ -46,10 +46,10 @@ export async function runArticleGeneration(shortCode: string): Promise<void> {
     } else if (article) {
       await update({ articleStatus: "unavailable", articlePreview: "Bài cần quản trị viên kiểm tra trước khi công khai.", articleSlug: null });
     } else {
-      await update({ articleStatus: "failed" });
+      await update({ articleStatus: "failed", articlePreview: "Chưa tạo được bài lúc này. Bạn có thể thử lại sau.", articleSlug: null });
     }
   } catch (error) {
     console.error("Article generation failed", error);
-    await update({ articleStatus: "failed" });
+    await update({ articleStatus: "failed", articlePreview: "Chưa tạo được bài lúc này. Bạn có thể thử lại sau.", articleSlug: null });
   }
 }
