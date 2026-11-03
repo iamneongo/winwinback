@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, sql } from "drizzle-orm";
 import { ArrowRight, BadgeDollarSign, Clock3, Coins, Landmark, PackageCheck, ShieldAlert, Users } from "lucide-react";
 import { db } from "@/db";
 import { users, orders, withdrawals } from "@/db/schema";
@@ -23,10 +23,11 @@ function SectionTitle({ children, href }: { children: React.ReactNode; href?: st
 
 export default async function AdminPage() {
   await requireAdmin();
-  const [orderRows, wdRows, userRows, trend] = await Promise.all([
+  const [orderRows, wdRows, [userCount], topUsers, trend] = await Promise.all([
     db.select({ order: orders, name: users.name, email: users.email, image: users.image }).from(orders).innerJoin(users, eq(orders.userId, users.id)).orderBy(desc(orders.createdAt)).limit(100),
     db.select({ w: withdrawals, name: users.name }).from(withdrawals).innerJoin(users, eq(withdrawals.userId, users.id)).orderBy(desc(withdrawals.requestedAt)).limit(100),
-    db.select({ id: users.id, name: users.name, balance: users.balance }).from(users).orderBy(desc(users.createdAt)).limit(100),
+    db.select({ total: sql<number>`count(*)::int` }).from(users),
+    db.select({ id: users.id, name: users.name, balance: users.balance }).from(users).orderBy(desc(users.balance), desc(users.id)).limit(5),
     getOrderTrend(7),
   ]);
   const totalCashback = orderRows.reduce((total, row) => total + row.order.cashbackAmount, 0);
@@ -36,7 +37,6 @@ export default async function AdminPage() {
   const shopee = orderRows.filter(({ order }) => order.platform === "shopee").reduce((total, row) => total + row.order.cashbackAmount, 0);
   const tiktok = Math.max(0, totalCashback - shopee);
   const approvalRate = orderRows.length ? Math.round((orderRows.filter(({ order }) => order.status !== "pending" && order.status !== "cancelled").length / orderRows.length) * 100) : 0;
-  const topUsers = [...userRows].sort((a, b) => b.balance - a.balance).slice(0, 5);
   const withdrawalPreview = wdRows.slice(0, 5).map(({ w, name }) => ({ id: w.id, name, amount: w.amount, status: w.status }));
   const orderPreview = pendingOrders.slice(0, 8).map(({ order, name, email, image }) => ({
     id: order.id, externalOrderId: order.externalOrderId, name, email, image,
@@ -49,7 +49,7 @@ export default async function AdminPage() {
     <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
       <Metric icon={Coins} tint="bg-[#e9f8dd] text-[#4bac22]" label="Tổng hoàn tiền tháng" value={formatVnd(totalCashback)} />
       <Metric icon={Clock3} tint="bg-[#fff3d9] text-[#eda919]" label="Đơn chờ duyệt" value={String(pendingOrders.length)} />
-      <Metric icon={Users} tint="bg-[#e8f1ff] text-[#287be5]" label="Người dùng hoạt động" value={String(userRows.length)} />
+      <Metric icon={Users} tint="bg-[#e8f1ff] text-[#287be5]" label="Tổng người dùng" value={String(userCount?.total ?? 0)} />
       <Metric icon={Landmark} tint="bg-[#f2e8ff] text-[#913fdb]" label="Tổng doanh thu đối tác" value={formatVnd(totalCommission)} />
       <Metric icon={PackageCheck} tint="bg-[#eaf7e5] text-[#46aa2b]" label="Tỉ lệ duyệt" value={`${approvalRate}%`} />
     </section>

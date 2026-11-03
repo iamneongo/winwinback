@@ -121,7 +121,11 @@ async function fetchArticleProductData(
       commission:
         Number.isFinite(commission) && commission > 0 ? commission : undefined,
     };
-  } catch {
+  } catch (error) {
+    console.warn("[article-generation] product lookup failed", {
+      platform,
+      name: error instanceof Error ? error.name : "UnknownError",
+    });
     return null;
   }
 }
@@ -212,7 +216,10 @@ async function buildArticle(
   onProgress?: (progress: ArticleProgress) => Promise<void>,
   onUsage?: (usage: { promptTokens: number | null; completionTokens: number | null }) => Promise<void>,
 ): Promise<BuiltArticle | null> {
-  if (!isNvidiaConfigured() || !input.productId) return null;
+  if (!isNvidiaConfigured() || !input.productId) {
+    console.warn("[article-generation] missing AI configuration or product ID");
+    return null;
+  }
 
   await onProgress?.({ stage: "fetching_product" });
   const data = await fetchArticleProductData(
@@ -221,7 +228,10 @@ async function buildArticle(
     input.productId,
   );
   const name = data?.name;
-  if (!name) return null; // need a real product name for a good article
+  if (!name) {
+    console.warn("[article-generation] product information unavailable", { platform: input.platform });
+    return null; // need a real product name for a good article
+  }
   await onProgress?.({ stage: "generating", preview: name });
 
   const estimatedCashback =
@@ -286,7 +296,10 @@ async function buildArticle(
   });
   await onProgress?.({ stage: "generating", preview: previewFromPartialArticle(raw) });
   const parsed = parseJsonObject(raw);
-  if (!parsed) return null;
+  if (!parsed) {
+    console.warn("[article-generation] invalid AI response");
+    return null;
+  }
 
   const title = (
     (typeof parsed.title === "string" && parsed.title.trim()) ||
@@ -337,6 +350,9 @@ export async function generateAndSaveArticle(
   input: GenerateArticleInput,
   onProgress?: (progress: ArticleProgress) => Promise<void>,
 ): Promise<Article | null> {
+  let shouldRecordUsage = false;
+  let usageStatus = "error";
+  let tokenUsage: { promptTokens: number | null; completionTokens: number | null } = { promptTokens: null, completionTokens: null };
   try {
     const existing = await db
       .select()
@@ -350,18 +366,8 @@ export async function generateAndSaveArticle(
       .limit(1);
     if (existing[0]) return existing[0];
 
-    let tokenUsage: { promptTokens: number | null; completionTokens: number | null } = { promptTokens: null, completionTokens: null };
-    let generated = false;
-    let c: BuiltArticle | null;
-    try {
-      c = await buildArticle(input, onProgress, async (usage) => { tokenUsage = usage; });
-      generated = Boolean(c);
-    } finally {
-      const inputPrice = Number(process.env.NVIDIA_INPUT_USD_PER_MILLION_TOKENS);
-      const outputPrice = Number(process.env.NVIDIA_OUTPUT_USD_PER_MILLION_TOKENS);
-      const cost = process.env.NVIDIA_INPUT_USD_PER_MILLION_TOKENS && process.env.NVIDIA_OUTPUT_USD_PER_MILLION_TOKENS && Number.isFinite(inputPrice) && Number.isFinite(outputPrice) && tokenUsage.promptTokens !== null && tokenUsage.completionTokens !== null ? String((tokenUsage.promptTokens * inputPrice + tokenUsage.completionTokens * outputPrice) / 1_000_000) : null;
-      await db.insert(seoAiUsage).values({ userId: input.userId || null, task: "product_article", model: getNvidiaModel(), promptTokens: tokenUsage.promptTokens, completionTokens: tokenUsage.completionTokens, estimatedCostUsd: cost, status: generated ? "success" : "error" }).catch(() => console.error("[seo-ai] product usage logging failed"));
-    }
+    shouldRecordUsage = true;
+    const c = await buildArticle(input, onProgress, async (usage) => { tokenUsage = usage; });
     if (!c) return null;
 
     const category = await resolveArticleCategory(c.category);
@@ -381,7 +387,10 @@ export async function generateAndSaveArticle(
       imageUrl: c.imageUrl && /^https:\/\//.test(c.imageUrl) ? c.imageUrl : "",
       seo: { ...initialSeo, title: templateTitle },
     });
-    if (!document.success) return null;
+    if (!document.success) {
+      console.warn("[article-generation] generated document failed validation");
+      return null;
+    }
     const isPublishable = Boolean(input.affiliateShortCode && input.productUrl && c.productName.trim() && c.sections.length && !publicationErrors(document.data).length);
     const inserted = await db.transaction(async (tx) => {
       const [created] = await tx.insert(articles).values({
@@ -409,16 +418,31 @@ export async function generateAndSaveArticle(
       if (!claimed) throw new Error("Đường dẫn bài viết đã được sử dụng.");
       return created;
     });
-    if (inserted) return inserted;
+    if (inserted) {
+      usageStatus = inserted.status === "published" ? "success" : "review";
+      return inserted;
+    }
     // Another link may have generated this product at the same time.
     const concurrent = await db
       .select()
       .from(articles)
       .where(and(eq(articles.platform, input.platform), eq(articles.productId, input.productId)))
       .limit(1);
+    if (concurrent[0]) usageStatus = concurrent[0].status === "published" ? "success" : "review";
     return concurrent[0] ?? null;
-  } catch {
+  } catch (error) {
+    console.error("[article-generation] failed", {
+      name: error instanceof Error ? error.name : "UnknownError",
+      code: error && typeof error === "object" && "code" in error ? String(error.code) : undefined,
+    });
     return null;
+  } finally {
+    if (shouldRecordUsage) {
+      const inputPrice = Number(process.env.NVIDIA_INPUT_USD_PER_MILLION_TOKENS);
+      const outputPrice = Number(process.env.NVIDIA_OUTPUT_USD_PER_MILLION_TOKENS);
+      const cost = process.env.NVIDIA_INPUT_USD_PER_MILLION_TOKENS && process.env.NVIDIA_OUTPUT_USD_PER_MILLION_TOKENS && Number.isFinite(inputPrice) && Number.isFinite(outputPrice) && tokenUsage.promptTokens !== null && tokenUsage.completionTokens !== null ? String((tokenUsage.promptTokens * inputPrice + tokenUsage.completionTokens * outputPrice) / 1_000_000) : null;
+      await db.insert(seoAiUsage).values({ userId: input.userId || null, task: "product_article", model: getNvidiaModel(), promptTokens: tokenUsage.promptTokens, completionTokens: tokenUsage.completionTokens, estimatedCostUsd: cost, status: usageStatus }).catch(() => console.error("[seo-ai] product usage logging failed"));
+    }
   }
 }
 
