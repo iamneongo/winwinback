@@ -1,10 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { and, eq, gt, lt, ne, sql } from "drizzle-orm";
+import { and, eq, gt, inArray, lt, ne, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
-import { luckyDrawPeriods } from "@/db/schema";
+import { luckyDrawPeriods, users } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth/guards";
 import { runDraw } from "@/lib/lucky-draw/service";
 import { formatVnd } from "@/lib/config";
@@ -145,18 +145,33 @@ export async function runDrawAction(
   const parsed = drawSchema.safeParse({ periodId: formData.get("periodId") });
   if (!parsed.success) return { error: "Dữ liệu không hợp lệ" };
 
+  let r: Awaited<ReturnType<typeof runDraw>>;
   try {
-    const r = await runDraw(parsed.data.periodId);
-    revalidatePath("/admin/rut-tham");
-    revalidatePath("/dashboard/rut-tham");
-    const msg =
-      r.ticketCount === 0
-        ? `Không có phiếu nào — toàn bộ quỹ ${formatVnd(r.pot)} cộng dồn sang kỳ sau.`
-        : r.exactMatch
-          ? `Số trúng ${r.winningNumber}: ${r.winners.length} người trúng, chia tổng ${formatVnd(r.paidOut)}.`
-          : `Không ai trùng ${r.winningNumber}. ${r.winners.length} phiếu gần nhất nhận ${formatVnd(r.paidOut)} (20%); còn ${formatVnd(r.rollover)} cộng dồn.`;
-    return { success: msg };
+    r = await runDraw(parsed.data.periodId);
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Quay số thất bại" };
   }
+  let namesSummary = `${r.winners.length} phiếu nhận giải`;
+  if (r.winners.length > 0) {
+    try {
+      const winnerUsers = await db.select({ id: users.id, name: users.name })
+        .from(users).where(inArray(users.id, [...new Set(r.winners.map((winner) => winner.userId))]));
+      const namesById = new Map(winnerUsers.map((winner) => [winner.id, winner.name]));
+      const winnerNames = [...new Set(r.winners.map((winner) => namesById.get(winner.userId) ?? "Người dùng đã xóa"))];
+      namesSummary = `${winnerNames.slice(0, 5).join(", ")}${winnerNames.length > 5 ? ` và ${winnerNames.length - 5} người khác` : ""}`;
+    } catch {
+      // The draw has already committed; a failed name lookup must not report a failed draw.
+    }
+  }
+  const awardedNumbers = [...new Set(r.winners.map((winner) => winner.number))].join(", ");
+  revalidatePath("/admin/rut-tham");
+  revalidatePath(`/admin/rut-tham/${parsed.data.periodId}`);
+  revalidatePath("/dashboard/rut-tham");
+  const msg =
+    r.ticketCount === 0
+      ? `Không có phiếu nào — toàn bộ quỹ ${formatVnd(r.pot)} cộng dồn sang kỳ sau.`
+      : r.exactMatch
+        ? `Số trúng ${r.winningNumber}. Phiếu ${awardedNumbers}: ${namesSummary} nhận tổng ${formatVnd(r.paidOut)}.`
+        : `Số trúng ${r.winningNumber}. Phiếu gần nhất ${awardedNumbers}: ${namesSummary} nhận tổng ${formatVnd(r.paidOut)} (20%); còn ${formatVnd(r.rollover)} cộng dồn.`;
+  return { success: msg };
 }

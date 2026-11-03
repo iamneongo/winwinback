@@ -53,6 +53,17 @@ export default async function AdminPeriodDetailPage({ params, searchParams }: { 
     .where(ticketFilter)
     .orderBy(desc(luckyDrawTickets.isWinner), luckyDrawTickets.number)
     .limit(PAGE_SIZE).offset((page - 1) * PAGE_SIZE);
+  const winners = period.status === "drawn" ? await db.select({
+    ticketId: luckyDrawTickets.id,
+    number: luckyDrawTickets.number,
+    amount: luckyDrawTickets.prizeAmount,
+    userId: users.id,
+    userName: users.name,
+  }).from(luckyDrawTickets)
+    .innerJoin(users, eq(luckyDrawTickets.userId, users.id))
+    .where(and(eq(luckyDrawTickets.periodId, id), eq(luckyDrawTickets.isWinner, true)))
+    .orderBy(luckyDrawTickets.number, users.name) : [];
+  const awardedNumbers = [...new Set(winners.map((winner) => winner.number))];
   return <RecordDetail layout="admin" backHref="/admin/rut-tham" backLabel="Danh sách kỳ rút thăm" title={period.name} description="Kết quả kỳ quay và danh sách phiếu đã tham gia." actions={period.status === "open" && period.endAt <= new Date() ? <DrawButton periodId={period.id} /> : undefined}>
     <DetailSection title="Kỳ quay">
       <DetailField label="Trạng thái">{period.status === "drawn" ? "Đã quay" : "Đang mở"}</DetailField>
@@ -68,6 +79,18 @@ export default async function AdminPeriodDetailPage({ params, searchParams }: { 
       <DetailField label="Thời điểm quay">{period.drawnAt?.toLocaleString("vi-VN") ?? "Chưa quay"}</DetailField>
       <DetailField label={period.status === "open" ? "Phiếu đủ điều kiện" : "Tổng phiếu trong kỳ"}>{total}</DetailField>
     </DetailSection>
+    {period.status === "drawn" && <section className="rounded-xl border border-[#dfe9f5] bg-white p-4 sm:p-5" aria-labelledby="draw-winners-heading">
+      <h2 id="draw-winners-heading" className="text-sm font-bold text-[#173861]">Người nhận giải kỳ này</h2>
+      {winners.length > 0 ? <>
+        <p className="mt-2 text-sm text-[#58749a]">{period.exactMatch ? "Số phiếu trúng" : "Số phiếu gần số trúng nhất"}: <span className="font-mono font-bold tracking-wider text-[#173861]">{awardedNumbers.join(", ")}</span></p>
+        <ul className="mt-3 divide-y divide-[#e8eef6] border-t border-[#e8eef6]">
+          {winners.map((winner) => <li key={winner.ticketId} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 py-3 text-sm">
+            <span><Link href={`/admin/nguoi-dung/${winner.userId}`} className="font-semibold text-[#1261ed] hover:underline">{winner.userName}</Link><span className="ml-2 text-[#58749a]">Phiếu #{winner.number}</span></span>
+            <strong className="tabular-nums text-[#168146]">{formatVnd(winner.amount)}</strong>
+          </li>)}
+        </ul>
+      </> : <p className="mt-2 text-sm text-[#58749a]">{period.exactMatch === null ? "Kỳ này không có phiếu hợp lệ; quỹ được cộng dồn." : "Không còn dữ liệu phiếu nhận giải để hiển thị."}</p>}
+    </section>}
     {period.status === "open" && <section className="rounded-xl border border-[#dfe9f5] bg-white p-4 sm:p-5">
       <h2 className="mb-1 text-sm font-bold text-[#173861]">Chỉnh sửa kỳ đang mở</h2>
       <p className="mb-4 text-xs leading-5 text-[#58749a]">Có thể đổi lịch và tăng ngân sách trước khi quay. Sau khi kỳ bắt đầu, không thể giảm giải thưởng đã công bố; chỉ quay sau giờ đóng kỳ.</p>

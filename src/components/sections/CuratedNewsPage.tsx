@@ -1,9 +1,11 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, CalendarDays, ChevronDown, ChevronLeft, ChevronRight, Megaphone, Newspaper } from "lucide-react";
+import { ArrowRight, CalendarDays, ChevronDown, Megaphone, Newspaper } from "lucide-react";
 import type { Article } from "@/db/schema";
 import { articleCoverUrl, type CategoryCount } from "@/lib/articles/service";
 import { UNCATEGORIZED } from "@/lib/articles/categories";
+import { visiblePages } from "@/lib/pagination";
+import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 
 const displayArticleCategory = (category: string | null) => category ?? UNCATEGORIZED;
 
@@ -102,13 +104,15 @@ export function CuratedNewsPage({ featured, articles, categories, activeCategory
           <div className="news-empty mx-auto mt-5 max-w-xl rounded-xl bg-white px-6 py-10 text-center text-sm text-[#526f8e]">Chưa có bài viết nào trong danh mục này.</div>
         ) : null}
         {pageCount > 1 && (
-          <nav aria-label="Phân trang bài viết" className="mt-8 flex flex-wrap items-center justify-center gap-2">
-            {page > 1 && <Link href={pageHref(activeCategory, page - 1)} className="news-page-button"><ChevronLeft className="size-4" aria-hidden="true" /> Trước</Link>}
-            {Array.from({ length: pageCount }, (_, index) => index + 1).map((number) => (
-              <Link key={number} href={pageHref(activeCategory, number)} aria-current={page === number ? "page" : undefined} aria-label={`Trang ${number}`} className={`news-page-number ${page === number ? "news-page-number-active" : ""}`}>{number}</Link>
-            ))}
-            {page < pageCount && <Link href={pageHref(activeCategory, page + 1)} className="news-page-button">Sau <ChevronRight className="size-4" aria-hidden="true" /></Link>}
-          </nav>
+          <Pagination aria-label="Phân trang bài viết" className="mt-8">
+            <PaginationContent>
+              {page > 1 && <PaginationItem><PaginationPrevious href={pageHref(activeCategory, page - 1)} /></PaginationItem>}
+              {visiblePages(page, pageCount).map((number, index) => <PaginationItem key={number === "ellipsis" ? `ellipsis-${index}` : number}>
+                {number === "ellipsis" ? <PaginationEllipsis /> : <PaginationLink href={pageHref(activeCategory, number)} isActive={page === number} aria-label={`Trang ${number}`}>{number}</PaginationLink>}
+              </PaginationItem>)}
+              {page < pageCount && <PaginationItem><PaginationNext href={pageHref(activeCategory, page + 1)} /></PaginationItem>}
+            </PaginationContent>
+          </Pagination>
         )}
       </section>
       <section className="news-cta news-curated-cta relative isolate mt-8 overflow-hidden rounded-xl sm:mt-[30px]" aria-labelledby="news-cta-title">

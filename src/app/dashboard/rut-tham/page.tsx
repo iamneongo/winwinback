@@ -1,11 +1,11 @@
-import { and, asc, desc, eq, isNotNull, isNull, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNotNull, isNull, sql } from "drizzle-orm";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Clock3, Coins, Gift, PiggyBank, Ticket, Trophy } from "lucide-react";
 import { LuckyDrawCountdown } from "@/components/dashboard/LuckyDrawCountdown";
 import { LuckyDrawRulesDialog } from "@/components/dashboard/LuckyDrawRulesDialog";
 import { db } from "@/db";
-import { luckyDrawPeriods, luckyDrawTickets } from "@/db/schema";
+import { luckyDrawPeriods, luckyDrawTickets, users } from "@/db/schema";
 import { requireUser } from "@/lib/auth/guards";
 import { formatVnd, prizeFundRate } from "@/lib/config";
 import { getFundBalance } from "@/lib/lucky-draw/service";
@@ -17,6 +17,11 @@ export const dynamic = "force-dynamic";
 const dateFormatter = new Intl.DateTimeFormat("vi-VN", {
   timeZone: "Asia/Ho_Chi_Minh", day: "2-digit", month: "2-digit", year: "numeric",
 });
+
+function publicWinnerName(name: string) {
+  const parts = name.trim().split(/\s+/);
+  return parts.length > 1 ? `${parts[0]} ${parts.slice(1).map((part) => `${part[0]}.`).join(" ")}` : `${parts[0]?.[0] ?? "?"}***`;
+}
 
 export default async function LuckyDrawPage() {
   const user = await requireUser();
@@ -30,6 +35,7 @@ export default async function LuckyDrawPage() {
       winningNumber: luckyDrawPeriods.winningNumber,
       paidOut: luckyDrawPeriods.paidOut,
       potTotal: luckyDrawPeriods.potTotal,
+      exactMatch: luckyDrawPeriods.exactMatch,
       drawnAt: luckyDrawPeriods.drawnAt,
     }).from(luckyDrawPeriods).where(eq(luckyDrawPeriods.status, "drawn"))
       .orderBy(desc(luckyDrawPeriods.drawnAt)).limit(5),
@@ -52,6 +58,23 @@ export default async function LuckyDrawPage() {
       won: sql<number>`coalesce(sum(${luckyDrawTickets.prizeAmount}) filter (where ${luckyDrawTickets.isWinner} = true), 0)::double precision`,
     }).from(luckyDrawTickets).where(eq(luckyDrawTickets.userId, user.id)),
   ]);
+
+  const recentWinners = recentDraws.length > 0 ? await db.select({
+    periodId: luckyDrawTickets.periodId,
+    number: luckyDrawTickets.number,
+    userName: users.name,
+  }).from(luckyDrawTickets)
+    .innerJoin(users, eq(luckyDrawTickets.userId, users.id))
+    .where(and(inArray(luckyDrawTickets.periodId, recentDraws.map((draw) => draw.id)), eq(luckyDrawTickets.isWinner, true))) : [];
+  const winnersByPeriod = new Map<string, { names: string[]; numbers: string[] }>();
+  for (const winner of recentWinners) {
+    if (!winner.periodId) continue;
+    const group = winnersByPeriod.get(winner.periodId) ?? { names: [], numbers: [] };
+    const displayName = publicWinnerName(winner.userName);
+    if (!group.names.includes(displayName)) group.names.push(displayName);
+    if (!group.numbers.includes(winner.number)) group.numbers.push(winner.number);
+    winnersByPeriod.set(winner.periodId, group);
+  }
 
   const now = Date.now();
   const active = periods.find((period) => period.startAt.getTime() <= now && period.endAt.getTime() > now);
@@ -128,7 +151,17 @@ export default async function LuckyDrawPage() {
 
         <section className="min-w-0 rounded-xl border border-[#e2ebf3] bg-white p-4 sm:p-5" aria-labelledby="history-heading">
           <div className="flex items-center justify-between gap-3"><h2 id="history-heading" className="flex items-center gap-2 text-sm font-extrabold text-[#153a60]"><Clock3 className="size-4 text-[#2ca142]" aria-hidden="true" /> Kết quả các kỳ trước</h2><span className="text-xs text-[#597695]">{recentDraws.length} kỳ gần nhất</span></div>
-          {recentDraws.length === 0 ? <div className="mt-5 rounded-lg bg-[#f5f9fc] px-4 py-5 text-sm leading-6 text-[#58749a]">Chưa có kỳ nào công bố kết quả. Kỳ mới sẽ xuất hiện tại đây sau khi admin quay số.</div> : <ul className="mt-2 divide-y divide-[#e9eff4]">{recentDraws.map((draw) => <li key={draw.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 py-3 text-xs"><div className="min-w-0"><p className="truncate font-bold text-[#153a60]">{draw.name}</p><p className="mt-0.5 text-[#607b96]">{draw.drawnAt ? dateFormatter.format(draw.drawnAt) : "—"} · Số trúng <span className="font-mono font-bold tabular-nums text-[#286e40]">{draw.winningNumber}</span></p></div><span className="font-bold tabular-nums text-[#2b7d3d]">Đã trao {formatVnd(draw.paidOut)}</span></li>)}</ul>}
+          {recentDraws.length === 0 ? <div className="mt-5 rounded-lg bg-[#f5f9fc] px-4 py-5 text-sm leading-6 text-[#58749a]">Chưa có kỳ nào công bố kết quả. Kỳ mới sẽ xuất hiện tại đây sau khi admin quay số.</div> : <ul className="mt-2 divide-y divide-[#e9eff4]">{recentDraws.map((draw) => {
+            const winners = winnersByPeriod.get(draw.id);
+            return <li key={draw.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2 py-3 text-xs">
+              <div className="min-w-0">
+                <p className="truncate font-bold text-[#153a60]">{draw.name}</p>
+                <p className="mt-0.5 text-[#607b96]">{draw.drawnAt ? dateFormatter.format(draw.drawnAt) : "—"} · Số trúng <span className="font-mono font-bold tabular-nums text-[#286e40]">{draw.winningNumber}</span></p>
+                {winners && <p className="mt-1 leading-5 text-[#466985]">{draw.exactMatch ? "Phiếu trúng" : "Phiếu gần nhất"} <span className="font-mono font-semibold">#{winners.numbers.join(", #")}</span> · Người nhận giải: {winners.names.join(", ")}</p>}
+              </div>
+              <span className="shrink-0 font-bold tabular-nums text-[#2b7d3d]">Đã trao {formatVnd(draw.paidOut)}</span>
+            </li>;
+          })}</ul>}
           {pastTickets.length > 0 && <div className="mt-3 border-t border-[#e9eff4] pt-3"><p className="text-xs font-bold text-[#153a60]">Phiếu đã quay của bạn</p><div className="mt-2 space-y-1.5">{pastTickets.map((ticket) => <p key={ticket.id} className="flex justify-between gap-2 text-xs text-[#597695]"><span className="truncate">{ticket.periodName ?? "Kỳ quay"} · #{ticket.number}</span><span className={ticket.isWinner ? "shrink-0 font-bold text-[#218543]" : "shrink-0"}>{ticket.isWinner ? `+${formatVnd(ticket.prizeAmount)}` : "Chưa trúng"}</span></p>)}</div></div>}
         </section>
       </div>
