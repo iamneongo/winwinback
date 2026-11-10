@@ -16,6 +16,7 @@ import {
   FileText,
   Images,
   Mail,
+  Link2,
   type LucideIcon,
 } from "lucide-react";
 
@@ -54,7 +55,7 @@ export const customerMobileMoreNav: ProfileNavItem[] = [
 
 export const contributorNav: NavItem[] = [
   { href: "/contributor", icon: LayoutDashboard, label: "Tổng quan", exact: true },
-  { href: "/contributor/links", icon: BadgeDollarSign, label: "Link affiliate", short: "Link" },
+  { href: "/contributor/links", icon: Link2, label: "Link & mã QR", short: "Link" },
   { href: "/contributor/bai-viet", icon: FileText, label: "Bài viết", short: "Bài viết" },
   { href: "/dashboard", icon: Store, label: "Trang khách hàng", short: "Khách hàng" },
 ];

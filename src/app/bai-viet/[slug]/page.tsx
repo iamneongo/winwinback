@@ -15,6 +15,7 @@ import { platformLabel } from "@/lib/labels";
 import { UNCATEGORIZED } from "@/lib/articles/categories";
 import { getOutro } from "@/lib/articles/studio";
 import { publicArticleMetadata, resolvePublicArticleSeo } from "@/lib/articles/seo-public";
+import { contributorSourceFromCookie } from "@/lib/contributor/tracking";
 
 export const dynamic = "force-dynamic";
 
@@ -40,7 +41,7 @@ export default async function ArticlePage({
   const article = await getPublishedArticleBySlug(slug);
   if (!article) notFound();
 
-  const [relatedCandidates, { ref }] = await Promise.all([listRelatedArticles(article, 4), searchParams]);
+  const [relatedCandidates, { ref }, contributorSource] = await Promise.all([listRelatedArticles(article, 4), searchParams, contributorSourceFromCookie()]);
   const related = relatedCandidates.filter((item) => item.slug !== REMOVED_FEATURED_SLUG).slice(0, 2);
   const [sharedLink] = ref && /^[a-zA-Z0-9]{4,32}$/.test(ref)
     ? await db.select({ shortCode: affiliateLinks.shortCode }).from(affiliateLinks).where(and(
@@ -49,7 +50,8 @@ export default async function ArticlePage({
         eq(affiliateLinks.productId, article.productId),
       )).limit(1)
     : [];
-  const buyHref = article.productId.startsWith("manual:") ? null : sharedLink?.shortCode
+  const trackedPurchase = Boolean(contributorSource) && !article.productId.startsWith("manual:") && Boolean(article.productUrl);
+  const buyHref = trackedPurchase && article.productUrl ? `/start?url=${encodeURIComponent(article.productUrl)}` : article.productId.startsWith("manual:") ? null : sharedLink?.shortCode
     ? `/go/${sharedLink.shortCode}`
     : article.affiliateShortCode ? `/go/${article.affiliateShortCode}` : article.productUrl;
 
@@ -67,6 +69,7 @@ export default async function ArticlePage({
       outro={await getOutro(article.seo?.outro)}
       related={related}
       buyHref={buyHref}
+      purchaseOnSite={trackedPurchase}
       platform={article.productId.startsWith("manual:") ? "Bài viết" : platformLabel[article.platform] ?? article.platform}
       category={article.category ?? UNCATEGORIZED}
       contentHtml={articleContentHtml(article)}

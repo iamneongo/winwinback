@@ -5,6 +5,7 @@ import { after } from "next/server";
 import { z } from "zod";
 import { db } from "@/db";
 import { affiliateLinks, bankAccounts, users, withdrawals, withdrawalEvents } from "@/db/schema";
+import { contributorSourceFromCookie } from "@/lib/contributor/tracking";
 import { and, eq, lt, ne, or } from "drizzle-orm";
 import { requireUser } from "@/lib/auth/guards";
 import { detectPlatform } from "@/lib/affiliate/platform";
@@ -105,6 +106,7 @@ export async function createLinkAction(
   // Generate the short code up front so it can be embedded in the affiliate
   // link as a tracking sub id (used for order→user attribution).
   const shortCode = generateShortCode();
+  const contributorSource = await contributorSourceFromCookie(user.id);
 
   let affiliateUrl: string;
   let title: string | undefined;
@@ -146,6 +148,7 @@ export async function createLinkAction(
     try {
       await db.insert(affiliateLinks).values({
         userId: user.id,
+        contributorShareId: contributorSource?.id,
         platform,
         originalUrl: parsed.data.url,
         affiliateUrl,

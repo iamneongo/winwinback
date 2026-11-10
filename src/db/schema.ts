@@ -148,7 +148,22 @@ export const verifications = pgTable("verifications", {
 });
 
 // ---------------------------------------------------------------------------
-// Affiliate links
+// Contributor campaign links lead to public articles on Win-Win Back. They
+// measure traffic and downstream orders without owning the customer's wallet.
+// ---------------------------------------------------------------------------
+
+export const contributorShares = pgTable("contributor_shares", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  contributorId: uuid("contributor_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  articleId: uuid("article_id").notNull().references(() => articles.id, { onDelete: "cascade" }),
+  code: text("code").notNull().unique(),
+  visits: integer("visits").notNull().default(0),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [uniqueIndex("contributor_shares_owner_article_idx").on(t.contributorId, t.articleId), index("contributor_shares_owner_idx").on(t.contributorId)]);
+
+// Affiliate links for purchases by a customer. A nullable contributorShareId
+// records the campaign that brought the customer here; userId remains the
+// customer who owns the cashback and purchase attribution.
 // ---------------------------------------------------------------------------
 
 export const affiliateLinks = pgTable(
@@ -158,6 +173,7 @@ export const affiliateLinks = pgTable(
     userId: uuid("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
+    contributorShareId: uuid("contributor_share_id").references(() => contributorShares.id, { onDelete: "set null" }),
     platform: platform("platform").notNull(),
     originalUrl: text("original_url").notNull(),
     affiliateUrl: text("affiliate_url").notNull(),
@@ -179,7 +195,7 @@ export const affiliateLinks = pgTable(
       .notNull()
       .defaultNow(),
   },
-  (t) => [index("affiliate_links_user_idx").on(t.userId)],
+  (t) => [index("affiliate_links_user_idx").on(t.userId), index("affiliate_links_contributor_share_idx").on(t.contributorShareId)],
 );
 
 // ---------------------------------------------------------------------------
