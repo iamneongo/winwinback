@@ -21,7 +21,7 @@ export async function submitArticleForReviewAction(id: string, revision: number)
     const errors = publicationErrors(draft.document);
     if (errors.length) return { ok: false as const, error: errors[0] };
     await tx.update(articles).set({ editorialStatus: "submitted", updatedAt: new Date() }).where(eq(articles.id, articleId));
-    revalidatePath("/dashboard/viet-bai");
+    revalidatePath("/contributor/bai-viet");
     revalidatePath("/admin/bai-viet");
     return { ok: true as const };
   });

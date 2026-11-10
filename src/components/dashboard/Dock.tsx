@@ -7,19 +7,20 @@ import glassNavStyles from "@/components/sections/NavBar.module.css";
 import {
   customerMobileNav,
   adminMobileNav,
+  contributorMobileNav,
   type NavItem,
 } from "@/components/dashboard/nav";
 
 export function Dock({
   variant = "customer",
 }: {
-  variant?: "customer" | "admin";
+  variant?: "customer" | "admin" | "contributor";
 }) {
   const pathname = usePathname();
-  const items: NavItem[] = variant === "admin" ? adminMobileNav : customerMobileNav;
+  const items: NavItem[] = variant === "admin" ? adminMobileNav : variant === "contributor" ? contributorMobileNav : customerMobileNav;
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-40 flex justify-center px-2 lg:hidden">
-      <nav aria-label="Điều hướng dashboard" className="pointer-events-auto max-w-full">
+      <nav aria-label={variant === "contributor" ? "Điều hướng cộng tác viên" : "Điều hướng dashboard"} className="pointer-events-auto max-w-full">
         <MagicDock
           iconSize={50}
           iconMagnification={60}

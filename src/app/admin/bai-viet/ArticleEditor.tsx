@@ -16,7 +16,7 @@ import { StudioDialog } from "./StudioDialog";
 import { SeoPanel } from "./SeoPanel";
 import { ArticleOutroPreview } from "./ArticleOutroPreview";
 import { previewSeoTemplateAction } from "./seo-actions";
-import { submitArticleForReviewAction } from "@/app/dashboard/viet-bai/actions";
+import { submitArticleForReviewAction } from "@/app/contributor/bai-viet/actions";
 
 type ArticleVersion = Awaited<ReturnType<typeof versionsAction>>[number];
 
@@ -86,7 +86,7 @@ export function ArticleEditor(props: { id?: string; slug?: string; manual?: bool
   const selectedOutro = outros.find((outro) => outro.id === doc.seo.outro);
   return <div className="space-y-4 text-[#173b5e]">
     <div className="flex flex-wrap items-center justify-between gap-3 border-b pb-4"><p role="status" className="flex items-center gap-2 text-sm text-[#526f8e]">{saving && <Loader2 className="size-4 animate-spin" />}{status}</p><div className="flex flex-wrap gap-2">
-      {id && <><Link href={props.contributor ? `/dashboard/viet-bai/${id}/preview` : `/admin/bai-viet/${id}/preview`} target="_blank" className="inline-flex items-center rounded-lg border px-3 text-sm">Xem bản đã lưu</Link><Button type="button" variant="outline" onClick={() => { versionsAction(id).then(setHistory).catch(() => setError("Không tải được lịch sử.")); }}>Lịch sử</Button></>}
+      {id && <><Link href={props.contributor ? `/contributor/bai-viet/${id}/preview` : `/admin/bai-viet/${id}/preview`} target="_blank" className="inline-flex items-center rounded-lg border px-3 text-sm">Xem bản đã lưu</Link><Button type="button" variant="outline" onClick={() => { versionsAction(id).then(setHistory).catch(() => setError("Không tải được lịch sử.")); }}>Lịch sử</Button></>}
       <Button type="button" variant="outline" disabled={saving} onClick={() => void save()}>Lưu nháp</Button>{props.contributor ? <Button type="button" variant="cta" disabled={saving || submitted} onClick={() => void submit()}>{submitted ? "Đang chờ duyệt" : "Gửi admin duyệt"}</Button> : <Button type="button" variant="cta" disabled={saving} onClick={() => void save(true)}>Xuất bản / Cập nhật</Button>}
     </div></div>
     {error && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}

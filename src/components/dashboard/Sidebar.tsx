@@ -10,6 +10,7 @@ import {
   contributorNav,
   adminNav,
   customerAdminLink,
+  customerContributorLink,
   type NavItem,
 } from "@/components/dashboard/nav";
 import {
@@ -27,7 +28,7 @@ export function Sidebar({
   showAdminLink = false,
   contributor = false,
 }: {
-  variant?: "customer" | "admin";
+  variant?: "customer" | "admin" | "contributor";
   showAdminLink?: boolean;
   contributor?: boolean;
 }) {
@@ -35,10 +36,12 @@ export function Sidebar({
   const items: NavItem[] =
     variant === "admin"
       ? adminNav
+      : variant === "contributor"
+        ? contributorNav
       : showAdminLink
         ? [...customerNav, customerAdminLink]
-        : contributor ? contributorNav : customerNav;
-  const homeHref = variant === "admin" ? "/admin" : "/dashboard";
+        : contributor ? [...customerNav, customerContributorLink] : customerNav;
+  const homeHref = variant === "admin" ? "/admin" : variant === "contributor" ? "/contributor" : "/dashboard";
   return (
     <SidebarRoot
       collapsible="icon"
@@ -48,11 +51,11 @@ export function Sidebar({
         {/* Constant padding => the mark never moves; only the name fades. */}
         <Link
           href={homeHref}
-          aria-label={variant === "admin" ? "Win-Win Back Admin" : "Win-Win Back"}
+          aria-label={variant === "admin" ? "Win-Win Back Admin" : variant === "contributor" ? "Win-Win Back Cộng tác viên" : "Win-Win Back"}
           className="flex w-full items-center overflow-hidden px-0 py-2"
         >
           <BrandLogo
-            subtitle={variant === "admin" ? "Admin" : undefined}
+            subtitle={variant === "admin" ? "Admin" : variant === "contributor" ? "Cộng tác viên" : undefined}
             className="[&>span:last-child]:transition-opacity [&>span:last-child]:duration-200 group-data-[collapsible=icon]:[&>span:last-child]:opacity-0"
           />
         </Link>

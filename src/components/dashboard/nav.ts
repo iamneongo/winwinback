@@ -52,16 +52,20 @@ export const customerMobileMoreNav: ProfileNavItem[] = [
   { href: "/dashboard/rut-tham", icon: "ticket", label: "Rút thăm may mắn" },
 ];
 
-export const contributorMobileMoreNav: ProfileNavItem[] = [
-  { href: "/dashboard/viet-bai", icon: "file-text", label: "Bài tự viết" },
-  ...customerMobileMoreNav,
+export const contributorNav: NavItem[] = [
+  { href: "/contributor", icon: LayoutDashboard, label: "Tổng quan", exact: true },
+  { href: "/contributor/links", icon: BadgeDollarSign, label: "Link affiliate", short: "Link" },
+  { href: "/contributor/bai-viet", icon: FileText, label: "Bài viết", short: "Bài viết" },
+  { href: "/dashboard", icon: Store, label: "Trang khách hàng", short: "Khách hàng" },
 ];
 
-export const contributorNav: NavItem[] = [
-  customerNav[0],
-  { href: "/dashboard/viet-bai", icon: FileText, label: "Bài tự viết", short: "Viết bài" },
-  ...customerNav.slice(1),
-];
+export const contributorMobileNav = contributorNav.slice(0, 3);
+
+export const customerContributorLink: NavItem = {
+  href: "/contributor",
+  icon: FileText,
+  label: "Cổng cộng tác viên",
+};
 
 /** Admin navigation. */
 export const adminNav: NavItem[] = [

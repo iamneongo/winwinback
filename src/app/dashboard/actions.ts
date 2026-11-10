@@ -156,6 +156,7 @@ export async function createLinkAction(
         articleUpdatedAt: productId ? new Date() : null,
       });
       revalidatePath("/dashboard");
+      revalidatePath("/contributor/links");
       // Next.js keeps this work alive after the link response is sent. Its
       // progress is stored on the link so the popup can reconnect later.
       if (productId) {

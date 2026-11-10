@@ -18,7 +18,7 @@ export async function saveStudioAction(input: { id?: string; revision: number; d
     const result = await saveDocument({ ...parsed.data, contributorId: editor.role === "contributor" ? editor.id : undefined });
     if (input.publish) { revalidatePath("/bai-viet", "layout"); revalidatePath("/sitemap.xml"); }
     revalidatePath("/admin/bai-viet");
-    revalidatePath("/dashboard/viet-bai");
+    revalidatePath("/contributor/bai-viet");
     return { ok: true as const, ...result };
   } catch (error) {
     const message = error instanceof Error && !/query|postgres|relation|connection/i.test(error.message) ? error.message : "Không lưu được bài. Kiểm tra kết nối và migration dữ liệu.";

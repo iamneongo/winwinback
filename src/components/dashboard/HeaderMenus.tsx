@@ -107,7 +107,7 @@ export function HeaderMenus({
 }: {
   name: string;
   role: "user" | "contributor" | "admin";
-  variant?: "customer" | "admin";
+  variant?: "customer" | "admin" | "contributor";
   notifications?: HeaderNotification[];
   unreadCount?: number;
   mobileMoreItems?: ProfileNavItem[];
@@ -255,12 +255,14 @@ export function HeaderMenus({
             <DropdownMenuItem render={<Link href="/dashboard" />}>
               <Store /> Trang khách hàng
             </DropdownMenuItem>
+          ) : variant === "contributor" ? (
+            <DropdownMenuItem render={<Link href="/dashboard" />}>
+              <Store /> Trang khách hàng
+            </DropdownMenuItem>
           ) : (
-            role === "admin" && (
-              <DropdownMenuItem render={<Link href="/admin" />}>
-                <ShieldCheck /> Quản trị
-              </DropdownMenuItem>
-            )
+            role === "admin" ? <DropdownMenuItem render={<Link href="/admin" />}><ShieldCheck /> Quản trị</DropdownMenuItem>
+              : role === "contributor" ? <DropdownMenuItem render={<Link href="/contributor" />}><FileText /> Cổng cộng tác viên</DropdownMenuItem>
+                : null
           )}
           <DropdownMenuSeparator />
           <DropdownMenuItem

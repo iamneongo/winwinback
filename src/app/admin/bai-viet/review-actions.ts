@@ -18,7 +18,7 @@ export async function approveContributorArticleAction(id: string) {
   try {
     await saveDocument({ id: articleId, revision: article.revision, document: draft.document, publish: true, label: "Admin duyệt xuất bản" });
     revalidatePath("/admin/bai-viet");
-    revalidatePath("/dashboard/viet-bai");
+    revalidatePath("/contributor/bai-viet");
     revalidatePath("/bai-viet", "layout");
     revalidatePath("/sitemap.xml");
     return { ok: true as const };

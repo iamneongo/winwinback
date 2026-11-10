@@ -28,7 +28,7 @@ export type MyLinkRow = {
   createdAt: string;
 };
 
-function createColumns(baseUrl: string): ColumnDef<MyLinkRow>[] {
+function createColumns(baseUrl: string, detailBase: string): ColumnDef<MyLinkRow>[] {
   return [
   {
     accessorKey: "title",
@@ -37,7 +37,7 @@ function createColumns(baseUrl: string): ColumnDef<MyLinkRow>[] {
     cell: ({ row }) => (
       <div className="min-w-0">
         <Link
-          href={`/dashboard/link/${row.original.shortCode}`}
+          href={`${detailBase}/${row.original.shortCode}`}
           className="line-clamp-2 break-words font-semibold text-[#1261ed] hover:underline"
           title={row.original.title || row.original.originalUrl}
         >
@@ -131,13 +131,15 @@ export function MyLinksTable({
   total,
   page,
   baseUrl,
+  detailBase = "/dashboard/link",
 }: {
   rows: MyLinkRow[];
   total: number;
   page: number;
   baseUrl: string;
+  detailBase?: string;
 }) {
-  const columns = createColumns(baseUrl);
+  const columns = createColumns(baseUrl, detailBase);
 
   return (
     <AdminDataTable
@@ -158,7 +160,7 @@ export function MyLinksTable({
       }]}
       emptyMessage="Không có link phù hợp. Thử đổi từ khóa hoặc bộ lọc."
       minWidth="860px"
-      getRowHref={(row) => `/dashboard/link/${row.shortCode}`}
+      getRowHref={(row) => `${detailBase}/${row.shortCode}`}
     />
   );
 }
