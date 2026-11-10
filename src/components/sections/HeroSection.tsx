@@ -19,7 +19,7 @@ export function HeroSection() {
       <div className="marketing-container relative z-10 grid items-center gap-6 lg:grid-cols-[minmax(0,0.94fr)_minmax(0,1.06fr)] lg:gap-2">
         <div className="relative z-10 min-w-0 max-w-[660px]">
           <p className="mb-5 inline-flex items-center gap-2 rounded-full bg-white/70 px-3 py-1.5 text-[11px] font-extrabold uppercase tracking-[0.08em] text-[#174369] ring-1 ring-white/70">
-            <ShoppingCart className="size-3.5 text-[#27a732]" aria-hidden="true" /> Mua sắm thông minh
+            <ShoppingCart className="size-3.5 text-[#27a732]" aria-hidden="true" /> Win-Win Back · Mua sắm thông minh
           </p>
           <h1 className="marketing-page-title text-[#0a3151]">
             Mua sắm Shopee & TikTok,

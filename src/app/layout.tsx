@@ -13,9 +13,9 @@ const arimo = Arimo({
 });
 
 const seoTitle =
-  "Win-Win Back | Hoàn Tiền Mua Sắm - cashback | Shopee back | Tiktok back";
+  "Win-Win Back | Hoàn tiền khi mua sắm Shopee, TikTok Shop";
 const seoDescription =
-  "Win-Win Back | ứng dụng cashback hoàn tiền khi mua Shopee, TikTok Shop. Voucher, sale, mã giảm giá mỗi ngày | Shopee back | Tiktok back";
+  "Win-Win Back giúp bạn mua sắm hoàn tiền trên Shopee và TikTok Shop: dán link sản phẩm, theo dõi đơn hàng và nhận tiền hoàn về ví khi đơn đủ điều kiện.";
 
 export const metadata: Metadata = {
   verification: {
@@ -29,6 +29,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: seoTitle,
     description: seoDescription,
+    siteName: "Win-Win Back",
     images: [
       {
         url: "/images/og-image-v6.png",
