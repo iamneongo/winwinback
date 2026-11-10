@@ -1,6 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { eq } from "drizzle-orm";
+import { db } from "@/db";
+import { articles } from "@/db/schema";
 import { z } from "zod";
 import { createManagedCategory, deleteManagedCategory, renameManagedCategory } from "@/lib/articles/category-service";
 import { requireAdmin } from "@/lib/auth/guards";
@@ -27,6 +30,10 @@ export async function toggleArticleAction(formData: FormData): Promise<void> {
   const id = idSchema.safeParse(String(formData.get("id") ?? ""));
   if (!id.success) return;
   const status = formData.get("status") === "hidden" ? "hidden" : "published";
+  if (status === "published") {
+    const [article] = await db.select({ editorialStatus: articles.editorialStatus }).from(articles).where(eq(articles.id, id.data)).limit(1);
+    if (article?.editorialStatus === "submitted") return;
+  }
   await setArticleStatus(id.data, status);
   revalidatePath("/admin/bai-viet");
 }

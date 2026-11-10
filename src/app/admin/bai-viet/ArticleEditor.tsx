@@ -16,15 +16,17 @@ import { StudioDialog } from "./StudioDialog";
 import { SeoPanel } from "./SeoPanel";
 import { ArticleOutroPreview } from "./ArticleOutroPreview";
 import { previewSeoTemplateAction } from "./seo-actions";
+import { submitArticleForReviewAction } from "@/app/dashboard/viet-bai/actions";
 
 type ArticleVersion = Awaited<ReturnType<typeof versionsAction>>[number];
 
-export function ArticleEditor(props: { id?: string; slug?: string; manual?: boolean; categories: string[]; initialHtml: string; initialTitle: string; initialDescription: string; initialCategory: string; initialImageUrl: string; initialDocument?: ArticleDocument; initialRevision?: number; initialPublished?: boolean }) {
+export function ArticleEditor(props: { id?: string; slug?: string; manual?: boolean; contributor?: boolean; initialSubmitted?: boolean; categories: string[]; initialHtml: string; initialTitle: string; initialDescription: string; initialCategory: string; initialImageUrl: string; initialDocument?: ArticleDocument; initialRevision?: number; initialPublished?: boolean }) {
   const initial = useRef<ArticleDocument>(props.initialDocument ?? { title: props.initialTitle, slug: props.slug || "", html: props.initialHtml, intro: "", metaDescription: props.initialDescription, category: props.initialCategory || props.categories[0] || "", imageUrl: props.initialImageUrl, seo: defaultSeo() });
   const [doc, setDoc] = useState(initial.current); const latest = useRef(doc); latest.current = doc;
   const [id, setId] = useState(props.id); const idRef = useRef(props.id); const revision = useRef(props.initialRevision || 0);
   const [tab, setTab] = useState<"article" | "seo">("article"); const [mobileSettings, setMobileSettings] = useState(false);
   const [published, setPublished] = useState(props.initialPublished ?? false);
+  const [submitted, setSubmitted] = useState(props.initialSubmitted ?? false);
   const [error, setError] = useState(""); const [status, setStatus] = useState("Chưa có thay đổi"); const [saving, setSaving] = useState(false); const savingRef = useRef(false); const [blocked, setBlocked] = useState(false);
   const [media, setMedia] = useState<"cover" | "social" | null>(null); const [history, setHistory] = useState<Awaited<ReturnType<typeof versionsAction>> | null>(null);
   const [restoreCandidate, setRestoreCandidate] = useState<ArticleVersion | null>(null);
@@ -38,7 +40,7 @@ export function ArticleEditor(props: { id?: string; slug?: string; manual?: bool
   const update = (key: keyof ArticleDocument, value: string) => setDoc((d) => ({ ...d, [key]: value }));
   const updateSeo = <K extends keyof ArticleSeo>(key: K, value: ArticleSeo[K]) => setDoc((d) => ({ ...d, seo: { ...d.seo, [key]: value } }));
   const save = useCallback(async (publish = false) => {
-    if (savingRef.current) return;
+    if (savingRef.current) return undefined;
     savingRef.current = true; setSaving(true); setError(""); setStatus(publish ? "Đang xuất bản…" : "Đang lưu bản nháp…");
     const snapshot = latest.current;
     try {
@@ -46,10 +48,23 @@ export function ArticleEditor(props: { id?: string; slug?: string; manual?: bool
       if (!result.ok) { setError(result.error); setStatus("Chưa lưu được"); setBlocked(true); return; }
       revision.current = result.revision; idRef.current = result.id; setId(result.id); saved.current = JSON.stringify(snapshot);
       if (publish) setPublished(true);
+      if (props.contributor) setSubmitted(false);
       setStatus(publish ? "Đã xuất bản" : "Đã lưu bản nháp"); setBlocked(false);
+      return { id: result.id, revision: result.revision };
     } catch { setError("Không lưu được. Nội dung vẫn nằm trong trình soạn thảo; hãy thử lại."); setStatus("Chưa lưu được"); setBlocked(true); }
     finally { savingRef.current = false; setSaving(false); }
-  }, []);
+  }, [props.contributor]);
+  const submit = async () => {
+    const current = await save();
+    if (!current) return;
+    setSaving(true);
+    try {
+      const result = await submitArticleForReviewAction(current.id, current.revision);
+      if (!result.ok) { setError(result.error); return; }
+      setSubmitted(true); setStatus("Đã gửi admin duyệt");
+    } catch { setError("Không gửi được bài. Hãy thử lại."); }
+    finally { setSaving(false); }
+  };
   useEffect(() => { if (blocked || saving || JSON.stringify(doc) === saved.current) return; const timer = setTimeout(() => void save(), 1800); return () => clearTimeout(timer); }, [doc, saving, blocked, save]);
   useEffect(() => { const handler = (event: BeforeUnloadEvent) => { if (JSON.stringify(latest.current) !== saved.current) { event.preventDefault(); event.returnValue = ""; } }; window.addEventListener("beforeunload", handler); return () => window.removeEventListener("beforeunload", handler); }, []);
   useEffect(() => { listOutrosAction().then(setOutros).catch(() => setError("Không tải được mẫu cuối bài. Hãy kiểm tra migration.")).finally(() => setOutroLoading(false)); }, []);
@@ -71,8 +86,8 @@ export function ArticleEditor(props: { id?: string; slug?: string; manual?: bool
   const selectedOutro = outros.find((outro) => outro.id === doc.seo.outro);
   return <div className="space-y-4 text-[#173b5e]">
     <div className="flex flex-wrap items-center justify-between gap-3 border-b pb-4"><p role="status" className="flex items-center gap-2 text-sm text-[#526f8e]">{saving && <Loader2 className="size-4 animate-spin" />}{status}</p><div className="flex flex-wrap gap-2">
-      {id && <><Link href={`/admin/bai-viet/${id}/preview`} target="_blank" className="inline-flex items-center rounded-lg border px-3 text-sm">Xem bản đã lưu</Link><Button type="button" variant="outline" onClick={() => { versionsAction(id).then(setHistory).catch(() => setError("Không tải được lịch sử.")); }}>Lịch sử</Button></>}
-      <Button type="button" variant="outline" disabled={saving} onClick={() => void save()}>Lưu nháp</Button><Button type="button" variant="cta" disabled={saving} onClick={() => void save(true)}>Xuất bản / Cập nhật</Button>
+      {id && <><Link href={props.contributor ? `/dashboard/viet-bai/${id}/preview` : `/admin/bai-viet/${id}/preview`} target="_blank" className="inline-flex items-center rounded-lg border px-3 text-sm">Xem bản đã lưu</Link><Button type="button" variant="outline" onClick={() => { versionsAction(id).then(setHistory).catch(() => setError("Không tải được lịch sử.")); }}>Lịch sử</Button></>}
+      <Button type="button" variant="outline" disabled={saving} onClick={() => void save()}>Lưu nháp</Button>{props.contributor ? <Button type="button" variant="cta" disabled={saving || submitted} onClick={() => void submit()}>{submitted ? "Đang chờ duyệt" : "Gửi admin duyệt"}</Button> : <Button type="button" variant="cta" disabled={saving} onClick={() => void save(true)}>Xuất bản / Cập nhật</Button>}
     </div></div>
     {error && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}
     <Button ref={settingsButtonRef} type="button" variant="outline" className="lg:hidden" onClick={() => setMobileSettings(true)}><SlidersHorizontal className="mr-2 size-4" />Bài viết & SEO</Button>
@@ -95,7 +110,7 @@ export function ArticleEditor(props: { id?: string; slug?: string; manual?: bool
                   : selectedOutro ? <><p className="mb-2 text-xs font-medium text-[#526f8e]">Xem trước bố cục thu gọn</p><ArticleOutroPreview outro={selectedOutro} manual={props.manual ?? !props.id} />{!(props.manual ?? !props.id) && <p className="mt-2 text-xs leading-5 text-[#526f8e]">Giá, mức hoàn tiền và nút đến sản phẩm sẽ dùng dữ liệu thực tế của bài.</p>}</>
                     : <p role="status" className="rounded-lg bg-amber-50 px-3 py-4 text-xs text-amber-800">Không tìm thấy mẫu đã chọn. Hãy chọn mẫu khác hoặc kiểm tra danh sách mẫu.</p>}
             </div>
-            <Link href="/admin/bai-viet/mau-cuoi-bai" className="inline-block text-sm text-blue-700 underline">Quản lý mẫu cuối bài</Link>
+            {!props.contributor && <Link href="/admin/bai-viet/mau-cuoi-bai" className="inline-block text-sm text-blue-700 underline">Quản lý mẫu cuối bài</Link>}
           </div>
         </div>}
         {tab === "seo" && <div className="space-y-4"><SeoPanel key={editorKey} articleId={id} doc={doc} published={published} update={update} updateSeo={updateSeo} chooseSocialImage={() => setMedia("social")} focusEditor={() => { setMobileSettings(false); requestAnimationFrame(() => editorRef.current?.commands.focus()); }} insertInternalLink={({ title, slug }) => {
@@ -111,7 +126,7 @@ export function ArticleEditor(props: { id?: string; slug?: string; manual?: bool
         }} /><Button type="button" variant="outline" className="w-full" onClick={() => { previewSeoTemplateAction({ document: doc, manual: props.manual ?? !props.id }).then((value) => { if (value) setTemplatePreview(value); else setError("Chưa có mẫu SEO cho danh mục hoặc loại bài này."); }).catch(() => setError("Không tải được mẫu SEO.")); }}>Xem mẫu SEO phù hợp</Button></div>}
       </aside>
     </div>
-    {media && <MediaPicker onClose={() => setMedia(null)} onSelect={(url) => { if (media === "cover") update("imageUrl", url); else updateSeo("socialImage", url); }} />}
+    {media && <MediaPicker contributor={props.contributor} onClose={() => setMedia(null)} onSelect={(url) => { if (media === "cover") update("imageUrl", url); else updateSeo("socialImage", url); }} />}
     {templatePreview && <StudioDialog title="Áp dụng mẫu SEO" onClose={() => setTemplatePreview(null)}><div className="space-y-4 text-sm"><p>Mẫu: {templatePreview.key}. Chỉ thay tiêu đề SEO và meta description sau khi bạn xác nhận.</p><p className="rounded-lg bg-[#f3f7fc] p-3"><strong>Tiêu đề:</strong> {templatePreview.title}<br /><strong>Mô tả:</strong> {templatePreview.description}</p><div className="flex gap-2"><Button type="button" variant="cta" onClick={() => { setDoc((d) => ({ ...d, metaDescription: templatePreview.description, seo: { ...d.seo, title: templatePreview.title } })); setTemplatePreview(null); }}>Áp dụng</Button><Button type="button" variant="outline" onClick={() => setTemplatePreview(null)}>Bỏ qua</Button></div></div></StudioDialog>}
     {history && <StudioDialog title={restoreCandidate ? "Xác nhận khôi phục" : "Lịch sử phiên bản"} description={restoreCandidate ? "Phiên bản được áp dụng vào bản nháp của bạn." : "Khôi phục vào bản nháp, không thay đổi bài công khai. Giữ 50 phiên bản gần nhất."} onClose={() => { setHistory(null); setRestoreCandidate(null); }}>
       {restoreCandidate ? <div className="space-y-4 text-sm text-[#34527d]">

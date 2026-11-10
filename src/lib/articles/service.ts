@@ -513,6 +513,7 @@ export type AdminArticleQuery = {
   status?: "published" | "hidden";
   platform?: Platform;
   category?: string;
+  review?: "submitted";
   sort?: "title" | "price" | "views" | "createdAt";
   dir?: "asc" | "desc";
   limit: number;
@@ -526,6 +527,7 @@ export async function listAdminArticles(opts: AdminArticleQuery): Promise<{ rows
   if (opts.status) conditions.push(eq(articles.status, opts.status));
   if (opts.platform) conditions.push(eq(articles.platform, opts.platform));
   if (opts.category) conditions.push(await categoryCondition(opts.category));
+  if (opts.review) conditions.push(eq(articles.editorialStatus, opts.review));
   const where = conditions.length ? and(...conditions) : undefined;
   const sortColumn = {
     title: articles.title,
@@ -542,15 +544,16 @@ export async function listAdminArticles(opts: AdminArticleQuery): Promise<{ rows
 }
 
 /** Counts all articles, not only the currently visible page. */
-export async function getArticleAdminStats(): Promise<{ total: number; published: number; hidden: number }> {
+export async function getArticleAdminStats(): Promise<{ total: number; published: number; hidden: number; submitted: number }> {
   const [row] = await db
     .select({
       total: sql<number>`count(*)::int`,
       published: sql<number>`count(*) filter (where ${articles.status} = 'published')::int`,
       hidden: sql<number>`count(*) filter (where ${articles.status} = 'hidden')::int`,
+      submitted: sql<number>`count(*) filter (where ${articles.editorialStatus} = 'submitted')::int`,
     })
     .from(articles);
-  return row ?? { total: 0, published: 0, hidden: 0 };
+  return row ?? { total: 0, published: 0, hidden: 0, submitted: 0 };
 }
 
 export { UNCATEGORIZED } from "@/lib/articles/categories";

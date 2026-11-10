@@ -21,7 +21,7 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
   const role = one("role");
   const conditions = [];
   if (q) conditions.push(or(ilike(users.name, `%${q}%`), ilike(users.email, `%${q}%`)));
-  if (role === "user" || role === "admin") conditions.push(eq(users.role, role));
+  if (role === "user" || role === "contributor" || role === "admin") conditions.push(eq(users.role, role));
   const where = conditions.length ? and(...conditions) : undefined;
 
   const [[stats], [count]] = await Promise.all([

@@ -28,7 +28,7 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
     <DetailSection title="Tài khoản">
       <DetailField label="Email">{user.email}</DetailField>
       <DetailField label="Xác thực email">{user.emailVerified ? "Đã xác thực" : "Chưa xác thực"}</DetailField>
-      <DetailField label="Vai trò">{user.role === "admin" ? "Quản trị" : "Người dùng"}</DetailField>
+      <DetailField label="Vai trò">{user.role === "admin" ? "Quản trị" : user.role === "contributor" ? "Cộng tác viên" : "Người dùng"}</DetailField>
       <DetailField label="Ngày tham gia">{user.createdAt.toLocaleString("vi-VN")}</DetailField>
       <DetailField label="Thông báo đơn hàng">{user.notifyOrders ? "Đang bật" : "Đã tắt"}</DetailField>
       <DetailField label="Thông báo hoàn tiền">{user.notifyCashback ? "Đang bật" : "Đã tắt"}</DetailField>

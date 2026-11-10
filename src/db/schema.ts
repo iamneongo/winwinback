@@ -17,7 +17,7 @@ import type { ArticleDocument, ArticleSeo } from "@/lib/articles/document";
 // Enums
 // ---------------------------------------------------------------------------
 
-export const userRole = pgEnum("user_role", ["user", "admin"]);
+export const userRole = pgEnum("user_role", ["user", "contributor", "admin"]);
 export const platform = pgEnum("platform", ["shopee", "tiktok"]);
 
 // Order lifecycle mirrors affiliate networks: an order is reported (pending),
@@ -580,6 +580,7 @@ export const articles = pgTable(
     productId: text("product_id").notNull(),
     // Creator who first triggered generation (no strong FK coupling needed).
     userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
+    editorialStatus: text("editorial_status"), // contributor: draft | submitted | approved
     title: text("title").notNull(),
     metaDescription: text("meta_description"),
     intro: text("intro"),
@@ -637,6 +638,7 @@ export const articleSlugs = pgTable("article_slugs", {
 });
 export const articleMedia = pgTable("article_media", {
   id: uuid("id").defaultRandom().primaryKey(),
+  uploadedBy: uuid("uploaded_by").references(() => users.id, { onDelete: "set null" }),
   name: text("name").notNull(),
   width: integer("width").notNull(),
   height: integer("height").notNull(),

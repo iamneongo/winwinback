@@ -52,6 +52,17 @@ export const customerMobileMoreNav: ProfileNavItem[] = [
   { href: "/dashboard/rut-tham", icon: "ticket", label: "Rút thăm may mắn" },
 ];
 
+export const contributorMobileMoreNav: ProfileNavItem[] = [
+  { href: "/dashboard/viet-bai", icon: "file-text", label: "Bài tự viết" },
+  ...customerMobileMoreNav,
+];
+
+export const contributorNav: NavItem[] = [
+  customerNav[0],
+  { href: "/dashboard/viet-bai", icon: FileText, label: "Bài tự viết", short: "Viết bài" },
+  ...customerNav.slice(1),
+];
+
 /** Admin navigation. */
 export const adminNav: NavItem[] = [
   { href: "/admin", icon: LayoutDashboard, label: "Tổng quan", exact: true },

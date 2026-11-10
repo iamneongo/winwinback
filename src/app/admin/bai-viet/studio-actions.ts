@@ -5,19 +5,20 @@ import { z } from "zod";
 import { and, asc, desc, eq, ilike, ne, notInArray, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { articles, articleOutros } from "@/db/schema";
-import { requireAdmin } from "@/lib/auth/guards";
+import { requireAdmin, requireEditor } from "@/lib/auth/guards";
 import { documentSchema, type ArticleDocument } from "@/lib/articles/document";
 import { listVersions, saveDocument } from "@/lib/articles/studio";
 import { linkSuggestionTerms } from "@/lib/articles/seo-link-suggestions";
 
 export async function saveStudioAction(input: { id?: string; revision: number; document: ArticleDocument; publish?: boolean }) {
-  await requireAdmin();
+  const editor = await requireEditor();
   const parsed = z.object({ id: z.string().uuid().optional(), revision: z.number().int().nonnegative(), document: documentSchema, publish: z.boolean().optional() }).safeParse(input);
   if (!parsed.success) return { ok: false as const, error: parsed.error.issues[0].message };
   try {
-    const result = await saveDocument(parsed.data);
+    const result = await saveDocument({ ...parsed.data, contributorId: editor.role === "contributor" ? editor.id : undefined });
     if (input.publish) { revalidatePath("/bai-viet", "layout"); revalidatePath("/sitemap.xml"); }
     revalidatePath("/admin/bai-viet");
+    revalidatePath("/dashboard/viet-bai");
     return { ok: true as const, ...result };
   } catch (error) {
     const message = error instanceof Error && !/query|postgres|relation|connection/i.test(error.message) ? error.message : "Không lưu được bài. Kiểm tra kết nối và migration dữ liệu.";
@@ -25,11 +26,16 @@ export async function saveStudioAction(input: { id?: string; revision: number; d
   }
 }
 export async function versionsAction(id: string) {
-  await requireAdmin();
-  return listVersions(z.string().uuid().parse(id));
+  const editor = await requireEditor();
+  const articleId = z.string().uuid().parse(id);
+  if (editor.role === "contributor") {
+    const [article] = await db.select({ userId: articles.userId, productId: articles.productId }).from(articles).where(eq(articles.id, articleId)).limit(1);
+    if (article?.userId !== editor.id || !article.productId.startsWith("manual:")) throw new Error("Không có quyền xem lịch sử này.");
+  }
+  return listVersions(articleId);
 }
 export async function searchArticleLinks(query: string) {
-  await requireAdmin();
+  await requireEditor();
   const q = z.string().max(150).parse(query).trim();
   if (!q) return [];
   const vector = sql`to_tsvector('simple', coalesce(${articles.title}, '') || ' ' || coalesce(regexp_replace(${articles.contentHtml}, '<[^>]+>', ' ', 'g'), ''))`;
@@ -41,7 +47,7 @@ export async function searchArticleLinks(query: string) {
   return db.select({ title: articles.title, slug: articles.slug }).from(articles).where(and(eq(articles.status, "published"), ilike(articles.title, `%${q.replace(/[%_]/g, "")}%`))).limit(10);
 }
 export async function suggestArticleLinks(input: { articleId?: string; focusKeyword: string; title: string; excludedSlugs: string[] }) {
-  await requireAdmin();
+  await requireEditor();
   const data = z.object({
     articleId: z.string().uuid().optional(),
     focusKeyword: z.string().max(100),
@@ -65,7 +71,7 @@ export async function suggestArticleLinks(input: { articleId?: string; focusKeyw
     .limit(8);
 }
 export async function listOutrosAction() {
-  await requireAdmin();
+  await requireEditor();
   return db.select().from(articleOutros).orderBy(asc(articleOutros.name));
 }
 const safeLink = z.string().max(2000).refine((v) => /^\/(?!\/)/.test(v) || /^https:\/\/[^\s]+$/.test(v));

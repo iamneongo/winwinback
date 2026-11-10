@@ -29,6 +29,7 @@ export type ArticleTableRow = {
   price: number | null;
   views: number;
   status: string;
+  editorialStatus: string | null;
   createdAt: string;
 };
 
@@ -38,11 +39,19 @@ const columns: ColumnDef<ArticleTableRow>[] = [
   { accessorKey: "category", header: "Danh mục", size: 135, enableSorting: false, cell: ({ row }) => <span className="block truncate" title={row.original.category ?? undefined}>{row.original.category ?? "—"}</span> },
   { accessorKey: "price", header: "Giá", size: 115, cell: ({ row }) => row.original.price ? formatVnd(row.original.price) : "—" },
   { accessorKey: "views", header: "Lượt xem", size: 90, cell: ({ row }) => row.original.views },
-  { accessorKey: "status", header: "Trạng thái", size: 105, enableSorting: false, cell: ({ row }) => <Badge variant={row.original.status === "published" ? "success" : "warning"}>{row.original.status === "published" ? "Hiển thị" : "Đã ẩn"}</Badge> },
+  { accessorKey: "status", header: "Trạng thái", size: 125, enableSorting: false, cell: ({ row }) => <Badge variant={row.original.status === "published" ? "success" : "warning"}>{row.original.status === "published" ? "Hiển thị" : row.original.editorialStatus === "submitted" ? "Chờ duyệt" : "Đã ẩn"}</Badge> },
   { accessorKey: "createdAt", header: "Ngày tạo", size: 110, cell: ({ row }) => new Date(row.original.createdAt).toLocaleDateString("vi-VN") },
   { id: "actions", header: "Thao tác", size: 76, enableSorting: false, cell: ({ row }) => {
     const article = row.original;
     return (
+      <ArticleActions article={article} />
+    );
+  } },
+];
+
+function ArticleActions({ article }: { article: ArticleTableRow }) {
+  return <>
+    {article.editorialStatus === "submitted" && <Link href={`/admin/bai-viet/${article.id}`} className="font-semibold text-[#1261ed] hover:underline">Xem duyệt</Link>}
       <DropdownMenu>
         <DropdownMenuTrigger
           render={<Button type="button" variant="ghost" size="icon-sm" aria-label={`Thao tác bài viết: ${article.title}`} />}
@@ -80,9 +89,8 @@ const columns: ColumnDef<ArticleTableRow>[] = [
           </DropdownMenuGroup>
         </DropdownMenuContent>
       </DropdownMenu>
-    );
-  } },
-];
+  </>;
+}
 
 export function ArticlesTable({ rows, categories, total, page }: { rows: ArticleTableRow[]; categories: string[]; total: number; page: number }) {
   return <AdminDataTable
@@ -97,6 +105,7 @@ export function ArticlesTable({ rows, categories, total, page }: { rows: Article
       { key: "platform", label: "Tất cả sàn", options: [{ value: "shopee", label: "Shopee" }, { value: "tiktok", label: "TikTok Shop" }] },
       { key: "status", label: "Mọi trạng thái", options: [{ value: "published", label: "Hiển thị" }, { value: "hidden", label: "Đã ẩn" }] },
       { key: "category", label: "Mọi danh mục", options: categories.map((name) => ({ value: name, label: name })) },
+      { key: "type", label: "Mọi nguồn bài", options: [{ value: "submitted", label: "Chờ duyệt" }] },
     ]}
     emptyMessage="Không có bài viết phù hợp."
     minWidth="1190px"

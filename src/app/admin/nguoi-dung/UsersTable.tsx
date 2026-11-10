@@ -13,7 +13,7 @@ export type UserTableRow = {
   name: string;
   email: string;
   image: string | null;
-  role: "admin" | "user";
+  role: "admin" | "contributor" | "user";
   emailVerified: boolean;
   balance: number;
   notifyOrders: boolean;
@@ -24,7 +24,7 @@ export type UserTableRow = {
 const columns: ColumnDef<UserTableRow>[] = [
   { accessorKey: "name", header: "Người dùng", size: 180, cell: ({ row }) => <Link href={`/admin/nguoi-dung/${row.original.id}`} className="flex items-center gap-2 hover:underline"><span className="grid size-8 shrink-0 place-items-center overflow-hidden rounded-full bg-[#e5effe] font-bold text-[#3676cb]">{row.original.image ? <Image src={row.original.image} unoptimized alt="" width={32} height={32} className="size-full object-cover" /> : row.original.name.charAt(0)}</span><b className="truncate text-[#1261ed]">{row.original.name}</b></Link> },
   { accessorKey: "email", header: "Email", size: 210, cell: ({ row }) => <span className="break-all">{row.original.email}</span> },
-  { accessorKey: "role", header: "Vai trò", size: 110, cell: ({ row }) => <Badge variant={row.original.role === "admin" ? "info" : "default"}>{row.original.role === "admin" ? "Quản trị" : "Người dùng"}</Badge> },
+  { accessorKey: "role", header: "Vai trò", size: 110, cell: ({ row }) => <Badge variant={row.original.role === "admin" ? "info" : "default"}>{row.original.role === "admin" ? "Quản trị" : row.original.role === "contributor" ? "Cộng tác viên" : "Người dùng"}</Badge> },
   { accessorKey: "emailVerified", header: "Xác thực", size: 125, enableSorting: false, cell: ({ row }) => <Badge variant={row.original.emailVerified ? "success" : "warning"}>{row.original.emailVerified ? "Đã xác thực" : "Chưa xác thực"}</Badge> },
   { accessorKey: "balance", header: "Số dư ví", size: 130, cell: ({ row }) => <b className="whitespace-nowrap text-[#168146]">{formatVnd(row.original.balance)}</b> },
   { id: "notifications", header: "Thông báo", size: 110, enableSorting: false, cell: ({ row }) => row.original.notifyOrders || row.original.notifyCashback ? "Đang bật" : "Đã tắt" },
@@ -33,5 +33,5 @@ const columns: ColumnDef<UserTableRow>[] = [
 ];
 
 export function UsersTable({ rows, total, page }: { rows: UserTableRow[]; total: number; page: number }) {
-  return <AdminDataTable data={rows} columns={columns} totalRows={total} page={page} pageSize={25} ariaLabel="Danh sách người dùng" searchPlaceholder="Tìm tên hoặc email..." filters={[{ key: "role", label: "Tất cả vai trò", options: [{ value: "admin", label: "Quản trị" }, { value: "user", label: "Người dùng" }] }]} minWidth="1180px" emptyMessage="Không tìm thấy người dùng phù hợp." getRowHref={(row) => `/admin/nguoi-dung/${row.id}`} />;
+  return <AdminDataTable data={rows} columns={columns} totalRows={total} page={page} pageSize={25} ariaLabel="Danh sách người dùng" searchPlaceholder="Tìm tên hoặc email..." filters={[{ key: "role", label: "Tất cả vai trò", options: [{ value: "admin", label: "Quản trị" }, { value: "contributor", label: "Cộng tác viên" }, { value: "user", label: "Người dùng" }] }]} minWidth="1180px" emptyMessage="Không tìm thấy người dùng phù hợp." getRowHref={(row) => `/admin/nguoi-dung/${row.id}`} />;
 }

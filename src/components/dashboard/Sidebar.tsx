@@ -7,6 +7,7 @@ import { BrandLogo } from "@/components/BrandLogo";
 import styles from "./Sidebar.module.css";
 import {
   customerNav,
+  contributorNav,
   adminNav,
   customerAdminLink,
   type NavItem,
@@ -24,9 +25,11 @@ import {
 export function Sidebar({
   variant = "customer",
   showAdminLink = false,
+  contributor = false,
 }: {
   variant?: "customer" | "admin";
   showAdminLink?: boolean;
+  contributor?: boolean;
 }) {
   const pathname = usePathname();
   const items: NavItem[] =
@@ -34,7 +37,7 @@ export function Sidebar({
       ? adminNav
       : showAdminLink
         ? [...customerNav, customerAdminLink]
-        : customerNav;
+        : contributor ? contributorNav : customerNav;
   const homeHref = variant === "admin" ? "/admin" : "/dashboard";
   return (
     <SidebarRoot

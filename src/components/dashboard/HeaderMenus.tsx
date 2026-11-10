@@ -106,7 +106,7 @@ export function HeaderMenus({
   mobileMoreItems = [],
 }: {
   name: string;
-  role: "user" | "admin";
+  role: "user" | "contributor" | "admin";
   variant?: "customer" | "admin";
   notifications?: HeaderNotification[];
   unreadCount?: number;

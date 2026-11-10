@@ -15,3 +15,15 @@ export async function requireAdmin(): Promise<User> {
   if (user.role !== "admin") redirect("/dashboard");
   return user;
 }
+
+export async function requireContributor(): Promise<User> {
+  const user = await requireUser();
+  if (user.role !== "contributor") redirect("/dashboard");
+  return user;
+}
+
+export async function requireEditor(): Promise<User> {
+  const user = await requireUser();
+  if (user.role !== "admin" && user.role !== "contributor") redirect("/dashboard");
+  return user;
+}

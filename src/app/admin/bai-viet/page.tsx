@@ -26,7 +26,7 @@ export default async function AdminArticlesPage({
   const sort = ["title", "price", "views", "createdAt"].includes(one("sort")) ? one("sort") as "title" | "price" | "views" | "createdAt" : "createdAt";
   const dir = one("dir") === "asc" ? "asc" : "desc";
   const [stats, categories] = await Promise.all([getArticleAdminStats(), listManagedCategories()]);
-  const query = { q: one("q"), status, platform, category, sort, dir, limit: PAGE_SIZE } as const;
+  const query = { q: one("q"), status, platform, category, review: one("type") === "submitted" ? "submitted" as const : undefined, sort, dir, limit: PAGE_SIZE } as const;
   let result = await listAdminArticles({ ...query, offset: (rawPage - 1) * PAGE_SIZE });
   const page = Math.min(rawPage, Math.max(1, Math.ceil(result.total / PAGE_SIZE)));
   if (page !== rawPage) result = await listAdminArticles({ ...query, offset: (page - 1) * PAGE_SIZE });
@@ -43,9 +43,9 @@ export default async function AdminArticlesPage({
       <FileText className="size-4 shrink-0 text-[#287be5]" />
       <span>Tổng: <b>{stats.total}</b> bài</span><span aria-hidden="true">·</span>
       <span>Hiển thị: <b>{stats.published}</b></span><span aria-hidden="true">·</span>
-      <span>Ẩn: <b>{stats.hidden}</b></span>
+      <span>Ẩn: <b>{stats.hidden}</b></span><span aria-hidden="true">·</span><Link href="/admin/bai-viet?type=submitted" className="font-semibold text-[#1261ed] hover:underline">Chờ duyệt: {stats.submitted}</Link>
     </div>
     <p className="mb-2 text-xs text-[#58749a] sm:hidden">Vuốt ngang để xem đủ cột trong bảng.</p>
-    <ArticlesTable rows={result.rows.map((article) => ({ id: article.id, slug: article.slug, title: article.title, platform: article.platform, manual: article.productId.startsWith("manual:"), category: article.category, price: article.price, views: article.views, status: article.status, createdAt: article.createdAt.toISOString() }))} categories={categories.map((item) => item.name)} total={result.total} page={page} />
+    <ArticlesTable rows={result.rows.map((article) => ({ id: article.id, slug: article.slug, title: article.title, platform: article.platform, manual: article.productId.startsWith("manual:"), category: article.category, price: article.price, views: article.views, status: article.status, editorialStatus: article.editorialStatus, createdAt: article.createdAt.toISOString() }))} categories={categories.map((item) => item.name)} total={result.total} page={page} />
   </AdminPageContainer>;
 }

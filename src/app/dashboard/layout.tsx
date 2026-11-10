@@ -7,7 +7,7 @@ import { formatVnd } from "@/lib/config";
 import { Dock } from "@/components/dashboard/Dock";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { HeaderMenus } from "@/components/dashboard/HeaderMenus";
-import { customerMobileMoreNav, customerAdminProfileLink } from "@/components/dashboard/nav";
+import { customerMobileMoreNav, contributorMobileMoreNav, customerAdminProfileLink } from "@/components/dashboard/nav";
 import { BrandLogo } from "@/components/BrandLogo";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -41,7 +41,7 @@ export default async function DashboardLayout({
         className="ww-dashboard-shell winwin-root overflow-x-hidden text-[#0d315d]"
         style={{ "--sidebar-width-icon": "3.5rem" } as React.CSSProperties}
       >
-        <Sidebar showAdminLink={isAdmin} />
+        <Sidebar showAdminLink={isAdmin} contributor={user.role === "contributor"} />
         <div className={dashboardFrameClass}>
           <header className="flex h-16 items-center justify-between border-b border-[#e4edf8] bg-white px-4 sm:px-6 lg:rounded-t-2xl lg:px-8">
             <SidebarTrigger
@@ -79,7 +79,7 @@ export default async function DashboardLayout({
                 role={user.role}
                 notifications={bell.items}
                 unreadCount={bell.unreadCount}
-                mobileMoreItems={isAdmin ? [...customerMobileMoreNav, customerAdminProfileLink] : customerMobileMoreNav}
+                mobileMoreItems={isAdmin ? [...customerMobileMoreNav, customerAdminProfileLink] : user.role === "contributor" ? contributorMobileMoreNav : customerMobileMoreNav}
               />
             </div>
           </header>

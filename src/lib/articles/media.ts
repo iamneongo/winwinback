@@ -10,7 +10,7 @@ export function mediaPath(id: string, thumb = false) {
   if (!/^[a-f0-9-]{36}$/.test(id)) throw new Error("Invalid media id");
   return path.join(mediaRoot(), `${id}${thumb ? "-thumb" : ""}.webp`);
 }
-export async function storeArticleImage(bytes: Buffer, name: string) {
+export async function storeArticleImage(bytes: Buffer, name: string, uploadedBy?: string) {
   if (!bytes.length || bytes.length > 10 * 1024 * 1024) throw new Error("Ảnh tối đa 10 MB.");
   const meta = await sharp(bytes, { limitInputPixels: 40_000_000 }).metadata();
   if (!["jpeg", "png", "webp", "avif"].includes(meta.format || "") || (meta.pages || 1) > 1) throw new Error("Chỉ nhận ảnh tĩnh JPEG, PNG, WebP hoặc AVIF.");
@@ -21,7 +21,7 @@ export async function storeArticleImage(bytes: Buffer, name: string) {
   try {
     await writeFile(mediaPath(id), full.data, { flag: "wx" });
     await writeFile(mediaPath(id, true), thumb, { flag: "wx" });
-    await db.insert(articleMedia).values({ id, name: name.slice(0, 180), width: full.info.width, height: full.info.height, bytes: full.data.length });
+    await db.insert(articleMedia).values({ id, uploadedBy: uploadedBy ?? null, name: name.slice(0, 180), width: full.info.width, height: full.info.height, bytes: full.data.length });
   } catch (error) {
     await Promise.allSettled([unlink(mediaPath(id)), unlink(mediaPath(id, true))]);
     throw error;

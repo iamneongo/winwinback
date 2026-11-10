@@ -16,7 +16,8 @@ export async function loadStudio(id: string) {
 }
 
 // The article row is the lock/version authority for drafts AND publication.
-export async function saveDocument(input: { id?: string; revision: number; document: ArticleDocument; publish?: boolean; label?: string }) {
+export async function saveDocument(input: { id?: string; revision: number; document: ArticleDocument; publish?: boolean; label?: string; contributorId?: string }) {
+  if (input.contributorId && input.publish) throw new Error("Bài của cộng tác viên cần quản trị viên duyệt trước khi xuất bản.");
   const doc = documentSchema.parse(input.document);
   doc.html = sanitizeArticleHtml(doc.html);
   if (input.publish) {
@@ -38,12 +39,13 @@ export async function saveDocument(input: { id?: string; revision: number; docum
     if (!id) {
       id = crypto.randomUUID();
       const initialSlug = `${articleSlug(doc.title) || "bai-viet"}-${id.slice(0, 8)}`;
-      await tx.insert(articles).values({ id, slug: initialSlug, platform: "shopee", productId: `manual:${id}`, title: doc.title || "Bản nháp", status: "hidden", category: doc.category || null });
+      await tx.insert(articles).values({ id, slug: initialSlug, platform: "shopee", productId: `manual:${id}`, userId: input.contributorId ?? null, editorialStatus: input.contributorId ? "draft" : null, title: doc.title || "Bản nháp", status: "hidden", category: doc.category || null });
       await tx.insert(articleSlugs).values({ slug: initialSlug, articleId: id });
       if (!doc.slug) doc.slug = initialSlug;
     }
     const [old] = await tx.select().from(articles).where(eq(articles.id, id)).for("update");
     if (!old) throw new Error("Bài viết không còn tồn tại.");
+    if (input.contributorId && (old.userId !== input.contributorId || !old.productId.startsWith("manual:") || old.status !== "hidden" || old.editorialStatus === "approved")) throw new Error("Bạn không có quyền sửa bài viết này.");
     if (old.revision !== input.revision) throw new Error("Bài đã được thay đổi ở phiên khác. Sao chép nội dung đang viết rồi tải lại trang để tránh ghi đè.");
     const revision = old.revision + 1;
     if (input.publish) {
@@ -64,10 +66,10 @@ export async function saveDocument(input: { id?: string; revision: number; docum
       if (reserved || occupied) throw new Error("URL này đã được sử dụng. Hãy chọn URL khác.");
       await tx.insert(articleSlugs).values([{ slug: old.slug, articleId: id }, { slug: doc.slug, articleId: id }]).onConflictDoNothing();
       await tx.insert(articleVersions).values({ articleId: id, document: documentFromArticle(old), label: "Trước khi xuất bản/cập nhật" });
-      await tx.update(articles).set({ title: doc.title, slug: doc.slug, contentHtml: doc.html, intro: doc.intro, metaDescription: doc.metaDescription, category: doc.category || null, imageUrl: doc.imageUrl, seo: doc.seo, status: "published", revision, updatedAt: new Date() }).where(eq(articles.id, id));
+      await tx.update(articles).set({ title: doc.title, slug: doc.slug, contentHtml: doc.html, intro: doc.intro, metaDescription: doc.metaDescription, category: doc.category || null, imageUrl: doc.imageUrl, seo: doc.seo, status: "published", editorialStatus: old.editorialStatus ? "approved" : null, revision, updatedAt: new Date() }).where(eq(articles.id, id));
       await tx.delete(articleDrafts).where(eq(articleDrafts.articleId, id));
     } else {
-      await tx.update(articles).set({ revision, ...(old.status === "hidden" ? { title: doc.title || "Bản nháp", category: doc.category || null } : {}) }).where(eq(articles.id, id));
+      await tx.update(articles).set({ revision, ...(input.contributorId ? { editorialStatus: "draft" } : {}), ...(old.status === "hidden" ? { title: doc.title || "Bản nháp", category: doc.category || null } : {}) }).where(eq(articles.id, id));
       await tx.insert(articleDrafts).values({ articleId: id, document: doc, revision }).onConflictDoUpdate({ target: articleDrafts.articleId, set: { document: doc, revision, updatedAt: new Date() } });
     }
     await tx.insert(articleVersions).values({ articleId: id, document: doc, label: input.label || (input.publish ? "Đã xuất bản" : "Bản nháp tự lưu") });

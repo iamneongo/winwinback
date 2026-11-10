@@ -7,6 +7,7 @@ import {
   MailCheck,
   MoreHorizontal,
   ShieldCheck,
+  FilePenLine,
   UserRound,
   Wallet,
 } from "lucide-react";
@@ -37,28 +38,24 @@ import { SubmitButton } from "@/components/forms/SubmitButton";
 
 export interface UserRowActionsProps {
   userId: string;
-  role: "user" | "admin";
+  role: "user" | "contributor" | "admin";
   emailVerified: boolean;
   notificationsOn: boolean;
 }
 
-function RoleItem({ userId, role }: { userId: string; role: "user" | "admin" }) {
+function RoleItem({ userId, nextRole }: { userId: string; nextRole: "user" | "contributor" | "admin" }) {
   const [, action] = useActionState<ActionState, FormData>(
     setUserRoleAction,
     undefined,
   );
-  const nextRole = role === "admin" ? "user" : "admin";
+  const label = nextRole === "admin" ? "Cấp quyền Quản trị" : nextRole === "contributor" ? "Cấp quyền Cộng tác viên" : "Chuyển thành Người dùng";
   return (
     <form action={action}>
       <input type="hidden" name="userId" value={userId} />
       <input type="hidden" name="role" value={nextRole} />
       <DropdownMenuItem render={<button type="submit" className="w-full" />}>
-        {role === "admin" ? (
-          <UserRound className="size-4" />
-        ) : (
-          <ShieldCheck className="size-4" />
-        )}
-        {role === "admin" ? "Hạ xuống Người dùng" : "Nâng lên Quản trị"}
+        {nextRole === "admin" ? <ShieldCheck className="size-4" /> : nextRole === "contributor" ? <FilePenLine className="size-4" /> : <UserRound className="size-4" />}
+        {label}
       </DropdownMenuItem>
     </form>
   );
@@ -198,7 +195,7 @@ export function UserRowActions({
         <DropdownMenuContent align="end" className="min-w-52">
           <DropdownMenuGroup>
             <DropdownMenuLabel>Thao tác</DropdownMenuLabel>
-            <RoleItem userId={userId} role={role} />
+            {(["user", "contributor", "admin"] as const).filter((candidate) => candidate !== role).map((candidate) => <RoleItem key={candidate} userId={userId} nextRole={candidate} />)}
             <NotificationsItem userId={userId} notificationsOn={notificationsOn} />
           </DropdownMenuGroup>
           {!emailVerified && (

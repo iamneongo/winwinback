@@ -4,7 +4,7 @@ import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
 import { articleCategories, seoTemplates } from "@/db/schema";
-import { requireAdmin } from "@/lib/auth/guards";
+import { requireAdmin, requireEditor } from "@/lib/auth/guards";
 import { getSeoTemplate } from "@/lib/articles/seo-template";
 import { renderSeoPattern } from "@/lib/articles/seo-template-pattern";
 import { documentSchema, type ArticleDocument } from "@/lib/articles/document";
@@ -32,7 +32,7 @@ export async function deleteSeoTemplateAction(key: string) {
   return { ok: true as const };
 }
 export async function previewSeoTemplateAction(input: { document: ArticleDocument; manual: boolean }) {
-  await requireAdmin();
+  await requireEditor();
   const document = documentSchema.parse(input.document);
   const selected = await getSeoTemplate(document.category, input.manual);
   if (!selected) return null;

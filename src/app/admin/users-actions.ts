@@ -12,7 +12,7 @@ import type { ActionState } from "@/app/admin/actions";
 
 const roleSchema = z.object({
   userId: z.string().uuid(),
-  role: z.enum(["user", "admin"]),
+  role: z.enum(["user", "contributor", "admin"]),
 });
 
 export async function setUserRoleAction(
