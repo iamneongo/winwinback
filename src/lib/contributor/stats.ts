@@ -7,7 +7,7 @@ export async function contributorShareStats(contributorId: string) {
   const [shares, purchases] = await Promise.all([
     db.select({ id: contributorShares.id, code: contributorShares.code, articleId: contributorShares.articleId, title: articles.title, slug: articles.slug, visits: contributorShares.visits, createdAt: contributorShares.createdAt })
       .from(contributorShares)
-      .innerJoin(articles, eq(articles.id, contributorShares.articleId))
+      .leftJoin(articles, eq(articles.id, contributorShares.articleId))
       .where(eq(contributorShares.contributorId, contributorId))
       .orderBy(desc(contributorShares.createdAt)),
     db.select({ shareId: affiliateLinks.contributorShareId, total: count(orders.id) })

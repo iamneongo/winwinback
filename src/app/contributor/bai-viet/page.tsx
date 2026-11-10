@@ -4,7 +4,6 @@ import { FilePlus2 } from "lucide-react";
 import { db } from "@/db";
 import { articles } from "@/db/schema";
 import { requireContributor } from "@/lib/auth/guards";
-import { createContributorShareAction } from "@/app/contributor/links/actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DashboardPageHeader } from "@/components/dashboard/ui";
@@ -32,7 +31,7 @@ export default async function ContributorArticlesPage({ searchParams }: { search
       <TableCell className="max-w-[24rem] font-semibold">{row.title}</TableCell>
       <TableCell><Badge variant={row.status === "published" ? "success" : "warning"}>{row.status === "published" ? "Đã xuất bản" : row.editorialStatus === "submitted" ? "Chờ admin duyệt" : "Bản nháp"}</Badge></TableCell>
       <TableCell>{(row.updatedAt ?? row.createdAt).toLocaleDateString("vi-VN")}</TableCell>
-      <TableCell><div className="flex items-center gap-3"><Link className="font-semibold text-[#1261ed] hover:underline" href={`/contributor/bai-viet/${row.id}`}>{row.status === "published" ? "Xem" : "Sửa bài"}</Link>{row.status === "published" && <form action={createContributorShareAction}><input type="hidden" name="articleId" value={row.id} /><button type="submit" className="font-semibold text-[#168146] hover:underline">Lấy link & QR</button></form>}</div></TableCell>
+      <TableCell><Link className="font-semibold text-[#1261ed] hover:underline" href={`/contributor/bai-viet/${row.id}`}>{row.status === "published" ? "Xem" : "Sửa bài"}</Link></TableCell>
     </TableRow>)}</TableBody></Table>{!rows.length && <p className="px-4 py-8 text-center text-sm text-[#58749a]">Chưa có bài viết tự viết.</p>}</div>
     {total > 20 && <nav aria-label="Phân trang bài viết" className="mt-4 flex items-center justify-between text-sm"><Link aria-disabled={page === 1} href={`/contributor/bai-viet?trang=${Math.max(1, page - 1)}`} className={page === 1 ? "pointer-events-none text-[#8aa0bb]" : "font-semibold text-[#1261ed]"}>Trước</Link><span>Trang {page} / {pages}</span><Link aria-disabled={page >= pages} href={`/contributor/bai-viet?trang=${Math.min(pages, page + 1)}`} className={page >= pages ? "pointer-events-none text-[#8aa0bb]" : "font-semibold text-[#1261ed]"}>Sau</Link></nav>}
   </main>;

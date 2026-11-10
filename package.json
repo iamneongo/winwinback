@@ -39,6 +39,7 @@
     "db:migrate-contributors": "node scripts/migrate-contributors.mjs",
     "db:verify-contributors": "node scripts/verify-contributors.mjs",
     "db:migrate-contributor-tracking": "node scripts/migrate-contributor-tracking.mjs",
+    "db:migrate-contributor-general-link": "node scripts/migrate-contributor-general-link.mjs",
     "set-role": "node --env-file=.env.local scripts/set-role.mjs"
   },
   "dependencies": {

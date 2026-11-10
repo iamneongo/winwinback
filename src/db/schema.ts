@@ -11,6 +11,7 @@ import {
   uniqueIndex,
   jsonb,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 import type { ArticleDocument, ArticleSeo } from "@/lib/articles/document";
 
 // ---------------------------------------------------------------------------
@@ -148,18 +149,22 @@ export const verifications = pgTable("verifications", {
 });
 
 // ---------------------------------------------------------------------------
-// Contributor campaign links lead to public articles on Win-Win Back. They
-// measure traffic and downstream orders without owning the customer's wallet.
+// Contributor campaign links lead to Win-Win Back from external posts. Legacy
+// articleId values remain nullable so existing links keep their statistics.
 // ---------------------------------------------------------------------------
 
 export const contributorShares = pgTable("contributor_shares", {
   id: uuid("id").defaultRandom().primaryKey(),
   contributorId: uuid("contributor_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-  articleId: uuid("article_id").notNull().references(() => articles.id, { onDelete: "cascade" }),
+  articleId: uuid("article_id").references(() => articles.id, { onDelete: "cascade" }),
   code: text("code").notNull().unique(),
   visits: integer("visits").notNull().default(0),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-}, (t) => [uniqueIndex("contributor_shares_owner_article_idx").on(t.contributorId, t.articleId), index("contributor_shares_owner_idx").on(t.contributorId)]);
+}, (t) => [
+  uniqueIndex("contributor_shares_owner_article_idx").on(t.contributorId, t.articleId),
+  uniqueIndex("contributor_shares_default_owner_idx").on(t.contributorId).where(sql`${t.articleId} IS NULL`),
+  index("contributor_shares_owner_idx").on(t.contributorId),
+]);
 
 // Affiliate links for purchases by a customer. A nullable contributorShareId
 // records the campaign that brought the customer here; userId remains the
