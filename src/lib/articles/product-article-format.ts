@@ -28,7 +28,9 @@ function validAmount(value: number | undefined): value is number {
 
 export function productLabel(name: string): string {
   const words = name.trim().split(/\s+/);
-  const label = words.slice(0, 9).join(" ");
+  const brand = words.find((word) => /^[A-Z]{3,16}$/.test(word) && !["SALE", "HOT", "LOCAL", "BRAND", "SIZE", "SHOP", "FREE"].includes(word));
+  const model = [...words].reverse().find((word) => /^[A-Z]{1,5}\d{2,}[A-Z0-9-]*$/.test(word));
+  const label = brand && model ? [...words.slice(0, 2), brand, model].join(" ") : words.slice(0, 6).join(" ");
   return label.length > 72 ? `${label.slice(0, 69).trimEnd()}…` : label;
 }
 

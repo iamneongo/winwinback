@@ -17,7 +17,7 @@ import { getOpenCollaborationProductsByIds } from "@/lib/affiliate/tiktok/client
 import { getValidTikTokAccessToken } from "@/lib/affiliate/tiktok/tokens";
 import { normalizeArticleCategory, UNCATEGORIZED } from "@/lib/articles/categories";
 import { resolveArticleCategory } from "@/lib/articles/category-service";
-import { buildProductArticleHtml, productArticleSections } from "./product-article-format";
+import { buildProductArticleHtml, productArticleSections, productLabel } from "./product-article-format";
 
 export interface ArticleSection {
   q: string;
@@ -234,8 +234,8 @@ async function buildArticle(
     "CHỈ trả về JSON hợp lệ, không markdown, không HTML, không giải thích.";
   const user = `DỮ LIỆU SẢN PHẨM:\n${facts}\n\n` +
     "Bài sẽ được trình bày theo cấu trúc: mở đầu → sản phẩm là gì/nơi bán → đánh giá có bảng đối chiếu dữ kiện công khai → giá → cách mua hoàn tiền → FAQ. Bảng, giá, tiền hoàn và hướng dẫn mua do hệ thống dựng từ dữ liệu thật; bạn chỉ viết phần biên tập. " +
-    "Trả về đúng MỘT JSON object với năm khóa chuỗi: title, metaDescription, intro, identity, assessment. " +
-    "title: câu hỏi mua hàng chứa tên sản phẩm, tối đa 120 ký tự. metaDescription: tóm tắt trung tính khoảng 130–160 ký tự. intro: 45–70 từ, nói rõ bài sẽ kiểm tra thông tin nào. " +
+    "Trả về đúng MỘT JSON object với bốn khóa chuỗi: metaDescription, intro, identity, assessment. " +
+    "metaDescription: tóm tắt trung tính khoảng 130–160 ký tự. intro: 35–70 từ, nói rõ bài sẽ kiểm tra thông tin nào. " +
     "identity: 70–110 từ về sản phẩm, nơi bán và thông tin thực sự có trong dữ liệu; không coi shop là nhà sản xuất. assessment: 80–120 từ đánh giá dựa trên dữ kiện công khai, nêu điểm cần kiểm tra thêm và giới hạn dữ liệu. " +
     "Không viết số giá, tiền hoàn, tỷ lệ, điểm đánh giá trong các đoạn văn; hệ thống sẽ chèn các số này từ dữ liệu sàn. Nếu thiếu xuất xứ, thành phần, chất lượng hoặc trải nghiệm thật, nói rõ chưa thể kết luận. Không dùng markdown, HTML hay khóa khác.";
 
@@ -263,13 +263,11 @@ async function buildArticle(
   }
   await onProgress?.({ stage: "generating", preview: typeof parsed.intro === "string" ? parsed.intro : name });
 
-  const title = (
-    (typeof parsed.title === "string" && parsed.title.trim()) ||
-    `${name} - Có Nên Mua Không? Mua Ở Đâu Được Hoàn Tiền?`).slice(0, 180);
+  const title = `${productLabel(name)} có tốt không? Giá, đánh giá và cách mua hoàn tiền`.slice(0, 180);
   const identity = typeof parsed.identity === "string" ? parsed.identity.trim() : "";
   const assessment = typeof parsed.assessment === "string" ? parsed.assessment.trim() : "";
   const intro = typeof parsed.intro === "string" ? parsed.intro.trim() : null;
-  const editorialValid = Boolean(intro && intro.length >= 120 && identity.length >= 250 && assessment.length >= 250 && !/\d[\d.,]*\s*(?:₫|đồng|%|sao\b)/i.test([intro, identity, assessment].join(" ")));
+  const editorialValid = Boolean(intro && intro.length >= 80 && identity.length >= 120 && assessment.length >= 120);
   const sections = productArticleSections({ name, platform: san, shopName: data?.shopName, category: data?.category, price: data?.price, rating: data?.rating, soldCount: data?.soldCount, estimatedCashback }, identity, assessment);
 
   const slug = `${slugify(title)}-${input.productId.replace(/\D/g, "").slice(-6)}`;

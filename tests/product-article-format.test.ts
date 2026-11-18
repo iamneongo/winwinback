@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { buildProductArticleHtml, productArticleSections } from "../src/lib/articles/product-article-format";
+import { buildProductArticleHtml, productArticleSections, productLabel } from "../src/lib/articles/product-article-format";
 import { sanitizeArticleHtml } from "../src/lib/articles/sanitize";
 
 test("product article follows the editorial structure and only renders supplied figures", () => {
@@ -26,4 +26,9 @@ test("missing product values stay explicitly unknown and text is escaped", () =>
   assert.match(html, /Mức hoàn tiền sẽ hiển thị khi bạn kiểm tra link/);
   assert.match(html, /&lt;mới&gt;/);
   assert.doesNotMatch(html, /<mới>|NaN|undefined/);
+});
+
+test("headings use a concise product name when brand and model are present", () => {
+  assert.equal(productLabel("Áo polo 88 phối local brand WENKO áo form rộng tay lỡ PK02"), "Áo polo WENKO PK02");
+  assert.equal(productLabel("Lạp xưởng truyền thống 500g"), "Lạp xưởng truyền thống 500g");
 });
