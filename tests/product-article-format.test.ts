@@ -30,5 +30,6 @@ test("missing product values stay explicitly unknown and text is escaped", () =>
 
 test("headings use a concise product name when brand and model are present", () => {
   assert.equal(productLabel("Áo polo 88 phối local brand WENKO áo form rộng tay lỡ PK02"), "Áo polo WENKO PK02");
+  assert.equal(productLabel("Áo Polo WENKO Thêu Local Brand Form Boxy Cotton 2 chiều nam nữ pk06"), "Áo Polo WENKO PK06");
   assert.equal(productLabel("Lạp xưởng truyền thống 500g"), "Lạp xưởng truyền thống 500g");
 });
