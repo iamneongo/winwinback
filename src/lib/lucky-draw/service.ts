@@ -260,6 +260,14 @@ export async function runDraw(periodId: string): Promise<DrawResult> {
       })
       .where(eq(luckyDrawPeriods.id, periodId));
 
+    // Persist the recipient snapshot with the result so sends can resume later.
+    await tx.execute(sql`
+      INSERT INTO lucky_draw_result_emails (period_id, user_id)
+      SELECT ${periodId}::uuid, id FROM users
+      WHERE email_verified = true AND notify_system_email = true AND notify_draw_email = true
+      ON CONFLICT (period_id, user_id) DO NOTHING
+    `);
+
     return {
       periodId,
       winningNumber,

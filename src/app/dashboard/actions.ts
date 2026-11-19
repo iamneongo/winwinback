@@ -76,6 +76,7 @@ export async function updateNotificationPrefsAction(
       notifyOrders: flag("notifyOrders"),
       notifyCashback: flag("notifyCashback"),
       notifySystemEmail: flag("notifySystemEmail"),
+      notifyDrawEmail: formData.has("notifyDrawEmail") ? flag("notifyDrawEmail") : user.notifyDrawEmail,
     })
     .where(eq(users.id, user.id));
   revalidatePath("/dashboard/tai-khoan");

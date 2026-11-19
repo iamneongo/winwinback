@@ -2,7 +2,7 @@ import Link from "next/link";
 import { and, desc, eq, isNull, lte, sql } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { db } from "@/db";
-import { luckyDrawPeriods, luckyDrawTickets, orders, users } from "@/db/schema";
+import { luckyDrawPeriods, luckyDrawResultEmails, luckyDrawTickets, orders, users } from "@/db/schema";
 import { DetailField, DetailSection, RecordDetail } from "@/components/detail/RecordDetail";
 import { requireAdmin } from "@/lib/auth/guards";
 import { formatVnd } from "@/lib/config";
@@ -30,6 +30,12 @@ export default async function AdminPeriodDetailPage({ params, searchParams }: { 
   const [period] = await db.select().from(luckyDrawPeriods).where(eq(luckyDrawPeriods.id, id)).limit(1);
   if (!period) notFound();
   const fund = await getFundBalance();
+  const [emailCounts] = period.status === "drawn" ? await db.select({
+    total: sql<number>`count(*)::int`,
+    sent: sql<number>`count(*) filter (where ${luckyDrawResultEmails.status} = 'sent')::int`,
+    pending: sql<number>`count(*) filter (where ${luckyDrawResultEmails.status} = 'pending')::int`,
+    skipped: sql<number>`count(*) filter (where ${luckyDrawResultEmails.status} = 'skipped')::int`,
+  }).from(luckyDrawResultEmails).where(eq(luckyDrawResultEmails.periodId, id)) : [];
   const ticketFilter = period.status === "open"
     ? and(isNull(luckyDrawTickets.periodId), lte(luckyDrawTickets.createdAt, period.endAt))
     : eq(luckyDrawTickets.periodId, id);
@@ -79,6 +85,11 @@ export default async function AdminPeriodDetailPage({ params, searchParams }: { 
       <DetailField label="Thời điểm quay">{period.drawnAt?.toLocaleString("vi-VN") ?? "Chưa quay"}</DetailField>
       <DetailField label={period.status === "open" ? "Phiếu đủ điều kiện" : "Tổng phiếu trong kỳ"}>{total}</DetailField>
     </DetailSection>
+    {period.status === "drawn" && <section className="rounded-xl border border-[#dfe9f5] bg-white p-4 sm:p-5">
+      <h2 className="text-sm font-bold text-[#173861]">Email kết quả cho thành viên</h2>
+      <p className="mt-2 text-sm text-[#58749a]">Đã gửi {emailCounts?.sent ?? 0}/{emailCounts?.total ?? 0} · Chờ gửi {emailCounts?.pending ?? 0} · Bỏ qua theo cài đặt email {emailCounts?.skipped ?? 0}</p>
+      <p className="mt-1 text-xs text-[#718bad]">Hàng đợi tự gửi tiếp theo hạn mức Resend; lỗi tạm thời được thử lại.</p>
+    </section>}
     {period.status === "drawn" && <section className="rounded-xl border border-[#dfe9f5] bg-white p-4 sm:p-5" aria-labelledby="draw-winners-heading">
       <h2 id="draw-winners-heading" className="text-sm font-bold text-[#173861]">Người nhận giải kỳ này</h2>
       {winners.length > 0 ? <>

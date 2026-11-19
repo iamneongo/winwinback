@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { and, eq, gt, inArray, lt, ne, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
@@ -8,6 +9,7 @@ import { luckyDrawPeriods, users } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth/guards";
 import { runDraw } from "@/lib/lucky-draw/service";
 import { formatVnd } from "@/lib/config";
+import { processDrawResultEmails } from "@/lib/lucky-draw/result-email-queue";
 
 export type ActionState = { error?: string; success?: string } | undefined;
 
@@ -151,6 +153,10 @@ export async function runDrawAction(
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Quay số thất bại" };
   }
+  after(async () => {
+    try { await processDrawResultEmails(); }
+    catch (error) { console.error("[draw-email] immediate processing failed; cron will retry", error); }
+  });
   let namesSummary = `${r.winners.length} phiếu nhận giải`;
   if (r.winners.length > 0) {
     try {

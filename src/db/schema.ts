@@ -9,6 +9,7 @@ import {
   pgEnum,
   index,
   uniqueIndex,
+  primaryKey,
   jsonb,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
@@ -73,6 +74,7 @@ export const users = pgTable("users", {
   notifyOrders: boolean("notify_orders").notNull().default(true),
   notifyCashback: boolean("notify_cashback").notNull().default(true),
   notifySystemEmail: boolean("notify_system_email").notNull().default(true),
+  notifyDrawEmail: boolean("notify_draw_email").notNull().default(true),
   // Referral: this user's own invite code + who invited them (app-level
   // attribution for the "mời bạn" missions; no FK to keep deletes simple).
   referralCode: text("referral_code").unique(),
@@ -537,6 +539,21 @@ export const luckyDrawPeriods = pgTable("lucky_draw_periods", {
     .notNull()
     .defaultNow(),
 });
+
+export const luckyDrawResultEmails = pgTable("lucky_draw_result_emails", {
+  periodId: uuid("period_id").notNull().references(() => luckyDrawPeriods.id, { onDelete: "cascade" }),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  status: text("status").notNull().default("pending"),
+  attempts: integer("attempts").notNull().default(0),
+  nextAttemptAt: timestamp("next_attempt_at", { withTimezone: true }).notNull().defaultNow(),
+  providerId: text("provider_id"),
+  lastError: text("last_error"),
+  sentAt: timestamp("sent_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  primaryKey({ columns: [t.periodId, t.userId] }),
+  index("lucky_draw_result_emails_pending_idx").on(t.status, t.nextAttemptAt),
+]);
 
 export const luckyDrawTickets = pgTable(
   "lucky_draw_tickets",

@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Mail, ShoppingBag, Wallet } from "lucide-react";
+import { Gift, Mail, ShoppingBag, Wallet } from "lucide-react";
 import { updateNotificationPrefsAction } from "@/app/dashboard/actions";
 
 type Prefs = {
   notifyOrders: boolean;
   notifyCashback: boolean;
   notifySystemEmail: boolean;
+  notifyDrawEmail: boolean;
 };
 
 const ROWS: {
@@ -19,6 +20,7 @@ const ROWS: {
 }[] = [
   { key: "notifyOrders", icon: ShoppingBag, tone: "bg-[#eff9df] text-[#62a51d]", title: "Email cập nhật rút tiền", text: "Khi yêu cầu được duyệt, từ chối hoặc chi trả" },
   { key: "notifyCashback", icon: Wallet, tone: "bg-[#f5e9ff] text-[#a32cdb]", title: "Email hoàn tiền", text: "Khi tiền hoàn được cộng vào ví" },
+  { key: "notifyDrawEmail", icon: Gift, tone: "bg-[#e8f8e6] text-[#168146]", title: "Kết quả rút thăm", text: "Nhận kết quả sau khi kỳ quay được công bố" },
 ];
 
 export function NotificationSettings({ prefs }: { prefs: Prefs }) {
@@ -32,6 +34,7 @@ export function NotificationSettings({ prefs }: { prefs: Prefs }) {
     fd.set("notifyOrders", String(next.notifyOrders));
     fd.set("notifyCashback", String(next.notifyCashback));
     fd.set("notifySystemEmail", String(next.notifySystemEmail));
+    fd.set("notifyDrawEmail", String(next.notifyDrawEmail));
     startTransition(() => {
       void updateNotificationPrefsAction(undefined, fd);
     });
